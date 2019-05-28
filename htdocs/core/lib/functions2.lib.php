@@ -2377,7 +2377,7 @@ function getModuleDirForApiClass($module)
     if ($module == 'contracts') {
     	$moduledirforclass = 'contrat';
     }
-    elseif (in_array($module, array('admin', 'login', 'setup', 'access', 'status', 'tools', 'documents'))) {
+    elseif (in_array($module, array('admin', 'login', 'setup', 'access', 'status', 'tools', 'documents', 'avoloisetup'))) {
         $moduledirforclass = 'api';
     }
     elseif ($module == 'contact' || $module == 'contacts' || $module == 'customer' || $module == 'thirdparty' || $module == 'thirdparties') {

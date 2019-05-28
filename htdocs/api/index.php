@@ -230,7 +230,7 @@ if (! empty($reg[1]) && ($reg[1] != 'explorer' || ($reg[2] != '/swagger.json' &&
 	if ($module == 'interventions')
 		$classfile = 'interventions';
 
-	$dir_part_file = dol_buildpath('/' . $moduledirforclass . '/class/api_' . $classfile . '.class.php', 0, 2);
+    $dir_part_file = dol_buildpath('/' . $moduledirforclass . '/class/api_' . $classfile . '.class.php', 0, 2);
 
 	$classname = ucwords($module);
 

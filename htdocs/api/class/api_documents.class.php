@@ -386,6 +386,18 @@ class Documents extends DolibarrApi
 
 			$upload_dir = $conf->agenda->dir_output.'/'.dol_sanitizeFileName($object->ref);
 		}
+		elseif ($modulepart == 'project')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+
+			$object = new Project($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Le projet ne contient aucun document');
+			}
+
+			$upload_dir = $conf->projet->dir_output.'/' .$object->id;
+		}
 		else
 		{
 			throw new RestException(500, 'Modulepart '.$modulepart.' not implemented yet.');
@@ -563,7 +575,8 @@ class Documents extends DolibarrApi
 		//var_dump($original_file);exit;
 
 		if (!dol_is_dir(dirname($destfile))) {
-			throw new RestException(401, 'Directory not exists : '.dirname($destfile));
+			// throw new RestException(401, 'Directory not exists PUTAIN d\'ENCULE DE SA MAMAN LE DOLI : '.dirname($destfile));
+			mkdir(dirname($destfile), 0700);
 		}
 
 		if (! $overwriteifexists && dol_is_file($destfile))
