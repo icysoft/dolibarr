@@ -260,13 +260,13 @@ class doc_generic_invoice_odt extends ModelePDFFactures
 
 			if (file_exists($dir))
 			{
-				//print "srctemplatepath=".$srctemplatepath;	// Src filename
 				$newfile=basename($srctemplatepath);
-				$newfiletmp=preg_replace('/\.od(t|s)/i', '', $newfile);
-				$newfiletmp=preg_replace('/template_/i', '', $newfiletmp);
-				$newfiletmp=preg_replace('/modele_/i', '', $newfiletmp);
+				// $newfiletmp=preg_replace('/\.od(t|s)/i', '', $newfile);
+				// $newfiletmp=preg_replace('/template_/i', '', $newfiletmp);
+				// $newfiletmp=preg_replace('/modele_/i', '', $newfiletmp);
 
-				$newfiletmp=$objectref.'_'.$newfiletmp;
+				// $newfiletmp=$objectref.'_'.$newfiletmp;
+				$newfiletmp=$objectref.$newfiletmp;
 
 				// Get extension (ods or odt)
 				$newfileformat=substr($newfile, strrpos($newfile, '.')+1);
@@ -281,11 +281,6 @@ class doc_generic_invoice_odt extends ModelePDFFactures
 					$filename=$newfiletmp.'.'.$newfileformat;
 				}
 				$file=$dir.'/'.$filename;
-				//$file=$dir.'/'.$newfiletmp.'.'.dol_print_date(dol_now(),'%Y%m%d%H%M%S').'.odt';
-				//print "newdir=".$dir;
-				//print "newfile=".$newfile;
-				//print "file=".$file;
-				//print "conf->societe->dir_temp=".$conf->societe->dir_temp;
 
 				dol_mkdir($conf->facture->dir_temp);
 

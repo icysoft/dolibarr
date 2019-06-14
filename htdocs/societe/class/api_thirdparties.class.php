@@ -130,7 +130,10 @@ class Thirdparties extends DolibarrApi
 		$search_sale = 0;
 		if (! DolibarrApiAccess::$user->rights->societe->client->voir && !$socids) $search_sale = DolibarrApiAccess::$user->id;
 
-		$sql = "SELECT t.rowid";
+		$sql = "";
+		$sqlEnd = "SELECT t.rowid";
+		$sqlCount = "SELECT COUNT(rowid)";
+
 		if ((!DolibarrApiAccess::$user->rights->societe->client->voir && !$socids) || $search_sale > 0) $sql .= ", sc.fk_soc, sc.fk_user"; // We need these fields in order to filter by sale (including the case where the user can only see his prospects)
 		$sql.= " FROM ".MAIN_DB_PREFIX."societe as t";
 
@@ -161,6 +164,8 @@ class Thirdparties extends DolibarrApi
 			$sql.=" AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlfilters).")";
 		}
 
+
+
 		$sql.= $db->order($sortfield, $sortorder);
 
 		if ($limit) {
@@ -173,7 +178,13 @@ class Thirdparties extends DolibarrApi
 			$sql.= $db->plimit($limit + 1, $offset);
 		}
 
-		$result = $db->query($sql);
+		$sqlEnd.= $sql;
+		// $sqlCount.= $sql;
+
+		$result = $db->query($sqlEnd);
+		// $resultCount = $db->query($sqlCount);
+		// $count = $resultCount->fetch_array(MYSQLI_NUM);
+
 		if ($result)
 		{
 			$num = $db->num_rows($result);
@@ -194,6 +205,12 @@ class Thirdparties extends DolibarrApi
 		if( ! count($obj_ret)) {
 			throw new RestException(404, 'Thirdparties not found');
 		}
+
+		// Renvoie le total de ligne de résultat et plus des donées
+		// $rtd['count']=$count[0];
+		// $rtd['data']=$obj_ret;
+		// return $rtd;
+
 		return $obj_ret;
 	}
 

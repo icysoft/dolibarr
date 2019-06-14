@@ -2790,6 +2790,13 @@ function dol_check_secure_access_document($modulepart, $original_file, $entity, 
 		$original_file=$conf->scanner->dir_temp.'/'.$fuser->id.'/'.$original_file;
 	}
 
+	// Wrapping pour doctemplates
+	elseif ($modulepart == 'doctemplates')
+	{
+		$accessallowed = 1;
+		$original_file="/var/www/documents/doctemplates";
+	}
+
 	// GENERIC Wrapping
 	// If modulepart=module_user_temp	Allows any module to open a file if file is in directory called DOL_DATA_ROOT/modulepart/temp/iduser
 	// If modulepart=module_temp		Allows any module to open a file if file is in directory called DOL_DATA_ROOT/modulepart/temp

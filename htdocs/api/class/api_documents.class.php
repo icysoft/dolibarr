@@ -176,6 +176,7 @@ class Documents extends DolibarrApi
 			}
 
 			$templateused = $doctemplate?$doctemplate:$this->invoice->modelpdf;
+
 			$result = $this->invoice->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			if( $result <= 0 ) {
 				throw new RestException(500, 'Error generating document');
@@ -398,6 +399,10 @@ class Documents extends DolibarrApi
 
 			$upload_dir = $conf->projet->dir_output.'/' .$object->id;
 		}
+		elseif (strpos($modulepart, 'doctemplates/') !== false)
+		{
+			$upload_dir = '/var/www/documents/'.$modulepart;
+		}
 		else
 		{
 			throw new RestException(500, 'Modulepart '.$modulepart.' not implemented yet.');
@@ -558,6 +563,9 @@ class Documents extends DolibarrApi
 			$relativefile = $subdir;
 
 			$tmp = dol_check_secure_access_document($modulepart, $relativefile, $entity, DolibarrApiAccess::$user, '', 'write');
+
+			if ($modulepart == 'doctemplates') $tmp['original_file'] = $tmp['original_file']."/".$subdir;
+
 			$upload_dir = $tmp['original_file'];	// No dirname here, tmp['original_file'] is already the dir because dol_check_secure_access_document was called with param original_file that is only the dir
 
 			if (empty($upload_dir) || $upload_dir == '/')

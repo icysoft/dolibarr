@@ -4497,9 +4497,11 @@ abstract class CommonObject
 		error_reporting(0);
 		@set_time_limit(120);
 		error_reporting($err);
+		
 
 		// If selected model is a filename template (then $modele="modelname" or "modelname:filename")
 		$tmp=explode(':', $modele, 2);
+		
 		if (! empty($tmp[1]))
 		{
 			$modele=$tmp[0];
