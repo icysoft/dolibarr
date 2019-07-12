@@ -629,6 +629,8 @@ class Setup extends DolibarrApi
             $sql .= $this->db->plimit($limit, $offset);
         }
 
+        print "QUERY : $sql<br>";
+
         $result = $this->db->query($sql);
 
         if ($result) {
@@ -1225,5 +1227,87 @@ class Setup extends DolibarrApi
     	}
 
     	return array('resultcode'=>$resultcode, 'resultcomment'=>$resultcomment, 'expectedchecksum'=> $outexpectedchecksum, 'currentchecksum'=> $outcurrentchecksum, 'out'=>$out);
+    }
+
+
+    /**
+     * Get the list of formes juridiques.
+     *
+     * @param string    $sortfield  Sort field
+     * @param string    $sortorder  Sort order
+     * @param int       $limit      Number of items per page
+     * @param int       $page       Page number (starting from zero)
+     * @param int       $country    Country to get the formes juridiques
+     * @param string    $code_list  Liste des codes des formes juridiques à récupérer
+     * @param int       $active     Payment term is active or not {@min 0} {@max 1}
+     * @param string    $sqlfilters Other criteria to filter answers separated by a comma. Syntax example "(t.code:like:'A%') and (t.active:>=:0)"
+     * @return List of towns
+     *
+     * @url     GET dictionary/formesjuridiques
+     *
+     * @throws RestException
+     */
+    public function getListOfFormesJuridiques($sortfield = "", $sortorder = 'ASC', $limit = 100, $page = 0, $country = 1, $code_list = "", $active = 1, $sqlfilters = '')
+    {
+        $list = array();
+
+        $fjArray = explode(',', $code_list);
+
+        $sql = "SELECT rowid, fk_pays, code, libelle";
+        $sql.= " FROM ".MAIN_DB_PREFIX."c_forme_juridique as t";
+        $sql.= " WHERE t.active = ".$active;
+        $sql.= " AND t.fk_pays = $country";
+
+        if (count($fjArray) > 0 && $fjArray[0] != "") {
+            foreach ($fjArray as $key => $fj) {
+                if ($key == 0) {
+                    $sql.= " AND (";
+                } else {
+                    $sql.= " OR ";
+                }
+                
+                $sql.= "t.code = $fj";
+
+                if($key == count($fjArray) - 1) {
+                    $sql.= ")";
+                }
+            }
+        } 
+
+        // Add sql filters
+        if ($sqlfilters)
+        {
+            if (! DolibarrApi::_checkFilters($sqlfilters))
+            {
+                throw new RestException(503, 'Error when validating parameter sqlfilters '.$sqlfilters);
+            }
+	        $regexstring='\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
+            $sql.=" AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlfilters).")";
+        }
+
+        $sql.= $this->db->order($sortfield, $sortorder);
+
+        if ($limit) {
+            if ($page < 0) {
+                $page = 0;
+            }
+            $offset = $limit * $page;
+
+            $sql .= $this->db->plimit($limit, $offset);
+        }
+
+        $result = $this->db->query($sql);
+
+        if ($result) {
+            $num = $this->db->num_rows($result);
+            $min = min($num, ($limit <= 0 ? $num : $limit));
+            for ($i = 0; $i < $min; $i++) {
+                $list[] = $this->db->fetch_object($result);
+            }
+        } else {
+            throw new RestException(503, 'Error when retrieving list of towns : '.$this->db->lasterror());
+        }
+
+        return $list;
     }
 }

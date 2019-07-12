@@ -102,6 +102,8 @@ class Documents extends DolibarrApi
 		}
 
 		$file_content=file_get_contents($original_file_osencoded);
+
+		//print "ORIGINAL FILE : $original_file<br>";
 		return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'encoding'=>'base64' );
 	}
 
@@ -605,6 +607,41 @@ class Documents extends DolibarrApi
 		}
 
 		$result = dol_move($destfiletmp, $destfile, 0, $overwriteifexists, 1);
+
+		if ($modulepart == 'logo' && $result) {
+			// Déclaration des class nécessaires à l'enregistrement des vignettes et enregistrement des consts
+			require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+			require_once DOL_DOCUMENT_ROOT.'/core/lib/images.lib.php';
+
+			if (preg_match('/([^\\/:]+)$/i', $destfile, $reg)) {
+				$original_file=$reg[1];
+				$isimage=image_format_supported($original_file);
+				$path_file_to_resize = $tmp['original_file'].'/'.$original_file;
+
+			}
+	
+			dolibarr_set_const($db, "MAIN_INFO_SOCIETE_LOGO", $original_file, 'chaine', 0, '', $conf->entity);
+
+			// Enregistrer small vignette
+			$imgThumbSmall = vignette($path_file_to_resize, $maxwidthsmall, $maxheightsmall, '_small', $quality);
+			if (image_format_supported($imgThumbSmall) >= 0 && preg_match('/([^\\/:]+)$/i', $imgThumbSmall, $reg))
+			{
+				$imgThumbSmall = $reg[1];
+				dolibarr_set_const($db, "MAIN_INFO_SOCIETE_LOGO_SMALL", $imgThumbSmall, 'chaine', 0, '', $conf->entity);
+			}
+			else dol_syslog($imgThumbSmall);
+
+			// Enregistrer mini vignette
+			$imgThumbMini = vignette($path_file_to_resize, $maxwidthmini, $maxheightmini, '_mini', $quality);
+			// print "IS SUPPORTED ? : ".image_format_supported($imgThumbMini)."<br>";
+			if (image_format_supported($imgThumbMini) >= 0 && preg_match('/([^\\/:]+)$/i', $imgThumbMini, $reg))
+			{
+				$imgThumbMini = $reg[1];
+				dolibarr_set_const($db, "MAIN_INFO_SOCIETE_LOGO_MINI", $imgThumbMini, 'chaine', 0, '', $conf->entity);
+			}
+			else dol_syslog($imgThumbMini);
+		}
+
 		if (! $result)
 		{
 			throw new RestException(500, "Failed to move file into '".$destfile."'");

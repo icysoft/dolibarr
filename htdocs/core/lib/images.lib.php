@@ -40,7 +40,10 @@ function image_format_supported($file)
     $regeximgext='\.gif|\.jpg|\.jpeg|\.png|\.bmp|\.xpm|\.xbm|\.svg';   // See also into product.class.php
 
     // Case filename is not a format image
-    if (! preg_match('/('.$regeximgext.')$/i', $file, $reg)) return -1;
+		if (! preg_match('/('.$regeximgext.')$/i', $file, $reg)) {
+			// print "NIQUE BIEN TA RACE !! : $file<br>";
+			return -1;
+		}
 
     // Case filename is a format image but not supported by this PHP
     $imgfonction='';
@@ -394,6 +397,10 @@ function vignette($file, $maxWidth = 160, $maxHeight = 120, $extName = '_small',
 	$imgWidth = $infoImg[0]; // Largeur de l'image
 	$imgHeight = $infoImg[1]; // Hauteur de l'image
 
+	// print "FILE : $file<br>";
+	// print "FILE TO READ : $filetoread<br>";
+	// print "INFO IMG : $infoImg<br>";
+
 	if ($maxWidth  == -1) $maxWidth=$infoImg[0];	// If size is -1, we keep unchanged
 	if ($maxHeight == -1) $maxHeight=$infoImg[1];	// If size is -1, we keep unchanged
 
@@ -462,6 +469,9 @@ function vignette($file, $maxWidth = 160, $maxHeight = 120, $extName = '_small',
 			$extImg = '.bmp';
 			break;
 	}
+
+	// print "IMG AVANT IS RESOURCE : $img<br>";
+
     if (! is_resource($img))
     {
         dol_syslog('Failed to detect type of image. We found infoImg[2]='.$infoImg[2], LOG_WARNING);

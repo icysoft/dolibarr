@@ -94,7 +94,7 @@ if ( ($action == 'update' && ! GETPOST("cancel", 'alpha'))
 	$varforimage='logo'; $dirforimage=$conf->mycompany->dir_output.'/logos/';
 	if ($_FILES[$varforimage]["tmp_name"])
 	{
-		if (preg_match('/([^\\/:]+)$/i', $_FILES[$varforimage]["name"], $reg))
+		if (preg_match('/([^\\/:]+)$/i', $_FILES['logo']["name"], $reg))
 		{
 			$original_file=$reg[1];
 
@@ -341,6 +341,7 @@ if ($action == 'edit' || $action == 'updateedit')
 	print '</script>'."\n";
 
 	print '<form enctype="multipart/form-data" method="POST" action="'.$_SERVER["PHP_SELF"].'" name="form_index">';
+
 	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 	print '<input type="hidden" name="action" value="update">';
 
@@ -348,6 +349,8 @@ if ($action == 'edit' || $action == 'updateedit')
 	print '<tr class="liste_titre"><th class="titlefield wordbreak">'.$langs->trans("CompanyInfo").'</th><th>'.$langs->trans("Value").'</th></tr>'."\n";
 
 	// Name
+
+	print '<div>ACTION : '.$_SERVER["PHP_SELF"].'" name="form_index</div>';
 
 	print '<tr class="oddeven"><td class="fieldrequired"><label for="name">'.$langs->trans("CompanyName").'</label></td><td>';
 	print '<input name="nom" id="name" class="minwidth200" value="'. dol_escape_htmltag($conf->global->MAIN_INFO_SOCIETE_NOM?$conf->global->MAIN_INFO_SOCIETE_NOM: GETPOST("nom", 'nohtml')) . '" autofocus="autofocus"></td></tr>'."\n";
@@ -427,6 +430,8 @@ if ($action == 'edit' || $action == 'updateedit')
 	}
 	print '</td></tr></table>';
 	print '</td></tr>';
+
+	// print '<img href="http://localhost:8087/api/viewimage.php%3Fmodulepart=mycompany&file=logos%252Fthumbs%252Fflat-earth-soccor_mini.jpg">';
 
 	// Note
 	print '<tr class="oddeven"><td class="tdtop"><label for="note">'.$langs->trans("Note").'</label></td><td>';

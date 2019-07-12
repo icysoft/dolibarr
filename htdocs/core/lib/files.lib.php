@@ -2797,6 +2797,13 @@ function dol_check_secure_access_document($modulepart, $original_file, $entity, 
 		$original_file="/var/www/documents/doctemplates";
 	}
 
+	// Wrapping pour logo
+	elseif ($modulepart == 'logo')
+	{
+		$accessallowed = 1;
+		$original_file="/var/www/documents/mycompany/logos";
+	}
+
 	// GENERIC Wrapping
 	// If modulepart=module_user_temp	Allows any module to open a file if file is in directory called DOL_DATA_ROOT/modulepart/temp/iduser
 	// If modulepart=module_temp		Allows any module to open a file if file is in directory called DOL_DATA_ROOT/modulepart/temp

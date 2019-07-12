@@ -294,10 +294,8 @@ class pdf_crabe extends ModelePDFFactures
 				$dir = $conf->facture->dir_output . "/" . $objectref;
 				$file = $dir . "/" . $objectref . ".pdf";
 			}
-			print "DIR : $dir<br>";
 			if (! file_exists($dir))
 			{
-				print "AVANT dol_mkdir()<br>";
 				if (dol_mkdir($dir) < 0)
 				{
 					$this->error=$langs->transnoentities("ErrorCanNotCreateDir", $dir);
@@ -307,7 +305,6 @@ class pdf_crabe extends ModelePDFFactures
 
 			if (file_exists($dir))
 			{
-				print "File exist : OK";
 				// Add pdfgeneration hook
 				if (! is_object($hookmanager))
 				{
