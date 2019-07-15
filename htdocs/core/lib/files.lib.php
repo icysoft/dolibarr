@@ -2801,7 +2801,7 @@ function dol_check_secure_access_document($modulepart, $original_file, $entity, 
 	elseif ($modulepart == 'logo')
 	{
 		$accessallowed = 1;
-		$original_file="/var/www/documents/mycompany/logos";
+		$original_file="/var/www/documents/mycompany/logos/".$original_file;
 	}
 
 	// GENERIC Wrapping
