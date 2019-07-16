@@ -629,8 +629,6 @@ class Setup extends DolibarrApi
             $sql .= $this->db->plimit($limit, $offset);
         }
 
-        print "QUERY : $sql<br>";
-
         $result = $this->db->query($sql);
 
         if ($result) {
