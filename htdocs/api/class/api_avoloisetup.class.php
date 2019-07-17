@@ -281,16 +281,84 @@ class Avoloisetup extends DolibarrApi
         return $this->get();
     }
 
+    // /**
+    //  * Get the list of departements.
+    //  *
+    //  * @param string    $sortfield  Sort field
+    //  * @param string    $sortorder  Sort order
+    //  * @return array                List of departements
+    //  *
+    //  * @url     GET /formesjuridiques
+    //  *
+    //  * @throws RestException
+    //  */
+    // public function getFormesJuridiques($sortfield = "", $sortorder = 'ASC')
+    // {
+    //     $list = array();
+
+    //     $sql = "SELECT rowid, libelle FROM ".MAIN_DB_PREFIX."c_forme_juridique as t";
+    //     $sql .= " WHERE t.fk_pays = '1'";
+
+    //     $sql.= $this->db->order($sortfield, $sortorder);
+
+    //     $result = $this->db->query($sql);
+
+    //     return $result;
+    // }
+
     /**
-     * Enregistrer logo
-     * 
-     * @param   any     $logo
-     * @return  string  Nom du logo enregistré
-     * 
-     * @url	PUT /setlogo
+     * Set properties of an accounting_setup object
+     *
+     * Return an array with accounting_setup informations
+     *
+     * @param   array   $setup_infos
+     * @return 	array|mixed data without useless information
+     *
+     * @url	PUT /accounting-setup
      * @throws 	RestException
      */
-    public function setLogo($logo) {
-        return 'logo name';
+    public function setAccountingSetup($setup_infos)
+    {
+        dol_include_once('/core/lib/admin.lib.php');
+
+        $setup_infos = (object) $setup_infos;
+
+        dolibarr_set_const($this->db, 'FACTURE_ADDON', 'mod_facture_mercure');
+
+        if ($setup_infos->invoice_nomenclature) dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', $setup_infos->invoice_nomenclature);
+        if ($setup_infos->credit_nomenclature) dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $setup_infos->credit_nomenclature);
+        if ($setup_infos->client_time_limit) dolibarr_set_const($this->db, 'CLIENT_TIME_LIMIT', $setup_infos->client_time_limit);
+        if ($setup_infos->provider_time_limit) dolibarr_set_const($this->db, 'PROVIDER_TIME_LIMIT', $setup_infos->provider_time_limit);
+
+        return $this->getAccountingSetup();
+    }
+
+    /**
+     * Get properties of an accounting_setup object
+     *
+     * Return an array with accounting_setup informations
+     *
+     * @return 	array|mixed data without useless information
+     *
+     * @url	GET /accounting-setup
+     * @throws 	RestException
+     */
+    public function getAccountingSetup()
+    {
+        dol_include_once('/core/lib/admin.lib.php');
+
+        $invoice_nomenclature = dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', 1);
+        $credit_nomenclature = dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', 1);
+        $client_time_limit = dolibarr_get_const($this->db, 'CLIENT_TIME_LIMIT', 1);
+        $provider_time_limit = dolibarr_get_const($this->db, 'PROVIDER_TIME_LIMIT', 1);
+
+        $list = array();
+
+        $list['invoice_nomenclature']=$invoice_nomenclature;
+        $list['credit_nomenclature']=$credit_nomenclature;
+        $list['client_time_limit']=$client_time_limit;
+        $list['provider_time_limit']=$provider_time_limit;
+
+        return $list;
     }
 }
