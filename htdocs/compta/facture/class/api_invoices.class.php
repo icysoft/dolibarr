@@ -803,7 +803,13 @@ class Invoices extends DolibarrApi
     	}
     	if ($result < 0) {
     		throw new RestException(500, 'Error when validating Invoice: '.$this->invoice->error);
-    	}
+        }
+        
+        // TODO Utiliser getNextNumRef() pour utiliser la nomenclature personnalisée
+        require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+        getNextNumRef($id);
+
+        // print "TEST NOMENCLATURE : $test<br>";
 
         $result = $this->invoice->fetch($id);
         if( ! $result ) {
