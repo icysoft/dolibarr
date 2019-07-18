@@ -806,8 +806,8 @@ class Invoices extends DolibarrApi
         }
         
         // TODO Utiliser getNextNumRef() pour utiliser la nomenclature personnalisée
-        require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
-        getNextNumRef($id);
+        // require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+        // getNextNumRef($id);
 
         // print "TEST NOMENCLATURE : $test<br>";
 
