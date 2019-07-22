@@ -433,6 +433,7 @@ class Project extends CommonObject
      */
     public function fetch($id, $ref = '')
     {
+        // debug_print_backtrace();
         global $conf;
 
         if (empty($id) && empty($ref)) return -1;
@@ -2045,6 +2046,6 @@ class Project extends CommonObject
 	    require_once DOL_DOCUMENT_ROOT.'/projet/class/task.class.php';
 	    $taskstatic = new Task($this->db);
 
-	    $this->lines = $taskstatic->getTasksArray(0, $user, $this->id, 0, 0);
+	    $this->lines = $taskstatic->getTasksArray(0, 0, $this->id, 0, 0);
 	}
 }

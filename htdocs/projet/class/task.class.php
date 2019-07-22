@@ -447,6 +447,8 @@ class Task extends CommonObject
 	public function delete($user, $notrigger = 0)
 	{
 
+		print "TRY DELETEZ<br>";
+
 		global $conf, $langs;
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
@@ -538,6 +540,7 @@ class Task extends CommonObject
 			//Delete associated link file
 			if ($conf->projet->dir_output)
 			{
+				require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 				$projectstatic=new Project($this->db);
 				$projectstatic->fetch($this->fk_project);
 
