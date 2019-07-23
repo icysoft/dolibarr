@@ -446,9 +446,6 @@ class Task extends CommonObject
 	 */
 	public function delete($user, $notrigger = 0)
 	{
-
-		print "TRY DELETEZ<br>";
-
 		global $conf, $langs;
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
