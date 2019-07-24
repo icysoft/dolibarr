@@ -2044,8 +2044,10 @@ class Project extends CommonObject
 	public function getLinesArray($user)
 	{
 	    require_once DOL_DOCUMENT_ROOT.'/projet/class/task.class.php';
+        require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 	    $taskstatic = new Task($this->db);
-
-	    $this->lines = $taskstatic->getTasksArray(0, 0, $this->id, 0, 0);
+        $extrafields = new ExtraFields($this->db);
+        $extrafields->fetch_name_optionals_label('projet_task');
+        $this->lines = $taskstatic->getTasksArray(0, 0, $this->id, 0, 0, '', '-1', '', 0, 0, $extrafields);
 	}
 }

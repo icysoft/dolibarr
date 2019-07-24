@@ -942,8 +942,10 @@ class Task extends CommonObject
                     {
                         foreach ($extrafields->attributes['projet_task']['label'] as $key => $val)
                         {
-                            if ($extrafields->attributes['projet_task']['type'][$key] != 'separate')
-                                $tasks[$i]->{'options_'.$key} = $obj->{'options_'.$key};
+                            if ($extrafields->attributes['projet_task']['type'][$key] != 'separate') {
+															$tasks[$i]->array_options['options_'.$key] = $obj->{'options_'.$key};
+                              $tasks[$i]->{'options_'.$key} = $obj->{'options_'.$key};
+                        		}
                         }
                     }
 				}
