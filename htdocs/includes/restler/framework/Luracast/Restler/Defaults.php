@@ -175,7 +175,7 @@ class Defaults
     /**
      * @var bool enables CORS support
      */
-    public static $crossOriginResourceSharing = true;
+    public static $crossOriginResourceSharing = false;
     public static $accessControlAllowOrigin = '*';
     public static $accessControlAllowMethods =
         'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD';

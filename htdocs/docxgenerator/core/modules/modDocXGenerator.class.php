@@ -137,7 +137,7 @@ class modDocXGenerator extends DolibarrModules
         //                             2 => array('MYMODULE_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
         // );
         $this->const = array(
-            // 1 => array('MYMODULE_MYCONSTANT', 'chaine', 'avalue', 'This is a constant to add', 1, 'allentities', 1)
+            1 => array('DOCXGENERATOR_INVOICE_PDF_DOCX_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/docxgenerator/templates', '', 0)
         );
 
         // Some keys to add into the overwriting translation tables
@@ -368,6 +368,8 @@ class modDocXGenerator extends DolibarrModules
     {
         // $result=$this->_load_tables('/mymodule/sql/');
         // if ($result < 0) return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
+
+        // (245,'FACTURE_ADDON_PDF_ODT_PATH',1,'DOL_DATA_ROOT/doctemplates/invoices','chaine',0,NULL,'2012-07-08 11:28:53')
 
         // Create extrafields during init
         //include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
