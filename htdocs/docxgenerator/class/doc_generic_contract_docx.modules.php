@@ -1,32 +1,31 @@
 <?php
-/* Copyright (C) 2010-2012	Laurent Destailleur	<ely@users.sourceforge.net>
- * Copyright (C) 2012		Regis Houssin		<regis.houssin@inodbox.com>
- * Copyright (C) 2014		Marcos García		<marcosgdf@gmail.com>
- * Copyright (C) 2016		Charlie Benke		<charlie@patas-monkey.com>
- * Copyright (C) 2018		Frédéric France		<frederic.france@netlogic.fr>
+/* Copyright (C) 2010-2012 	Laurent Destailleur <eldy@users.sourceforge.net>
+ * Copyright (C) 2012		Juanjo Menent		<jmenent@2byte.es>
+ * Copyright (C) 2018		Ferran Marcet		<fmarcet@2byte.es>
+ * Copyright (C) 2018       Frédéric France         <frederic.france@netlogic.fr>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * or see http://www.gnu.org/
- */
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+* or see http://www.gnu.org/
+*/
 
 /**
- *	\file       htdocs/docxgenerator/core/class/doc_generic_invoice_docx.modules.php
+ *	\file       htdocs/core/modules/contract/doc/doc_generic_contract_docx.modules.php
  *	\ingroup    societe
- *	\brief      File of class to build DOCX documents for third parties
+ *	\brief      File of class to build Docx documents for third parties
  */
 
-require_once DOL_DOCUMENT_ROOT.'/core/modules/facture/modules_facture.php';
+require_once DOL_DOCUMENT_ROOT.'/core/modules/contract/modules_contract.php';
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
@@ -37,11 +36,11 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/doc.lib.php';
 /**
  *	Class to build documents using DOCX templates generator
  */
-class doc_generic_invoice_docx extends ModelePDFFactures
+class doc_generic_contract_docx extends ModelePDFContract
 {
 	/**
 	 * Issuer
-	 * @var Company object that emits
+	 * @var Societe
 	 */
 	public $emetteur;
 
@@ -59,24 +58,24 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 
 
 	/**
-	 *	Constructor
+	 *  Constructor
 	 *
-	 *  @param		DoliDB		$db      Database handler
+	 *  @param      DoliDB      $db      Database handler
 	 */
-    public function __construct($db)
-    {
+	public function __construct($db)
+	{
 		global $conf, $langs, $mysoc;
 
 		// Load translation files required by the page
         $langs->loadLangs(array("main","companies"));
 
 		$this->db = $db;
-		$this->name = "DOCX templates";
-		$this->description = $langs->trans("DocumentModelDocx");
-		$this->scandir = 'FACTURE_ADDON_PDF_DOCX_PATH';	// Name of constant that is used to save list of directories to scan
+		$this->name = "ODT templates";
+		$this->description = $langs->trans("DocumentModelOdt");
+		$this->scandir = 'CONTRACT_ADDON_PDF_ODT_PATH';	// Name of constant that is used to save list of directories to scan
 
 		// Dimension page pour format A4
-		$this->type = 'docx';
+		$this->type = 'odt';
 		$this->page_largeur = 0;
 		$this->page_hauteur = 0;
 		$this->format = array($this->page_largeur,$this->page_hauteur);
@@ -86,7 +85,7 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 		$this->marge_basse=0;
 
 		$this->option_logo = 1;                    // Affiche logo
-		$this->option_tva = 0;                     // Gere option tva FACTURE_TVAOPTION
+		$this->option_tva = 0;                     // Gere option tva CONTRACT_TVAOPTION
 		$this->option_modereg = 0;                 // Affiche mode reglement
 		$this->option_condreg = 0;                 // Affiche conditions reglement
 		$this->option_codeproduitservice = 0;      // Affiche code produit-service
@@ -98,36 +97,36 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 
 		// Recupere emetteur
 		$this->emetteur=$mysoc;
-		if (! $this->emetteur->country_code) $this->emetteur->country_code=substr($langs->defaultlang, -2);    // Par defaut, si n'etait pas defini
-    }
+		if (! $this->emetteur->country_code) $this->emetteur->country_code=substr($langs->defaultlang, -2);    // By default if not defined
+	}
 
 
 	/**
-	 * Return description of a module
+	 *	Return description of a module
 	 *
-	 * @param	Translate	$langs      Lang object to use for output
-	 * @return	string      			Description
+	 *	@param	Translate	$langs      Lang object to use for output
+	 *	@return string       			Description
 	 */
-    public function info($langs)
-    {
-		global $conf, $langs;
+	public function info($langs)
+	{
+		global $conf,$langs;
 
 		// Load translation files required by the page
-        $langs->loadLangs(array("errors","companies"));
+        $langs->loadLangs(array('companies', 'errors'));
 
 		$form = new Form($this->db);
 
 		$texte = $this->description.".<br>\n";
-		$texte.= '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
+		$texte.= '<form action="'.$_SERVER["PHP_SELF"].'" method="POST" enctype="multipart/form-data">';
 		$texte.= '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 		$texte.= '<input type="hidden" name="action" value="setModuleOptions">';
-		$texte.= '<input type="hidden" name="param1" value="FACTURE_ADDON_PDF_DOCX_PATH">';
+		$texte.= '<input type="hidden" name="param1" value="CONTRACT_ADDON_PDF_ODT_PATH">';
 		$texte.= '<table class="nobordernopadding" width="100%">';
 
 		// List of directories area
-		$texte.= '<tr><td valign="middle">';
+		$texte.= '<tr><td>';
 		$texttitle=$langs->trans("ListOfDirectories");
-		$listofdir=explode(',', preg_replace('/[\r\n]+/', ',', trim($conf->global->FACTURE_ADDON_PDF_DOCX_PATH)));
+		$listofdir=explode(',', preg_replace('/[\r\n]+/', ',', trim($conf->global->CONTRACT_ADDON_PDF_ODT_PATH)));
 		$listoffiles=array();
 		foreach($listofdir as $key=>$tmpdir)
 		{
@@ -151,31 +150,23 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 		$texte.= $form->textwithpicto($texttitle, $texthelp, 1, 'help', '', 1);
 		$texte.= '<div><div style="display: inline-block; min-width: 100px; vertical-align: middle;">';
 		$texte.= '<textarea class="flat" cols="60" name="value1">';
-		$texte.=$conf->global->FACTURE_ADDON_PDF_DOCX_PATH;
+		$texte.=$conf->global->CONTRACT_ADDON_PDF_ODT_PATH;
 		$texte.= '</textarea>';
 		$texte.= '</div><div style="display: inline-block; vertical-align: middle;">';
-		$texte.= '<input type="submit" class="button" value="'.$langs->trans("Modify").'" name="Button">';
+		$texte.= '<input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans("Modify")).'" name="Button">';
 		$texte.= '<br></div></div>';
 
 		// Scan directories
-		$nbofiles=count($listoffiles);
-		if (! empty($conf->global->FACTURE_ADDON_PDF_DOCX_PATH))
+		if (count($listofdir))
 		{
-			$texte.=$langs->trans("NumberOfModelFilesFound").': <b>';
-			//$texte.=$nbofiles?'<a id="a_'.get_class($this).'" href="#">':'';
-			$texte.=count($listoffiles);
-			//$texte.=$nbofiles?'</a>':'';
-			$texte.='</b>';
+			$texte.=$langs->trans("NumberOfModelFilesFound").': <b>'.count($listoffiles).'</b>';
 		}
-		if ($nbofiles)
-		{
-   			$texte.='<div id="div_'.get_class($this).'" class="hidden">';
-   			foreach($listoffiles as $file)
-   			{
-                $texte.=$file['name'].'<br>';
-   			}
-   			$texte.='<div id="div_'.get_class($this).'">';
-		}
+
+		// Add select to upload a new template file. TODO Copy this feature on other admin pages.
+		$texte.= '<div>'.$langs->trans("UploadNewTemplate").' <input type="file" name="uploadfile">';
+		$texte.= '<input type="hidden" value="CONTRACT_ADDON_PDF_ODT_PATH" name="keyforuploaddir">';
+		$texte.= '<input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans("Upload")).'" name="upload">';
+        $texte.= '</div>';
 
 		$texte.= '</td>';
 
@@ -188,22 +179,22 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 		$texte.= '</form>';
 
 		return $texte;
-    }
+	}
 
     // phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
 	/**
 	 *  Function to build a document on disk using the generic odt module.
 	 *
-	 *	@param		Facture		$object				Object source to build document
-	 *	@param		Translate	$outputlangs		Lang output object
-	 * 	@param		string		$srctemplatepath	Full path of source filename for generator using a template file
+	 *  @param		Contract		$object				Object source to build document
+	 *  @param		Translate	$outputlangs		Lang output object
+	 *  @param		string		$srctemplatepath	Full path of source filename for generator using a template file
 	 *  @param		int			$hidedetails		Do not show line details
 	 *  @param		int			$hidedesc			Do not show desc
 	 *  @param		int			$hideref			Do not show ref
-	 *	@return		int         					1 if OK, <=0 if KO
+	 *  @return		int         					1 if OK, <=0 if KO
 	 */
-    public function write_file($object, $outputlangs, $srctemplatepath, $hidedetails = 0, $hidedesc = 0, $hideref = 0)
-    {
+	public function write_file($object, $outputlangs, $srctemplatepath, $hidedetails = 0, $hidedesc = 0, $hideref = 0)
+	{
         // phpcs:enable
 		global $user,$langs,$conf,$mysoc,$hookmanager;
 
@@ -226,16 +217,16 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 		$sav_charset_output=$outputlangs->charset_output;
 		$outputlangs->charset_output='UTF-8';
 
-		// Load translation files required by the page
+		// Load traductions files requiredby by page
 		$outputlangs->loadLangs(array("main", "dict", "companies", "bills"));
 
-		if ($conf->facture->dir_output)
+		if ($conf->contrat->dir_output)
 		{
 			// If $object is id instead of object
 			if (! is_object($object))
 			{
 				$id = $object;
-				$object = new Facture($this->db);
+				$object = new Contrat($this->db);
 				$result=$object->fetch($id);
 				if ($result < 0)
 				{
@@ -244,7 +235,7 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 				}
 			}
 
-			$dir = $conf->facture->dir_output;
+			$dir = $conf->contrat->dir_output;
 			$objectref = dol_sanitizeFileName($object->ref);
 			if (! preg_match('/specimen/i', $objectref)) $dir.= "/" . $objectref;
 			$file = $dir . "/" . $objectref . ".odt";
@@ -260,13 +251,13 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 
 			if (file_exists($dir))
 			{
+				//print "srctemplatepath=".$srctemplatepath;	// Src filename
 				$newfile=basename($srctemplatepath);
-				// $newfiletmp=preg_replace('/\.od(t|s)/i', '', $newfile);
-				// $newfiletmp=preg_replace('/template_/i', '', $newfiletmp);
-				// $newfiletmp=preg_replace('/modele_/i', '', $newfiletmp);
+				$newfiletmp=preg_replace('/\.od(t|s)/i', '', $newfile);
+				$newfiletmp=preg_replace('/template_/i', '', $newfiletmp);
+				$newfiletmp=preg_replace('/modele_/i', '', $newfiletmp);
 
-				// $newfiletmp=$objectref.'_'.$newfiletmp;
-				$newfiletmp=$objectref.$newfiletmp;
+				$newfiletmp=$objectref.'_'.$newfiletmp;
 
 				// Get extension (ods or odt)
 				$newfileformat=substr($newfile, strrpos($newfile, '.')+1);
@@ -281,13 +272,17 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 					$filename=$newfiletmp.'.'.$newfileformat;
 				}
 				$file=$dir.'/'.$filename;
+				//print "newdir=".$dir;
+				//print "newfile=".$newfile;
+				//print "file=".$file;
+				//print "conf->contrat->dir_temp=".$conf->contrat->dir_temp;
 
-				dol_mkdir($conf->facture->dir_temp);
+				dol_mkdir($conf->contrat->dir_temp);
 
 
-				// If BILLING contact defined on invoice, we use it
+				// If CUSTOMER contact defined on contract, we use it
 				$usecontact=false;
-				$arrayidcontact=$object->getIdContact('external', 'BILLING');
+				$arrayidcontact=$object->getIdContact('external', 'CUSTOMER');
 				if (count($arrayidcontact) > 0)
 				{
 					$usecontact=true;
@@ -295,46 +290,54 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 				}
 
 				// Recipient name
-				$contactobject = null;
-				if (! empty($usecontact)) {
-					// On peut utiliser le nom de la societe du contact
-					if (! empty($conf->global->MAIN_USE_COMPANY_NAME_OF_CONTACT))
-						$socobject = $object->contact;
-					else {
-						$socobject = $object->thirdparty;
-						// if we have a BILLING contact and we dont use it as recipient we store the contact object for later use
-						$contactobject = $object->contact;
-					}
-				} else {
-					$socobject = $object->thirdparty;
+				$contactobject=null;
+                if (! empty($usecontact)) {
+                    // On peut utiliser le nom de la societe du contact
+                    if (! empty($conf->global->MAIN_USE_COMPANY_NAME_OF_CONTACT)) {
+                        $socobject = $object->contact;
+                    } else {
+                        $socobject = $object->thirdparty;
+                        // if we have a CUSTOMER contact and we dont use it as recipient we store the contact object for later use
+                        $contactobject = $object->contact;
+                    }
+				}
+				else
+				{
+					$socobject=$object->thirdparty;
 				}
 
-				// Fetch info for linked propal
-				$object->fetchObjectLinked('', '', '', '');
-				//print_r($object->linkedObjects['propal']); exit;
+				$object->fetch_optionals();
 
-				$propal_object = $object->linkedObjects['propal'][0];
 
-				// Make substitution
-				$substitutionarray=array(
-				'__FROM_NAME__' => $this->emetteur->name,
-				'__FROM_EMAIL__' => $this->emetteur->email,
-				'__TOTAL_TTC__' => $object->total_ttc,
-				'__TOTAL_HT__' => $object->total_ht,
-				'__TOTAL_VAT__' => $object->total_tva
-				);
-				complete_substitutions_array($substitutionarray, $langs, $object);
+				// Define substitution array
+				$substitutionarray = getCommonSubstitutionArray($outputlangs, 0, null, $object);
+				$array_object_from_properties=$this->get_substitutionarray_each_var_object($object, $outputlangs);
+				$array_objet=$this->get_substitutionarray_object($object, $outputlangs);		// complete with vars not set as properties by get_substitutionarray_each_var_object
+				$array_user=$this->get_substitutionarray_user($user, $outputlangs);
+				$array_soc=$this->get_substitutionarray_mysoc($mysoc, $outputlangs);
+				$array_thirdparty=$this->get_substitutionarray_thirdparty($socobject, $outputlangs);
+				$array_other=$this->get_substitutionarray_other($outputlangs);
+				// retrieve contact information for use in order as contact_xxx tags
+				$array_thirdparty_contact = array();
+				if ($usecontact && is_object($contactobject)) $array_thirdparty_contact=$this->get_substitutionarray_contact($contactobject, $outputlangs, 'contact');
+
+				$substitutionarray = array_merge($substitutionarray, $array_object_from_properties, $array_user, $array_soc, $array_thirdparty, $array_objet, $array_other, $array_thirdparty_contact);
+				complete_substitutions_array($substitutionarray, $outputlangs, $object);
+
+				$tmparray = $substitutionarray;
+
 				// Call the ODTSubstitution hook
-				$parameters=array('file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$substitutionarray);
+				$parameters=array('file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
 				$reshook=$hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 				// Line of free text
 				$newfreetext='';
-				$paramfreetext='INVOICE_FREE_TEXT';
+				$paramfreetext='CONTRACT_FREE_TEXT';
 				if (! empty($conf->global->$paramfreetext))
 				{
-					$newfreetext=make_substitutions($conf->global->$paramfreetext, $substitutionarray);
+					$newfreetext=make_substitutions($conf->global->$paramfreetext, $tmparray);
 				}
+
 
 				// Open and load template
 				require_once ODTPHP_PATH.'odf.php';
@@ -342,14 +345,14 @@ class doc_generic_invoice_docx extends ModelePDFFactures
     $odfHandler = new odf(
 						$srctemplatepath,
 						array(
-						'PATH_TO_TMP'	  => $conf->facture->dir_temp,
+						'PATH_TO_TMP'	  => $conf->contrat->dir_temp,
 						'ZIP_PROXY'		  => 'PclZipProxy',	// PhpZipProxy or PclZipProxy. Got "bad compression method" error when using PhpZipProxy.
 						'DELIMITER_LEFT'  => '{',
 						'DELIMITER_RIGHT' => '}'
 						)
 					);
 				}
-				catch (Exception $e)
+				catch(Exception $e)
 				{
 					$this->error=$e->getMessage();
 					dol_syslog($e->getMessage(), LOG_INFO);
@@ -371,33 +374,11 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 					dol_syslog($e->getMessage(), LOG_INFO);
 				}
 
-				// Define substitution array
-				$substitutionarray = getCommonSubstitutionArray($outputlangs, 0, null, $object);
-				$array_object_from_properties=$this->get_substitutionarray_each_var_object($object, $outputlangs);
-				$array_objet=$this->get_substitutionarray_object($object, $outputlangs);
-				$array_user=$this->get_substitutionarray_user($user, $outputlangs);
-				$array_soc=$this->get_substitutionarray_mysoc($mysoc, $outputlangs);
-				$array_thirdparty=$this->get_substitutionarray_thirdparty($socobject, $outputlangs);
-				$array_propal=is_object($propal_object)?$this->get_substitutionarray_object($propal_object, $outputlangs, 'propal'):array();
-				$array_other=$this->get_substitutionarray_other($outputlangs);
-				// retrieve contact information for use in object as contact_xxx tags
-				$array_thirdparty_contact = array();
-				if ($usecontact && is_object($contactobject)) $array_thirdparty_contact=$this->get_substitutionarray_contact($contactobject, $outputlangs, 'contact');
-
-				$tmparray = array_merge($substitutionarray, $array_object_from_properties, $array_user, $array_soc, $array_thirdparty, $array_objet, $array_propal, $array_other, $array_thirdparty_contact);
-				complete_substitutions_array($tmparray, $outputlangs, $object);
-
-				// Call the ODTSubstitution hook
-				$parameters=array('odfHandler'=>&$odfHandler,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
-				$reshook=$hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
-
-				//var_dump($tmparray); exit;
 				foreach($tmparray as $key=>$value)
 				{
 					try {
 						if (preg_match('/logo$/', $key)) // Image
 						{
-							//var_dump($value);exit;
 							if (file_exists($value)) $odfHandler->setImage($key, $value);
 							else $odfHandler->setVars($key, 'ErrorFileNotFound', true, 'UTF-8');
 						}
@@ -411,6 +392,7 @@ class doc_generic_invoice_docx extends ModelePDFFactures
                         dol_syslog($e->getMessage(), LOG_INFO);
 					}
 				}
+
 				// Replace tags of lines
 				try
 				{
@@ -474,29 +456,27 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 				}
 
 				// Call the beforeODTSave hook
-				$parameters=array('odfHandler'=>&$odfHandler,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
+				$parameters=array('odfHandler'=>&$odfHandler,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs);
 				$reshook=$hookmanager->executeHooks('beforeODTSave', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 				// Write new file
 				if (!empty($conf->global->MAIN_ODT_AS_PDF)) {
 					try {
 						$odfHandler->exportAsAttachedPDF($file);
-					}catch (Exception $e){
+					} catch (Exception $e) {
 						$this->error=$e->getMessage();
-                        dol_syslog($e->getMessage(), LOG_INFO);
 						return -1;
 					}
 				}
 				else {
 					try {
-						$odfHandler->saveToDisk($file);
+					$odfHandler->saveToDisk($file);
 					} catch (Exception $e) {
 						$this->error=$e->getMessage();
-                        dol_syslog($e->getMessage(), LOG_INFO);
 						return -1;
 					}
 				}
-				$parameters=array('odfHandler'=>&$odfHandler,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
+
 				$reshook=$hookmanager->executeHooks('afterODTCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
 				if (! empty($conf->global->MAIN_UMASK))
@@ -516,5 +496,5 @@ class doc_generic_invoice_docx extends ModelePDFFactures
 		}
 
 		return -1;
-    }
+	}
 }

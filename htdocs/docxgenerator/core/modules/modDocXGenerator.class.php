@@ -137,7 +137,10 @@ class modDocXGenerator extends DolibarrModules
         //                             2 => array('MYMODULE_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
         // );
         $this->const = array(
-            1 => array('DOCXGENERATOR_INVOICE_PDF_DOCX_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/docxgenerator/templates', '', 0)
+            1 => array('DOCXGENERATOR_INVOICE_PDF_DOCX_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/docxgenerator/templates/invoice', '', 0),
+            2 => array('COMPANY_ADDON_PDF_DOCX_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/docxgenerator/templates/company', '', 0),
+            3 => array('PROPALE_ADDON_PDF_ODT_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/docxgenerator/templates/proposal', '', 0),
+            4 => array('PROJECT_ADDON_PDF_ODT_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/docxgenerator/templates/project', '', 0)
         );
 
         // Some keys to add into the overwriting translation tables

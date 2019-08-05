@@ -130,7 +130,7 @@ class Docxgenerator extends DolibarrApi
 
 			$templateused = $doctemplate?$doctemplate:$this->invoice->modelpdf;
 
-			$result = $this->invoice->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
+			$result = $this->generateInvoice($this->invoice, $templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			if( $result <= 0 ) {
 				throw new RestException(500, 'Error generating document');
 			}
@@ -184,14 +184,13 @@ class Docxgenerator extends DolibarrApi
 	 *  Create a document onto disk according to template module.
 	 *
 	 *	@param	string		$modele			Generator to use. Caller must set it to obj->modelpdf or GETPOST('modelpdf') for example.
-	 *	@param	Translate	$outputlangs	objet lang a utiliser pour traduction
 	 *  @param  int			$hidedetails    Hide details of lines
 	 *  @param  int			$hidedesc       Hide description
 	 *  @param  int			$hideref        Hide ref
 	 *  @param   null|array  $moreparams     Array to provide more information
 	 *	@return int        					<0 if KO, >0 if OK
 	 */
-	public function generateInvoice($modele, $outputlangs, $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = null)
+	public function generateInvoice($invoice, $modele, $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = null)
 	{
 		global $conf,$langs;
 
@@ -215,7 +214,7 @@ class Docxgenerator extends DolibarrApi
 
 		$modelpath = "core/modules/facture/doc/";
 
-		return commonGenerateDocument($modelpath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams);
+		return $this->commonGenerateDocument($invoice, $modelpath, $modele, $hidedetails, $hidedesc, $hideref, $moreparams);
 	}
 
 	
@@ -225,7 +224,6 @@ class Docxgenerator extends DolibarrApi
 	 *
 	 * @param 	string 		$modelspath 	Relative folder where generators are placed
 	 * @param 	string 		$modele 		Generator to use. Caller must set it to obj->modelpdf or GETPOST('modelpdf') for example.
-	 * @param 	Translate 	$outputlangs 	Output language to use
 	 * @param 	int 		$hidedetails 	1 to hide details. 0 by default
 	 * @param 	int 		$hidedesc 		1 to hide product description. 0 by default
 	 * @param 	int 		$hideref 		1 to hide product reference. 0 by default
@@ -233,7 +231,7 @@ class Docxgenerator extends DolibarrApi
 	 * @return 	int 						>0 if OK, <0 if KO
 	 * @see	addFileIntoDatabaseIndex()
 	 */
-	protected function commonGenerateDocument($modelspath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams = null)
+	protected function commonGenerateDocument($document, $modelspath, $modele, $hidedetails, $hidedesc, $hideref, $moreparams = null)
 	{
 		global $conf, $langs, $user;
 
@@ -339,16 +337,20 @@ class Docxgenerator extends DolibarrApi
 
 			// We save charset_output to restore it because write_file can change it if needed for
 			// output format that does not support UTF8.
-			$sav_charset_output=$outputlangs->charset_output;
+			// TODO : remettre en paramètre
+			$sav_charset_output='UTF8';
+			$outputlangs=new Translate('', $conf);
+			$outputlangs->setDefaultLang('fr_FR');
 
 			if (in_array(get_class($this), array('Adherent')))
 			{
 				$arrayofrecords = array();   // The write_file of templates of adherent class need this var
-				$resultwritefile = $obj->write_file($this, $outputlangs, $srctemplatepath, 'member', 1, $moreparams);
+				$resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, 'member', 1, $moreparams);
 			}
 			else
 			{
-				$resultwritefile = $obj->write_file($this, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
+				print_r($obj);
+				$resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
 			}
 			// After call of write_file $obj->result['fullpath'] is set with generated file. It will be used to update the ECM database index.
 
