@@ -131,7 +131,16 @@ class Docxgenerator extends DolibarrApi
 			$templateused = $doctemplate?$doctemplate:$this->invoice->modelpdf;
 
 			$result = $this->generateInvoice($this->invoice, $templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
-			if( $result <= 0 ) {
+			if (is_object($result)) {
+				if ( $result->code <= 0 ) {
+					throw new RestException(500, 'Error generating document');
+				}
+
+				$filename = basename($original_file);
+				return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($result->b64content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+			}
+			else
+			if ( $result <= 0 ) {
 				throw new RestException(500, 'Error generating document');
 			}
 		}
@@ -349,8 +358,10 @@ class Docxgenerator extends DolibarrApi
 			}
 			else
 			{
-				print_r($obj);
-				$resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
+				require_once DOL_DOCUMENT_ROOT.'/docxgenerator/class/docx_generator.modules.php';
+				$docxgenerator=new docx_generator($this->db);
+				$resultwritefile = $docxgenerator->write_file($document, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
+				// $resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
 			}
 			// After call of write_file $obj->result['fullpath'] is set with generated file. It will be used to update the ECM database index.
 
@@ -461,6 +472,10 @@ class Docxgenerator extends DolibarrApi
 							}
 						}
 					}
+				}
+				else 
+				if (! empty($obj->result['b64content'])) {
+					return array('b64content'=>$file, 'code'=> 1);
 				}
 				else
 				{

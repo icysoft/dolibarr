@@ -586,7 +586,7 @@ class Documents extends DolibarrApi
 
 		if (!dol_is_dir(dirname($destfile))) {
 			// throw new RestException(401, 'Directory not exists PUTAIN d\'ENCULE DE SA MAMAN LE DOLI : '.dirname($destfile));
-			mkdir(dirname($destfile), 0700);
+			mkdir(dirname($destfile), 0700, true);
 		}
 
 		if (! $overwriteifexists && dol_is_file($destfile))
