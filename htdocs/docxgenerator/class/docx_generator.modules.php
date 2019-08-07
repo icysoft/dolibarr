@@ -95,7 +95,7 @@ class docx_generator extends ModeleThirdPartyDoc
      *  @param		int			$hideref			Do not show ref
 	 *	@return		int         					1 if OK, <=0 if KO
 	 */
-	public function write_file($object, $outputlangs, $srctemplatepath, $hidedetails = 0, $hidedesc = 0, $hideref = 0)
+	public function write_file($typeDocument, $idType, $templateName, $outputlangs, $srctemplatepath, $hidedetails = 0, $hidedesc = 0, $hideref = 0)
 	{
         // phpcs:enable
         global $user,$langs,$conf,$mysoc,$hookmanager;
@@ -175,7 +175,21 @@ class docx_generator extends ModeleThirdPartyDoc
                 // Open and load template
                 $phpWord = new \PhpOffice\PhpWord\PhpWord();
 				try {
-                    $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor(DOL_DOCUMENT_ROOT.'/docxgenerator/templates/invoice/template_invoice.docx');
+					switch ($typeDocument) {
+						case 'invoice':
+							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/invoice/'.$templateName;
+							break;
+						case 'acte':
+							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/acte/'.$templateName;
+							break;
+						case 'proposal':
+							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/proposal/'.$templateName;
+							break;
+						case 'project':
+							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/project/'.$templateName;
+							break;
+					}
+                    $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($template);
 				    // require_once ODTPHP_PATH.'odf.php';
                     // $odfHandler = new odf(
 					//     $srctemplatepath,
@@ -196,9 +210,47 @@ class docx_generator extends ModeleThirdPartyDoc
 				//print $odfHandler->__toString()."\n";
 
                 // Replace tags of lines for contacts
-                $contact_arrray=array();
+				$contact_arrray=array();
+				
+				// On récupère l'objet correspondant en fonction du typeDocument
+				switch ($typeDocument) {
+					case 'invoice':
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."facture as p";
+						$sql .= " WHERE p.rowid = ".$idType;
 
-                // TODO : Remettre contacts
+						$result = $this->db->query($sql);
+						break;
+					case 'acte':
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+						$sql .= " WHERE p.rowid = ".$idType;
+
+						$result = $this->db->query($sql);
+						break;
+					case 'proposal':
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."propal as p";
+						$sql .= " WHERE p.rowid = ".$idType;
+
+						$result = $this->db->query($sql);
+						break;
+					case 'project':
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+						$sql .= " WHERE p.rowid = ".$idType;
+
+						$result = $this->db->query($sql);
+						break;
+				}
+				$object = $this->db->fetch_object($result);
+
+                $sql = "SELECT *";
+                $sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+                $sql .= " WHERE p.rowid = ".$object->fk_soc;
+
+                $result = $this->db->query($sql);
+				$tiers = $this->db->fetch_object($result);
 
                 $sql = "SELECT p.rowid";
                 $sql .= " FROM ".MAIN_DB_PREFIX."socpeople as p";
@@ -221,7 +273,7 @@ class docx_generator extends ModeleThirdPartyDoc
                 		$contact_arrray[$i] = $obj->rowid;
                 		$i++;
                 	}
-                }
+				}
 
                 // TODO : Vérifier existence des segments
 
@@ -266,7 +318,7 @@ class docx_generator extends ModeleThirdPartyDoc
                 $array_user=$this->get_substitutionarray_user($user, $outputlangs);
                 $array_soc=$this->get_substitutionarray_mysoc($mysoc, $outputlangs);
                 $array_thirdparty=$this->get_substitutionarray_thirdparty($object, $outputlangs);
-                $array_other=$this->get_substitutionarray_other($outputlangs);
+				$array_other=$this->get_substitutionarray_other($outputlangs);
 
                 $tmparray = array_merge($array_user, $array_soc, $array_thirdparty, $array_other);
                 complete_substitutions_array($tmparray, $outputlangs, $object);
@@ -335,9 +387,35 @@ class docx_generator extends ModeleThirdPartyDoc
                         {
                             $templateProcessor->userdefined['dol_id'] = $object->id;
                             $templateProcessor->userdefined['dol_element'] = $object->element;
-                        }
-                        $namefile = 'test.docx';
-                        $newtmpfile = $templateProcessor->saveAs(DOL_DATA_ROOT.'/facture/' . $namefile);
+						}
+						switch ($typeDocument) {
+							case 'invoice':
+								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture')) {
+									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture', 0700, true);
+								}
+								$storage = 'facture/'.$idType.'_'.time().'_'. $templateName;
+								break;
+							case 'acte':
+								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire')) {
+									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire', 0700, true);
+								}
+								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
+								break;
+							case 'proposal':
+								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale')) {
+									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale', 0700, true);
+								}
+								$storage = 'propale/'.$idType.'_'.time().'_'. $templateName;
+								break;
+							case 'project':
+								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire')) {
+									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire', 0700, true);
+								}
+								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
+								break;
+						}
+						$path = DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/'.$storage;
+                        $newtmpfile = $templateProcessor->saveAs($path);
                         // $file = $phpWord->save('invoice.docx', 'Word2007');
                         //    $templateProcessor->saveToDisk($file);
 					} catch (Exception $e){
@@ -354,7 +432,7 @@ class docx_generator extends ModeleThirdPartyDoc
 
 				$templateProcessor=null;	// Destroy object
                 $phpWord=null;	// Destroy object
-                return array('code'=> 1);
+                return array('code'=> 1, 'documentPath'=>$path);
 				// $this->result = array('fullpath'=>$file);
 
 				// return 1;   // Success
