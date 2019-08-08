@@ -67,7 +67,6 @@ class Docxgenerator extends DolibarrApi
 	 * @param   string  $module_part    Name of module or area concerned by file download ('invoice', 'order', ...).
 	 * @param   string  $original_file  Relative path with filename, relative to modulepart (for example: IN201701-999/IN201701-999.pdf).
 	 * @param	string	$doctemplate	Set here the doc template to use for document generation (If not set, use the default template).
-	 * @param	string	$templateName	Set here the doc template to use for document generation (If not set, use the default template).
 	 * @param	string	$langcode		Language code like 'en_US', 'fr_FR', 'es_ES', ... (If not set, use the default language).
 	 * @param	number	$idType			Id of the type to get, linked to $module_part. If $module_part is an invoice, idType should be the id of the invoice
 	 * @return  array                   List of documents
@@ -81,7 +80,7 @@ class Docxgenerator extends DolibarrApi
 	 *
 	 * @url PUT /builddocfromdocx
 	 */
-	public function builddocfromdocx($module_part, $original_file = '', $doctemplate = '', $templateName, $langcode = '', $idType)
+	public function builddocfromdocx($module_part, $original_file = '', $doctemplate = '', $langcode = '', $idType)
 	{
 		global $conf, $langs;
 
@@ -91,6 +90,7 @@ class Docxgenerator extends DolibarrApi
 		if (empty($original_file)) {
 			throw new RestException(400, 'bad value for parameter original_file');
 		}
+		$name = explode("/", $original_file)[0];
 
 		$outputlangs = $langs;
 		if ($langcode && $langs->defaultlang != $langcode)
@@ -98,13 +98,6 @@ class Docxgenerator extends DolibarrApi
 			$outputlangs=new Translate('', $conf);
 			$outputlangs->setDefaultLang($langcode);
 		}
-		print_r(filter_var("abjhvfréè^^^^iô/--ç_", FILTER_SANITIZE_ENCODED));
-		print_r("-----------newline------");
-		print_r(preg_replace('/[\W]/', '', "abjhvfréè^^^^iô/--ç_"));
-		print_r(preg_replace('/[\W]/', '',strtr("abjhvfréè^^^^iô/--ç_",
-		'ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ',
-		'AAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy')));
-		print_r(utf8_encode("abjhvfréè^^^^iô/--ç_"));
 
 		//--- Finds and returns the document
 		$entity=$conf->entity;
@@ -127,6 +120,7 @@ class Docxgenerator extends DolibarrApi
 		$hideref = empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 0 : 1;
 
 		$templateused='';
+		$mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 		if ($module_part == 'facture' || $module_part == 'invoice')
 		{
@@ -136,10 +130,14 @@ class Docxgenerator extends DolibarrApi
 			if( ! $result ) {
 				throw new RestException(404, 'Invoice not found');
 			}
-
 			$templateused = $doctemplate?$doctemplate:$this->invoice->modelpdf;
 
-			$result = $this->generateInvoice($templateused, $outputlangs, $idType, $templateName, $hidedetails, $hidedesc, $hideref);
+			if ($doctemplate == 'crabe') {
+				$result = $this->invoice->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
+				$mimetype = "application/pdf";
+			} else {
+				$result = $this->commonGenerateDocument('invoice', $templateused, $idType, $name, $hidedetails, $hidedesc, $hideref);
+			}
 			if (is_object($result)) {
 				if ( $result->code <= 0 ) {
 					throw new RestException(500, 'Error generating document');
@@ -162,8 +160,23 @@ class Docxgenerator extends DolibarrApi
 				throw new RestException(404, 'Proposal not found');
 			}
 			$templateused = $doctemplate?$doctemplate:$this->propal->modelpdf;
-			$result = $this->propal->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
-			if( $result <= 0 ) {
+
+			if ($doctemplate == 'azur') {
+				$result = $this->propal->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
+				$mimetype = "application/pdf";
+			} else {
+				$result = $this->commonGenerateDocument('proposal', $templateused, $idType, $name, $hidedetails, $hidedesc, $hideref);
+			}
+			if (is_object($result)) {
+				if ( $result->code <= 0 ) {
+					throw new RestException(500, 'Error generating document');
+				}
+
+				$filename = basename($original_file);
+				return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($result->b64content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+			}
+			else
+			if ( $result <= 0 ) {
 				throw new RestException(500, 'Error generating document');
 			}
 		}
@@ -185,47 +198,8 @@ class Docxgenerator extends DolibarrApi
 		}
 
 		$file_content=file_get_contents($original_file_osencoded);
-		return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+		return array('filename'=>$filename, 'content-type' => $mimetype, 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
 	}
-
-	/**
-	 *  Create a document onto disk according to template module.
-	 *
-	 *	@param	string		$modele			Generator to use. Caller must set it to obj->modelpdf or GETPOST('modelpdf') for example.
-	 *  @param  int			$hidedetails    Hide details of lines
-	 *  @param  int			$hidedesc       Hide description
-	 *  @param  int			$hideref        Hide ref
-	 *  @param   null|array  $moreparams     Array to provide more information
-	 *	@return int        					<0 if KO, >0 if OK
-	 */
-	public function generateInvoice($modele, $outputlangs, $idType, $templateName, $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = null)
-	{
-		global $conf,$langs;
-
-		$langs->load("bills");
-
-		// print "dol_strlen(\$modele) : ".dol_strlen($modele)."<br>";
-
-		if (! dol_strlen($modele))
-		{			
-			$modele = 'crabe';
-			$thisTypeConfName = 'FACTURE_ADDON_PDF_'.$this->type;
-
-			if ($this->modelpdf) {
-				$modele = $this->modelpdf;
-			} elseif (! empty($conf->global->$thisTypeConfName)) {
-				$modele = $conf->global->$thisTypeConfName;
-			} elseif (! empty($conf->global->FACTURE_ADDON_PDF)) {
-				$modele = $conf->global->FACTURE_ADDON_PDF;
-			}
-		}
-
-		$modelpath = "core/modules/facture/doc/";
-
-		return $this->commonGenerateDocument('invoice', $modelpath, $modele, $idType, $templateName, $hidedetails, $hidedesc, $hideref, $moreparams);
-	}
-
-	
 
 	/**
 	 * Common function for all objects extending CommonObject for generating documents
@@ -239,7 +213,7 @@ class Docxgenerator extends DolibarrApi
 	 * @return 	int 						>0 if OK, <0 if KO
 	 * @see	addFileIntoDatabaseIndex()
 	 */
-	protected function commonGenerateDocument($typeDocument, $modelspath, $modele, $idType, $templateName, $hidedetails, $hidedesc, $hideref, $moreparams = null)
+	protected function commonGenerateDocument($typeDocument, $modele, $idType, $name, $hidedetails, $hidedesc, $hideref, $moreparams = null)
 	{
 		global $conf, $langs, $user;
 
@@ -253,95 +227,95 @@ class Docxgenerator extends DolibarrApi
 		
 
 		// If selected model is a filename template (then $modele="modelname" or "modelname:filename")
-		$tmp=explode(':', $modele, 2);
+		// $tmp=explode(':', $modele, 2);
 		
-		if (! empty($tmp[1]))
-		{
-			$modele=$tmp[0];
-			$srctemplatepath=$tmp[1];
-		}
+		// if (! empty($tmp[1]))
+		// {
+		// 	$modele=$tmp[0];
+		// 	$srctemplatepath=$tmp[1];
+		// }
 
 		// Search template files
-		$file=''; $classname=''; $filefound=0;
-		$dirmodels=array('/');
-		if (is_array($conf->modules_parts['models'])) $dirmodels=array_merge($dirmodels, $conf->modules_parts['models']);
-		foreach($dirmodels as $reldir)
-		{
-			foreach(array('doc','pdf') as $prefix)
-			{
-				if (in_array(get_class($this), array('Adherent'))) $file = $prefix."_".$modele.".class.php";     // Member module use prefix_module.class.php
-				else $file = $prefix."_".$modele.".modules.php";
+		// $file=''; $classname=''; $filefound=0;
+		// $dirmodels=array('/');
+		// if (is_array($conf->modules_parts['models'])) $dirmodels=array_merge($dirmodels, $conf->modules_parts['models']);
+		// foreach($dirmodels as $reldir)
+		// {
+		// 	foreach(array('doc','pdf') as $prefix)
+		// 	{
+		// 		if (in_array(get_class($this), array('Adherent'))) $file = $prefix."_".$modele.".class.php";     // Member module use prefix_module.class.php
+		// 		else $file = $prefix."_".$modele.".modules.php";
 
-				// On verifie l'emplacement du modele
-				$file=dol_buildpath($reldir.$modelspath.$file, 0);
-				if (file_exists($file))
-				{
-					$filefound=1;
-					$classname=$prefix.'_'.$modele;
-					break;
-				}
-			}
-			if ($filefound) break;
-		}
+		// 		// On verifie l'emplacement du modele
+		// 		$file=dol_buildpath($reldir.$modelspath.$file, 0);
+		// 		if (file_exists($file))
+		// 		{
+		// 			$filefound=1;
+		// 			$classname=$prefix.'_'.$modele;
+		// 			break;
+		// 		}
+		// 	}
+		// 	if ($filefound) break;
+		// }
 
 		// If generator was found
-		if ($filefound)
-		{
+		// if ($filefound)
+		// {
 			global $db;  // Required to solve a conception default in commonstickergenerator.class.php making an include of code using $db
 
-			require_once $file;
+			// require_once $file;
 
-			$obj = new $classname($this->db);
+			// $obj = new $classname($this->db);
 
 			// If generator is ODT, we must have srctemplatepath defined, if not we set it.
-			if ($obj->type == 'odt' && empty($srctemplatepath))
-			{
-				$varfortemplatedir=$obj->scandir;
-				if ($varfortemplatedir && ! empty($conf->global->$varfortemplatedir))
-				{
-					$dirtoscan=$conf->global->$varfortemplatedir;
+			// if ($obj->type == 'odt' && empty($srctemplatepath))
+			// {
+			// 	$varfortemplatedir=$obj->scandir;
+			// 	if ($varfortemplatedir && ! empty($conf->global->$varfortemplatedir))
+			// 	{
+			// 		$dirtoscan=$conf->global->$varfortemplatedir;
 
-					$listoffiles=array();
+			// 		$listoffiles=array();
 
-					// Now we add first model found in directories scanned
-					$listofdir=explode(',', $dirtoscan);
-					foreach($listofdir as $key => $tmpdir)
-					{
-						$tmpdir=trim($tmpdir);
-						$tmpdir=preg_replace('/DOL_DATA_ROOT/', DOL_DATA_ROOT, $tmpdir);
-						if (! $tmpdir) { unset($listofdir[$key]); continue; }
-						if (is_dir($tmpdir))
-						{
-							$tmpfiles=dol_dir_list($tmpdir, 'files', 0, '\.od(s|t)$', '', 'name', SORT_ASC, 0);
-							if (count($tmpfiles)) $listoffiles=array_merge($listoffiles, $tmpfiles);
-						}
-					}
+			// 		// Now we add first model found in directories scanned
+			// 		$listofdir=explode(',', $dirtoscan);
+			// 		foreach($listofdir as $key => $tmpdir)
+			// 		{
+			// 			$tmpdir=trim($tmpdir);
+			// 			$tmpdir=preg_replace('/DOL_DATA_ROOT/', DOL_DATA_ROOT, $tmpdir);
+			// 			if (! $tmpdir) { unset($listofdir[$key]); continue; }
+			// 			if (is_dir($tmpdir))
+			// 			{
+			// 				$tmpfiles=dol_dir_list($tmpdir, 'files', 0, '\.od(s|t)$', '', 'name', SORT_ASC, 0);
+			// 				if (count($tmpfiles)) $listoffiles=array_merge($listoffiles, $tmpfiles);
+			// 			}
+			// 		}
 
-					if (count($listoffiles))
-					{
-						foreach($listoffiles as $record)
-						{
-							$srctemplatepath=$record['fullname'];
-							break;
-						}
-					}
-				}
+			// 		if (count($listoffiles))
+			// 		{
+			// 			foreach($listoffiles as $record)
+			// 			{
+			// 				$srctemplatepath=$record['fullname'];
+			// 				break;
+			// 			}
+			// 		}
+			// 	}
 
-				if (empty($srctemplatepath))
-				{
-					$this->error='ErrorGenerationAskedForOdtTemplateWithSrcFileNotDefined';
-					return -1;
-				}
-			}
+			// 	if (empty($srctemplatepath))
+			// 	{
+			// 		$this->error='ErrorGenerationAskedForOdtTemplateWithSrcFileNotDefined';
+			// 		return -1;
+			// 	}
+			// }
 
-			if ($obj->type == 'odt' && ! empty($srctemplatepath))
-			{
-				if (! dol_is_file($srctemplatepath))
-				{
-					$this->error='ErrorGenerationAskedForOdtTemplateWithSrcFileNotFound';
-					return -1;
-				}
-			}
+			// if ($obj->type == 'odt' && ! empty($srctemplatepath))
+			// {
+			// 	if (! dol_is_file($srctemplatepath))
+			// 	{
+			// 		$this->error='ErrorGenerationAskedForOdtTemplateWithSrcFileNotFound';
+			// 		return -1;
+			// 	}
+			// }
 
 			// We save charset_output to restore it because write_file can change it if needed for
 			// output format that does not support UTF8.
@@ -350,18 +324,18 @@ class Docxgenerator extends DolibarrApi
 			$outputlangs=new Translate('', $conf);
 			$outputlangs->setDefaultLang('fr_FR');
 
-			if (in_array(get_class($this), array('Adherent')))
-			{
-				$arrayofrecords = array();   // The write_file of templates of adherent class need this var
-				$resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, 'member', 1, $moreparams);
-			}
-			else
-			{
+			// if (in_array(get_class($this), array('Adherent')))
+			// {
+			// 	$arrayofrecords = array();   // The write_file of templates of adherent class need this var
+			// 	$resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, 'member', 1, $moreparams);
+			// }
+			// else
+			// {
 				require_once DOL_DOCUMENT_ROOT.'/docxgenerator/class/docx_generator.modules.php';
 				$docxgenerator=new docx_generator($this->db);
-				$resultwritefile = $docxgenerator->write_file($typeDocument, $idType, $templateName, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
+				$resultwritefile = $docxgenerator->write_file($typeDocument, $idType, $modele, $name, $outputlangs, '', $hidedetails, $hidedesc, $hideref, $moreparams);
 				// $resultwritefile = $obj->write_file($document, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
-			}
+			// }
 			// After call of write_file $obj->result['fullpath'] is set with generated file. It will be used to update the ECM database index.
 			if ($resultwritefile['code'] > 0) {
 				return $resultwritefile;
@@ -489,12 +463,12 @@ class Docxgenerator extends DolibarrApi
 				dol_print_error($this->db, "Error generating document for ".__CLASS__.". Error: ".$obj->error, $obj->errors);
 				return -1;
 			}
-		}
-		else
-		{
-			$this->error=$langs->trans("Error")." ".$langs->trans("ErrorFileDoesNotExists", $file);
-			dol_print_error('', $this->error);
-			return -1;
-		}
+		// }
+		// else
+		// {
+		// 	$this->error=$langs->trans("Error")." ".$langs->trans("ErrorFileDoesNotExists", $file);
+		// 	dol_print_error('', $this->error);
+		// 	return -1;
+		// }
 	}
 }

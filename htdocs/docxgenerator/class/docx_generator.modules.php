@@ -95,10 +95,10 @@ class docx_generator extends ModeleThirdPartyDoc
      *  @param		int			$hideref			Do not show ref
 	 *	@return		int         					1 if OK, <=0 if KO
 	 */
-	public function write_file($typeDocument, $idType, $templateName, $outputlangs, $srctemplatepath, $hidedetails = 0, $hidedesc = 0, $hideref = 0)
+	public function write_file($typeDocument, $idType, $templateName, $name, $outputlangs, $srctemplatepath, $hidedetails = 0, $hidedesc = 0, $hideref = 0)
 	{
         // phpcs:enable
-        global $user,$langs,$conf,$mysoc,$hookmanager;
+		global $user,$langs,$conf,$mysoc,$hookmanager;
 
 		// if (empty($srctemplatepath))
 		// {
@@ -177,16 +177,16 @@ class docx_generator extends ModeleThirdPartyDoc
 				try {
 					switch ($typeDocument) {
 						case 'invoice':
-							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/invoice/'.$templateName;
+							$template = DOL_DATA_ROOT.'/doctemplates/invoices/'.$templateName;
 							break;
 						case 'acte':
-							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/acte/'.$templateName;
+							$template = DOL_DATA_ROOT.'/doctemplates/acte/'.$templateName;
 							break;
 						case 'proposal':
-							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/proposal/'.$templateName;
+							$template = DOL_DATA_ROOT.'/doctemplates/proposals/'.$templateName;
 							break;
 						case 'project':
-							$template = DOL_DOCUMENT_ROOT.'/docxgenerator/templates/project/'.$templateName;
+							$template = DOL_DATA_ROOT.'/doctemplates/project/'.$templateName;
 							break;
 					}
                     $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($template);
@@ -391,31 +391,31 @@ class docx_generator extends ModeleThirdPartyDoc
 						switch ($typeDocument) {
 							case 'invoice':
 								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture')) {
-									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture', 0700, true);
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture'), 0700, true);
 								}
-								$storage = 'facture/'.$idType.'_'.time().'_'. $templateName;
+								$storage = 'facture/'.$name.'_'.time().'_'. $templateName;
 								break;
 							case 'acte':
 								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire')) {
-									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire', 0700, true);
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire'), 0700, true);
 								}
 								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
 								break;
 							case 'proposal':
 								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale')) {
-									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale', 0700, true);
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale'), 0700, true);
 								}
-								$storage = 'propale/'.$idType.'_'.time().'_'. $templateName;
+								$storage = 'propale/'.$name.'_'.time().'_'. $templateName;
 								break;
 							case 'project':
 								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire')) {
-									mkdir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire', 0700, true);
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire'), 0700, true);
 								}
 								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
 								break;
 						}
 						$path = DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/'.$storage;
-                        $newtmpfile = $templateProcessor->saveAs($path);
+                        $newtmpfile = $templateProcessor->saveAs($this->sanitizePath($path));
                         // $file = $phpWord->save('invoice.docx', 'Word2007');
                         //    $templateProcessor->saveToDisk($file);
 					} catch (Exception $e){
@@ -446,5 +446,14 @@ class docx_generator extends ModeleThirdPartyDoc
 
 		$this->error='UnknownError';
 		return -1;
+	}
+
+	public function sanitizePath($str) {
+		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+		'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+		'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+		'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+		'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+		return strtr($str , $unwanted_array );
 	}
 }
