@@ -220,6 +220,19 @@ class docx_generator extends ModeleThirdPartyDoc
 						$sql .= " WHERE p.rowid = ".$idType;
 
 						$result = $this->db->query($sql);
+						$object = $this->db->fetch_object($result);
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."facturedet as p";
+						$sql .= " WHERE p.fk_facture = ".$object->rowid;
+
+						$result = $this->db->query($sql);
+						$object->lines = array();
+						$num = $this->db->num_rows($sql);
+						if ($num) {
+							while ( $obj = $this->db->fetch_object($sql) ) {
+								$object->lines[] = $obj;
+							}
+						}
 						break;
 					case 'acte':
 						$sql = "SELECT *";
@@ -227,6 +240,7 @@ class docx_generator extends ModeleThirdPartyDoc
 						$sql .= " WHERE p.rowid = ".$idType;
 
 						$result = $this->db->query($sql);
+						$object = $this->db->fetch_object($result);
 						break;
 					case 'proposal':
 						$sql = "SELECT *";
@@ -234,6 +248,19 @@ class docx_generator extends ModeleThirdPartyDoc
 						$sql .= " WHERE p.rowid = ".$idType;
 
 						$result = $this->db->query($sql);
+						$object = $this->db->fetch_object($result);
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."propaldet as p";
+						$sql .= " WHERE p.fk_propal = ".$object->rowid;
+
+						$result = $this->db->query($sql);
+						$object->lines = array();
+						$num = $this->db->num_rows($sql);
+						if ($num) {
+							while ( $obj = $this->db->fetch_object($sql) ) {
+								$object->lines[] = $obj;
+							}
+						}
 						break;
 					case 'project':
 						$sql = "SELECT *";
@@ -241,9 +268,9 @@ class docx_generator extends ModeleThirdPartyDoc
 						$sql .= " WHERE p.rowid = ".$idType;
 
 						$result = $this->db->query($sql);
+						$object = $this->db->fetch_object($result);
 						break;
 				}
-				$object = $this->db->fetch_object($result);
 
                 $sql = "SELECT *";
                 $sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
@@ -347,7 +374,44 @@ class docx_generator extends ModeleThirdPartyDoc
 						// setValue failed, probably because key not found
                         dol_syslog($e->getMessage(), LOG_INFO);
 					}
-                }
+				}
+				if ($object->lines) {
+					$templateProcessor->cloneRow('TABLE_description', count($object->lines));
+					for ($i = 1; $i <= count($object->lines); $i++) {
+						if ($object->lines[$i-1]) {
+							$keys = get_object_vars($object->lines[$i-1]);
+							foreach($keys as $key=>$value) {
+								if (is_numeric($value)) {
+									$value = number_format($value, 2);
+								}
+								$templateProcessor->setValue('TABLE_'.$key.'#'.$i, $value);
+							}
+						}
+						// $templateProcessor->setValue('TABLE_line_fulldesc#'.$i, $object->lines[$i-1]->description);
+						// $templateProcessor->setValue('TABLE_line_price_ttc#'.$i, $object->lines[$i-1]->total_ttc);
+					}
+					$templateProcessor->cloneBlock('COPYBLOC', count($object->lines));
+					for ($i = 0; $i <= count($object->lines); $i++) {
+						if ($object->lines[$i]) {
+							$keys = get_object_vars($object->lines[$i]);
+							foreach($keys as $key=>$value) {
+								if (is_numeric($value)) {
+									$value = number_format($value, 2);
+								}
+								$templateProcessor->setValue($key, $value, 1);
+							}
+						}
+						// $templateProcessor->setValue('line_fulldesc', $object->lines[$i]->description, 1);
+						// $templateProcessor->setValue('line_price_ttc', $object->lines[$i]->total_ttc, 1);
+					}
+					// $values = array();
+					// foreach($object->lines as $line) {
+						// array_push($values, array(
+						// 	'line_fulldesc' => $line->description
+						// ));
+					// }
+					// $templateProcessor->cloneRowAndSetValues('line_fulldesc', $values);
+				}
 
 				// Replace labels translated
 				$tmparray=$outputlangs->get_translations_for_substitutions();
