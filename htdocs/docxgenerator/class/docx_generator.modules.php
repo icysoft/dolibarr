@@ -376,34 +376,41 @@ class docx_generator extends ModeleThirdPartyDoc
 					}
 				}
 				if ($object->lines) {
-					$templateProcessor->cloneRow('TABLE_description', count($object->lines));
-					for ($i = 1; $i <= count($object->lines); $i++) {
-						if ($object->lines[$i-1]) {
-							$keys = get_object_vars($object->lines[$i-1]);
-							foreach($keys as $key=>$value) {
-								if (is_numeric($value)) {
-									$value = number_format($value, 2);
+					try {
+						$templateProcessor->cloneRow('TABLE_description', count($object->lines));
+						for ($i = 1; $i <= count($object->lines); $i++) {
+							if ($object->lines[$i-1]) {
+								$keys = get_object_vars($object->lines[$i-1]);
+								foreach($keys as $key=>$value) {
+									if (is_numeric($value)) {
+										$value = number_format($value, 2);
+									}
+									$templateProcessor->setValue('TABLE_'.$key.'#'.$i, $value);
 								}
-								$templateProcessor->setValue('TABLE_'.$key.'#'.$i, $value);
 							}
+							// $templateProcessor->setValue('TABLE_line_fulldesc#'.$i, $object->lines[$i-1]->description);
+							// $templateProcessor->setValue('TABLE_line_price_ttc#'.$i, $object->lines[$i-1]->total_ttc);
 						}
-						// $templateProcessor->setValue('TABLE_line_fulldesc#'.$i, $object->lines[$i-1]->description);
-						// $templateProcessor->setValue('TABLE_line_price_ttc#'.$i, $object->lines[$i-1]->total_ttc);
 					}
-					$templateProcessor->cloneBlock('COPYBLOC', count($object->lines));
-					for ($i = 0; $i <= count($object->lines); $i++) {
-						if ($object->lines[$i]) {
-							$keys = get_object_vars($object->lines[$i]);
-							foreach($keys as $key=>$value) {
-								if (is_numeric($value)) {
-									$value = number_format($value, 2);
+					catch (Exception $e) {}
+						
+					try {
+						$templateProcessor->cloneBlock('COPYBLOC', count($object->lines));
+						for ($i = 0; $i <= count($object->lines); $i++) {
+							if ($object->lines[$i]) {
+								$keys = get_object_vars($object->lines[$i]);
+								foreach($keys as $key=>$value) {
+									if (is_numeric($value)) {
+										$value = number_format($value, 2);
+									}
+									$templateProcessor->setValue($key, $value, 1);
 								}
-								$templateProcessor->setValue($key, $value, 1);
 							}
+							// $templateProcessor->setValue('line_fulldesc', $object->lines[$i]->description, 1);
+							// $templateProcessor->setValue('line_price_ttc', $object->lines[$i]->total_ttc, 1);
 						}
-						// $templateProcessor->setValue('line_fulldesc', $object->lines[$i]->description, 1);
-						// $templateProcessor->setValue('line_price_ttc', $object->lines[$i]->total_ttc, 1);
 					}
+					catch (Exception $e) {}
 					// $values = array();
 					// foreach($object->lines as $line) {
 						// array_push($values, array(
