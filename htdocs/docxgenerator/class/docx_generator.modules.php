@@ -272,12 +272,41 @@ class docx_generator extends ModeleThirdPartyDoc
 						break;
 				}
 
-                $sql = "SELECT *";
-                $sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
-                $sql .= " WHERE p.rowid = ".$object->fk_soc;
+				if ($object->fk_soc) {
+					$sql = "SELECT *";
+					$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+					$sql .= " WHERE p.rowid = ".$object->fk_soc;
+	
+					$result = $this->db->query($sql);
+					$tiers = $this->db->fetch_object($result);
+				}
 
-                $result = $this->db->query($sql);
-				$tiers = $this->db->fetch_object($result);
+				if ($object->socid) {
+					$sql = "SELECT *";
+					$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+					$sql .= " WHERE p.rowid = ".$object->socid;
+	
+					$result = $this->db->query($sql);
+					$tiers = $this->db->fetch_object($result);
+				}
+
+				if ($object->fk_projet) {
+					$sql = "SELECT *";
+					$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+					$sql .= " WHERE p.rowid = ".$object->fk_projet;
+
+					$result = $this->db->query($sql);
+					$affaire = $this->db->fetch_object($result);
+				}
+
+				if ($object->fk_project) {
+					$sql = "SELECT *";
+					$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+					$sql .= " WHERE p.rowid = ".$object->fk_project;
+
+					$result = $this->db->query($sql);
+					$affaire = $this->db->fetch_object($result);
+				}
 
                 $sql = "SELECT p.rowid";
                 $sql .= " FROM ".MAIN_DB_PREFIX."socpeople as p";
@@ -461,32 +490,71 @@ class docx_generator extends ModeleThirdPartyDoc
 						}
 						switch ($typeDocument) {
 							case 'invoice':
-								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture')) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/facture'), 0700, true);
+								if ($tiers) {
+									$path = '/tiers/'.$tiers->nom.'/facture';
+									if ($affaire) {
+										$path = $path.'/'.$affaire->title;
+									}
+								} else if ($affaire) {
+									$path = '/affaire/'.$affaire->title.'/facture';
+								} else {
+									$path = '/facture';
+								}
+								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/facture'))) {
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/facture'), 0700, true);
 								}
 								$storage = 'facture/'.$name.'_'.time().'_'. $templateName;
 								break;
 							case 'acte':
-								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire')) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire'), 0700, true);
+								if ($tiers) {
+									$path = '/tiers/'.$tiers->nom.'/acte';
+									if ($affaire) {
+										$path = $path.'/'.$affaire->title;
+									}
+								} else if ($affaire) {
+									$path = '/affaire/'.$affaire->title.'/acte';
+								} else {
+									$path = '/acte';
+								}
+								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/acte'))) {
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/acte'), 0700, true);
 								}
 								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
 								break;
 							case 'proposal':
-								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale')) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/propale'), 0700, true);
+								if ($tiers) {
+									$path = '/tiers/'.$tiers->nom.'/propale';
+									if ($affaire) {
+										$path = $path.'/'.$affaire->title;
+									}
+								} else if ($affaire) {
+									$path = '/affaire/'.$affaire->title.'/propale';
+								} else {
+									$path = '/propale';
+								}
+								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/propale'))) {
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/propale'), 0700, true);
 								}
 								$storage = 'propale/'.$name.'_'.time().'_'. $templateName;
 								break;
 							case 'project':
-								if (!dol_is_dir(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire')) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire'), 0700, true);
+								if ($tiers) {
+									$path = '/tiers/'.$tiers->nom.'/affaire';
+									if ($affaire) {
+										$path = $path.'/'.$affaire->title;
+									}
+								} else if ($affaire) {
+									$path = '/affaire/'.$affaire->title;
+								} else {
+									$path = '/affaire';
+								}
+								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/affaire'))) {
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/affaire'), 0700, true);
 								}
 								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
 								break;
 						}
-						$path = DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/'.$storage;
-                        $newtmpfile = $templateProcessor->saveAs($this->sanitizePath($path));
+                        $newtmpfile = $templateProcessor->saveAs($this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));
                         // $file = $phpWord->save('invoice.docx', 'Word2007');
                         //    $templateProcessor->saveToDisk($file);
 					} catch (Exception $e){
@@ -503,7 +571,7 @@ class docx_generator extends ModeleThirdPartyDoc
 
 				$templateProcessor=null;	// Destroy object
                 $phpWord=null;	// Destroy object
-                return array('code'=> 1, 'documentPath'=>$path);
+                return array('code'=> 1, 'documentPath'=>$this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));
 				// $this->result = array('fullpath'=>$file);
 
 				// return 1;   // Success
@@ -524,7 +592,7 @@ class docx_generator extends ModeleThirdPartyDoc
 		'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
 		'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
 		'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
-		'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+		'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y', '/\s+/'=>'_', ' '=>'_' );
 		return strtr($str , $unwanted_array );
 	}
 }

@@ -102,20 +102,17 @@ class modDocXGenerator extends DolibarrModules
             ),
             // Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
             'hooks' => array(
-                //   'data' => array(
-                //       'hookcontext1',
-                //       'hookcontext2',
-                //   ),
-                //   'entity' => '0',
+                      'pdfgeneration',
+                    //   'hookcontext2',
             ),
             // Set this to 1 if features of module are opened to external users
             'moduleforexternal' => 0,
         );
         // Data directories to create when module is enabled.
         // Example: this->dirs = array("/mymodule/temp","/mymodule/subdir");
-        $this->dirs = array("/mymodule/temp");
+        // $this->dirs = array("/mymodule/temp");
         // Config pages. Put here list of php page, stored into mymodule/admin directory, to use to setup module.
-        $this->config_page_url = array("setup.php@mymodule");
+        // $this->config_page_url = array("setup.php@mymodule");
         // Dependencies
         // A condition to hide module
         $this->hidden = false;
@@ -123,7 +120,7 @@ class modDocXGenerator extends DolibarrModules
         $this->depends = array();
         $this->requiredby = array();	// List of module class names as string to disable if this one is disabled. Example: array('modModuleToDisable1', ...)
         $this->conflictwith = array();	// List of module class names as string this module is in conflict with. Example: array('modModuleToDisable1', ...)
-        $this->langfiles = array("mymodule@mymodule");
+        $this->langfiles = array("docxgenerator@docxgenerator");
         $this->phpmin = array(5,5);					    // Minimum version of PHP required by module
         $this->need_dolibarr_version = array(8,0);		// Minimum version of Dolibarr required by module
         $this->warnings_activation = array();			// Warning to show when we activate module. array('always'='text') or array('FR'='textfr','ES'='textes'...)

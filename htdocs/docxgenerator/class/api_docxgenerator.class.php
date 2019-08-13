@@ -131,7 +131,6 @@ class Docxgenerator extends DolibarrApi
 				throw new RestException(404, 'Invoice not found');
 			}
 			$templateused = $doctemplate?$doctemplate:$this->invoice->modelpdf;
-
 			if ($doctemplate == 'crabe') {
 				$result = $this->invoice->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
 				$mimetype = "application/pdf";
@@ -142,9 +141,16 @@ class Docxgenerator extends DolibarrApi
 				if ( $result->code <= 0 ) {
 					throw new RestException(500, 'Error generating document');
 				}
-
-				$filename = basename($original_file);
-				return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($result->b64content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+				// $filename = basename($original_file);
+				// return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($result->b64content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+			}
+			else
+			if (is_array($result)) {
+				if ( $result['code'] <= 0 ) {
+					throw new RestException(500, 'Error generating document');
+				}
+				// $filename = basename($original_file);
+				// return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($result->b64content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
 			}
 			else
 			if ( $result <= 0 ) {
