@@ -186,7 +186,7 @@ class docx_generator extends ModeleThirdPartyDoc
 							$template = DOL_DATA_ROOT.'/doctemplates/proposals/'.$templateName;
 							break;
 						case 'project':
-							$template = DOL_DATA_ROOT.'/doctemplates/project/'.$templateName;
+							$template = DOL_DATA_ROOT.'/doctemplates/projects/'.$templateName;
 							break;
 					}
                     $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($template);
@@ -540,18 +540,18 @@ class docx_generator extends ModeleThirdPartyDoc
 							case 'project':
 								if ($tiers) {
 									$path = '/tiers/'.$tiers->nom.'/affaire';
-									if ($affaire) {
-										$path = $path.'/'.$affaire->title;
+									if ($object) {
+										$path = $path.'/'.$object->title;
 									}
-								} else if ($affaire) {
-									$path = '/affaire/'.$affaire->title;
+								} else if ($object) {
+									$path = '/affaire/'.$object->title;
 								} else {
 									$path = '/affaire';
 								}
-								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/affaire'))) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/affaire'), 0700, true);
+								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path))) {
+									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path), 0700, true);
 								}
-								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
+								$storage = '/'.$object->title.'_'.time().'_'. $templateName;
 								break;
 						}
                         $newtmpfile = $templateProcessor->saveAs($this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));

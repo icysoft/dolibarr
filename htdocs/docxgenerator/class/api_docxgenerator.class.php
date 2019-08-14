@@ -186,6 +186,35 @@ class Docxgenerator extends DolibarrApi
 				throw new RestException(500, 'Error generating document');
 			}
 		}
+		elseif ($module_part == 'projet' || $module_part == 'project' || $module_part == 'affaire')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+			$this->project = new Project($this->db);
+			$result = $this->project->fetch(0, preg_replace('/\.[^\.]+$/', '', basename($original_file)));
+			if( ! $result ) {
+				throw new RestException(404, 'Proposal not found');
+			}
+			$templateused = $doctemplate?$doctemplate:$this->project->modelpdf;
+
+			if ($doctemplate == 'baleine') {
+				$result = $this->project->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
+				$mimetype = "application/pdf";
+			} else {
+				$result = $this->commonGenerateDocument('project', $templateused, $idType, $name, $hidedetails, $hidedesc, $hideref);
+			}
+			if (is_object($result)) {
+				if ( $result->code <= 0 ) {
+					throw new RestException(500, 'Error generating document');
+				}
+
+				$filename = basename($original_file);
+				return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($result->b64content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+			}
+			else
+			if ( $result <= 0 ) {
+				throw new RestException(500, 'Error generating document');
+			}
+		}
 		else
 		{
 			throw new RestException(403, 'Generation not available for this modulepart');
@@ -197,14 +226,23 @@ class Docxgenerator extends DolibarrApi
 		}
 		$filename = basename($original_file);
 		$original_file_osencoded=dol_osencode($original_file);	// New file name encoded in OS encoding charset
+		// print_r($original_file_osencoded);
+		// if (! file_exists($original_file_osencoded))
+		// {
+		// 	throw new RestException(404, 'File not found');
+		// }
 
-		if (! file_exists($original_file_osencoded))
-		{
-			throw new RestException(404, 'File not found');
-		}
+		$file_content=file_get_contents($this->sanitizePath($original_file_osencoded));
+		return array('filename'=>$filename, 'content-type' => $mimetype, 'filesize'=>filesize($this->sanitizePath($original_file_osencoded)), 'content'=>base64_encode($file_content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+	}
 
-		$file_content=file_get_contents($original_file_osencoded);
-		return array('filename'=>$filename, 'content-type' => $mimetype, 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'langcode'=>$outputlangs->defaultlang, 'template'=>$templateused, 'encoding'=>'base64' );
+	public function sanitizePath($str) {
+		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+		'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+		'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+		'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+		'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+		return strtr($str , $unwanted_array );
 	}
 
 	/**
@@ -476,5 +514,279 @@ class Docxgenerator extends DolibarrApi
 		// 	dol_print_error('', $this->error);
 		// 	return -1;
 		// }
+	}
+
+	
+
+	/**
+	 * Return the list of documents of a dedicated element (from its ID or Ref)
+	 *
+	 * @param   string 	$modulepart		Name of module or area concerned ('thirdparty', 'member', 'proposal', 'order', 'invoice', 'shipment', 'project',  ...)
+	 * @param	int		$id				ID of element
+	 * @param	int		$tiersid		ID of element
+	 * @param	string	$ref			Ref of element
+	 * @param	string	$sortfield		Sort criteria ('','fullname','relativename','name','date','size')
+	 * @param	string	$sortorder		Sort order ('asc' or 'desc')
+	 * @return	array					Array of documents with path
+	 *
+	 * @throws 200
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 500
+	 *
+	 * @url GET /getDocumentsListByElement
+	 */
+	public function getDocumentsListByElement($modulepart, $id = 0, $tiersid = 0, $ref = '', $sortfield = '', $sortorder = '')
+	{
+		global $conf;
+
+		if (empty($modulepart)) {
+			throw new RestException(400, 'bad value for parameter modulepart');
+		}
+
+		if (empty($id) && empty($ref)) {
+			throw new RestException(400, 'bad value for parameter id or ref');
+		}
+
+		$id = (empty($id)?0:$id);
+
+		if ($modulepart == 'societe' || $modulepart == 'thirdparty')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->societe->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Societe($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Thirdparty not found');
+			}
+
+			$upload_dir = $conf->societe->multidir_output[$object->entity] . "/" . $object->id;
+		}
+		elseif ($modulepart == 'adherent' || $modulepart == 'member')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/adherents/class/adherent.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->adherent->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Adherent($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Member not found');
+			}
+
+			$upload_dir = $conf->adherent->dir_output . "/" . get_exdir(0, 0, 0, 1, $object, 'member');
+		}
+		elseif ($modulepart == 'propal' || $modulepart == 'proposal')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->propal->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Propal($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Proposal not found');
+			}
+
+			$upload_dir = $conf->propal->multidir_output[$object->entity] . "/" . get_exdir(0, 0, 0, 1, $object, 'propal');
+		}
+		elseif ($modulepart == 'commande' || $modulepart == 'order')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->commande->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Commande($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Order not found');
+			}
+
+			$upload_dir = $conf->commande->dir_output . "/" . get_exdir(0, 0, 0, 1, $object, 'commande');
+		}
+		elseif ($modulepart == 'shipment' || $modulepart == 'expedition')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->expedition->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Expedition($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Shipment not found');
+			}
+
+			$upload_dir = $conf->expedition->dir_output . "/sending/" . get_exdir(0, 0, 0, 1, $object, 'shipment');
+		}
+		elseif ($modulepart == 'facture' || $modulepart == 'invoice')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->facture->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Facture($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Invoice not found');
+			}
+
+			$upload_dir = $conf->facture->dir_output . "/" . get_exdir(0, 0, 0, 1, $object, 'invoice');
+		}
+        elseif ($modulepart == 'produit' || $modulepart == 'product')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->produit->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Product($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Product not found');
+			}
+
+			$upload_dir = $conf->product->dir_output . "/" . get_exdir(0, 0, 0, 1, $object, 'product');
+		}
+		elseif ($modulepart == 'agenda' || $modulepart == 'action' || $modulepart == 'event')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->agenda->myactions->read && !DolibarrApiAccess::$user->rights->agenda->allactions->read) {
+				throw new RestException(401);
+			}
+
+			$object = new ActionComm($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Event not found');
+			}
+
+			$upload_dir = $conf->agenda->dir_output.'/'.dol_sanitizeFileName($object->ref);
+		}
+		elseif ($modulepart == 'project')
+		{
+			require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+
+			if ($id) {
+				$sql = "SELECT *";
+				$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+				$sql .= " WHERE p.rowid = ".$id;
+
+				$result = $this->db->query($sql);
+				$affaire = $this->db->fetch_object($result);
+			}
+
+			if ($tiersid) {
+				$sql = "SELECT *";
+				$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+				$sql .= " WHERE p.rowid = ".$tiersid;
+
+				$result = $this->db->query($sql);
+				$tiers = $this->db->fetch_object($result);
+			}
+			// $result=$object->fetch($id, $ref);
+			// if ( ! $result ) {
+			// 	throw new RestException(404, 'Le projet ne contient aucun document');
+			// }
+			$upload_dir = $this->hardsanitizePath(DOL_DATA_ROOT.'/tiers/'.$tiers->nom.'/affaire'.'/'.$affaire->title);
+			// $upload_dir = $conf->projet->dir_output.'/' .$object->id;
+		}
+		elseif (strpos($modulepart, 'doctemplates/') !== false)
+		{
+			$upload_dir = '/var/www/documents/'.$modulepart;
+		}
+		else
+		{
+			throw new RestException(500, 'Modulepart '.$modulepart.' not implemented yet.');
+		}
+
+		$filearray=dol_dir_list($upload_dir, "files", 0, '', '(\.meta|_preview.*\.png)$', $sortfield, (strtolower($sortorder)=='desc'?SORT_DESC:SORT_ASC), 1);
+		if (empty($filearray)) {
+			throw new RestException(404, 'Search for modulepart '.$modulepart.' with Id '.$object->id.(! empty($object->Ref)?' or Ref '.$object->ref:'').' does not return any document.');
+		}
+
+		return $filearray;
+	}
+
+
+	/**
+	 * Download a document.
+	 *
+	 * Note that, this API is similar to using the wrapper link "documents.php" to download a file (used for
+	 * internal HTML links of documents into application), but with no need to have a session cookie (the token is used instead).
+	 *
+	 * @param   string  $module_part    Name of module or area concerned by file download ('facture', ...)
+	 * @param   string  $original_file  Relative path with filename, relative to modulepart (for example: IN201701-999/IN201701-999.pdf)
+	 * @return  array                   List of documents
+	 *
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /download
+	 */
+	public function index($module_part, $original_file = '')
+	{
+		global $conf, $langs;
+
+		if (empty($module_part)) {
+				throw new RestException(400, 'bad value for parameter modulepart');
+		}
+		if (empty($original_file)) {
+			throw new RestException(400, 'bad value for parameter original_file');
+		}
+
+		//--- Finds and returns the document
+		$entity=$conf->entity;
+
+		$check_access = dol_check_secure_access_document($module_part, $original_file, $entity, DolibarrApiAccess::$user, '', 'read');
+		$accessallowed = $check_access['accessallowed'];
+		$sqlprotectagainstexternals = $check_access['sqlprotectagainstexternals'];
+		// $original_file = $check_access['original_file'];
+
+		if (preg_match('/\.\./', $original_file) || preg_match('/[<>|]/', $original_file)) {
+			throw new RestException(401);
+		}
+		if (!$accessallowed) {
+			throw new RestException(401);
+		}
+		$filename = basename($original_file);
+		$original_file_osencoded=dol_osencode($original_file);	// New file name encoded in OS encoding charset
+
+		if (! file_exists($original_file_osencoded))
+		{
+			throw new RestException(404, 'File not found');
+		}
+
+		$file_content=file_get_contents($original_file_osencoded);
+
+		//print "ORIGINAL FILE : $original_file<br>";
+		return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'encoding'=>'base64' );
+	}
+
+	protected function hardsanitizePath($str) {
+		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+		'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+		'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+		'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+		'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y', '/\s+/'=>'_', ' '=>'_' );
+		return strtr($str , $unwanted_array );
 	}
 }
