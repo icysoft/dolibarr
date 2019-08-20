@@ -24,6 +24,7 @@ use Luracast\Restler\Format\UploadFormat;
 require_once DOL_DOCUMENT_ROOT.'/main.inc.php';
 require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 
 /**
  * API class for receive files
@@ -72,44 +73,84 @@ class AvoloiEvent extends DolibarrApi
 
 		$avoloi_event = (object) $avoloi_event;
 
-		print "CREATION D'UN EVENT<br>";
-
 		$agendaevent = $avoloi_event->agendaevent;
 		$tiers = $avoloi_event->tiers;
 		$affair = $avoloi_event->affair;
 
-		if ($tiers['name'] !== '') {
-			$societe = new Societe($this->db);
+		// TODO Checker l'existence du tiers
+		// TODO Checker l'existence de l'affaire
 
-			$societe->name = $tiers['name'];
-			$societe->name_alias = $tiers['name_alias'];
-			$societe->client = $tiers['client'];
-			$societe->default_lang = $tiers['default_lang'];
-			$societe->tva_assuj = $tiers['tva_assuj'];
-			$societe->tva_intra = $tiers['tva_intra'];
-			$societe->typent_id = $tiers['typent_id'];
-			$societe->capital = $tiers['capital'];
-			$societe->idprof1 = $tiers['id_prof_1'];
-			$societe->idprof2 = $tiers['id_prof_2'];
-			$societe->idprof3 = $tiers['id_prof_3'];
-			$societe->idprof4 = $tiers['id_prof_4'];
-			$societe->idprof5 = $tiers['id_prof_5'];
-			$societe->idprof6 = $tiers['id_prof_6'];
-			$societe->array_options['options_type_tiers'] = $tiers->array_options['options_type_tiers'];
-
-			$socid = $societe->create($user);
-
-			if ($affair['title'] !== '') {
-				// TODO Création d'une affaire
-			}
+		if (sizeof($agendaevent) <= 0) {
+			// TODO Return erreur si pas d'information sur l'event
+			return "Manque l'enventagenda";
 		}
 
-		// TODO Création d'un event
+		if (sizeof($tiers) <= 0 && sizeof($affair) > 0) {
+			// TODO Return erreur si affaire sans tiers
+			return "Tiers obligatoire si affaire présente";
+		}
+
+		// if (sizeof($tiers) > 0) {
+		// 	$societe = new Societe($this->db);
+
+		// 	$societe->name = $tiers['name'];
+		// 	$societe->name_alias = $tiers['name_alias'];
+		// 	$societe->client = $tiers['client'];
+		// 	$societe->default_lang = $tiers['default_lang'];
+		// 	$societe->tva_assuj = $tiers['tva_assuj'];
+		// 	$societe->tva_intra = $tiers['tva_intra'];
+		// 	$societe->typent_id = $tiers['typent_id'];
+		// 	$societe->capital = $tiers['capital'];
+		// 	$societe->idprof1 = $tiers['id_prof_1'];
+		// 	$societe->idprof2 = $tiers['id_prof_2'];
+		// 	$societe->idprof3 = $tiers['id_prof_3'];
+		// 	$societe->idprof4 = $tiers['id_prof_4'];
+		// 	$societe->idprof5 = $tiers['id_prof_5'];
+		// 	$societe->idprof6 = $tiers['id_prof_6'];
+		// 	$societe->array_options = $tiers['array_options'];
+
+		// 	$socid = $societe->create($user);
+ 
+			// if (sizeof($affair) > 0 && $socid) {
+				$projet = new Project($this->db);
+
+				$projet->title = $affair['title'];
+				$projet->description = $affair['description'];
+				$projet->socid = $socid;
+				$projet->ref = $affair['ref'];
+				$projet->statut = $affair['statut'];
+				$projet->date_start = $affair['date_start'];
+				$projet->date_end = $affair['date_end'];
+				$projet->budget_amount = $affair['budget_amount'];
+				$projet->opp_percent = $affair['opp_percent'];
+				$projet->opp_status = $affair['opp_status'];
+
+				$affairid = $projet->create($user);
+				print "AFFAIR ID : $affairid<br>";
+			// }
+		// }
 
 		// $event = new ActionComm($this->db);
-		// $event->socid = $socid;
-		// $event->create($user);
 
-		// TODO Envoi de la notification push
+		// $event->socid = $affairid;
+		// $event->userownerid = $agendaevent['userownerid'];
+		// $event->type_id = $agendaevent['type_id'];
+		// $event->datep = $agendaevent['datep'];
+		// $event->datef = $agendaevent['datef'];
+		// $event->note = $agendaevent['note'];
+		// $event->userdoneid = $agendaevent['userdoneid'];
+		// $event->contactid = $socid;
+
+		// $eventcreated = $event->create($user);
+
+		// // TODO Envoi de la notification push
+
+		// $rtd = array();
+
+		// $rtd['tiers_id'] = $socid;
+		// $rtd['affair_id'] = $affairid;
+		// $rtd['event'] = $eventcreated;
+
+		// return $rtd;
 	}
 }
