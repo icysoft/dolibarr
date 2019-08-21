@@ -269,6 +269,24 @@ class docx_generator extends ModeleThirdPartyDoc
 
 						$result = $this->db->query($sql);
 						$object = $this->db->fetch_object($result);
+
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."projet_extrafields as p";
+						$sql .= " WHERE p.fk_object = ".$idType;
+
+						$result = $this->db->query($sql);
+						$object->arrayOptions = $this->db->fetch_object($result);
+						if ($object->arrayOptions && $object->arrayOptions->multitiers) {
+							$object->arrayOptions->multitiers = json_decode($object->arrayOptions->multitiers);
+						}
+						foreach($object->arrayOptions->multitiers as $tiers) {
+							$sql = "SELECT *";
+							$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+							$sql .= " WHERE p.rowid = ".$tiers->idTiers;
+
+							$result = $this->db->query($sql);
+							$tiers->detail = $this->db->fetch_object($result);
+						}
 						break;
 				}
 
@@ -402,6 +420,15 @@ class docx_generator extends ModeleThirdPartyDoc
 					{
 						// setValue failed, probably because key not found
                         dol_syslog($e->getMessage(), LOG_INFO);
+					}
+				}
+				if ($object->arrayOptions && $object->arrayOptions->multitiers) {
+					foreach($object->arrayOptions->multitiers as $tiers) {
+						$keys = get_object_vars($tiers->detail);
+						$templateProcessor->setValue($tiers->typeTiers.$tiers->postype.'_type', $tiers->typeTiers);
+						foreach($keys as $key=>$value) {
+							$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+						}
 					}
 				}
 				if ($object->lines) {
