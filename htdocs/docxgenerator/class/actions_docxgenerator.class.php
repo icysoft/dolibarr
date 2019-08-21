@@ -17,6 +17,7 @@ class ActionsDocXGenerator
 	{
 			global $conf, $user, $langs, $db;
 			global $hookmanager;
+			require_once DOL_DOCUMENT_ROOT."/core/lib/files.lib.php";
 			if ($parameters['object']) {
 				if ($parameters['object']->socid) {
 					$sql = "SELECT *";
