@@ -77,43 +77,82 @@ class AvoloiEvent extends DolibarrApi
 		$tiers = $avoloi_event->tiers;
 		$affair = $avoloi_event->affair;
 
-		// TODO Checker l'existence du tiers
-		// TODO Checker l'existence de l'affaire
-
-		if (sizeof($agendaevent) <= 0) {
-			// TODO Return erreur si pas d'information sur l'event
-			return "Manque l'enventagenda";
+		// Vérification d'un eventagenda envoyé en paramètre
+		if (is_null($agendaevent)) {
+			throw new RestException(400, 'Event agenda is missing');
 		}
 
-		if (sizeof($tiers) <= 0 && sizeof($affair) > 0) {
-			// TODO Return erreur si affaire sans tiers
-			return "Tiers obligatoire si affaire présente";
+		// Vérification de l'existence d'un tiers
+		if (is_null($tiers)) {
+			throw new RestException(400, 'Tiers is missing');
 		}
 
-		// if (sizeof($tiers) > 0) {
-		// 	$societe = new Societe($this->db);
+		$societe = new Societe($this->db);
 
-		// 	$societe->name = $tiers['name'];
-		// 	$societe->name_alias = $tiers['name_alias'];
-		// 	$societe->client = $tiers['client'];
-		// 	$societe->default_lang = $tiers['default_lang'];
-		// 	$societe->tva_assuj = $tiers['tva_assuj'];
-		// 	$societe->tva_intra = $tiers['tva_intra'];
-		// 	$societe->typent_id = $tiers['typent_id'];
-		// 	$societe->capital = $tiers['capital'];
-		// 	$societe->idprof1 = $tiers['id_prof_1'];
-		// 	$societe->idprof2 = $tiers['id_prof_2'];
-		// 	$societe->idprof3 = $tiers['id_prof_3'];
-		// 	$societe->idprof4 = $tiers['id_prof_4'];
-		// 	$societe->idprof5 = $tiers['id_prof_5'];
-		// 	$societe->idprof6 = $tiers['id_prof_6'];
-		// 	$societe->array_options = $tiers['array_options'];
+		$tiers['email'] = trim($tiers['email']);
+		$tiers['phone'] = trim($tiers['phone']);
 
-		// 	$socid = $societe->create($user);
- 
-			// if (sizeof($affair) > 0 && $socid) {
-				$projet = new Project($this->db);
+		if (empty($tiers['email']) && empty($tiers['phone'])) {
+			throw new RestException(400, 'Email and/or phone is needed for tiers');
+		}
 
+		$sql = "SELECT *";
+		$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+		if (!empty($tiers['email']) && !empty($tiers['phone'])) {
+			// Search on email and phone
+			$sql .= " WHERE p.email = \"".$tiers['email']."\" OR p.phone = \"".$tiers['phone']."\"";
+		} else if (!empty($tiers['email'])) {
+			// Search only on email
+			$sql .= " WHERE p.email = \"".$tiers['email']."\"";
+		} else {
+			// Search only on phone
+			$sql .= " WHERE p.phone = \"".$tiers['phone']."\"";
+		}
+
+		$result = $this->db->query($sql);
+		$checktiers = $this->db->fetch_object($result);
+
+		if (is_null($checktiers)) {
+			// Si le tiers n'existe pas, on le créé et on récupère son id
+			$societe->name = $tiers['name'];
+			$societe->name_alias = $tiers['name_alias'];
+			$societe->client = $tiers['client'];
+			$societe->default_lang = $tiers['default_lang'];
+			$societe->tva_assuj = $tiers['tva_assuj'];
+			$societe->tva_intra = $tiers['tva_intra'];
+			$societe->typent_id = $tiers['typent_id'];
+			$societe->capital = $tiers['capital'];
+			$societe->idprof1 = $tiers['id_prof_1'];
+			$societe->idprof2 = $tiers['id_prof_2'];
+			$societe->idprof3 = $tiers['id_prof_3'];
+			$societe->idprof4 = $tiers['id_prof_4'];
+			$societe->idprof5 = $tiers['id_prof_5'];
+			$societe->idprof6 = $tiers['id_prof_6'];
+			$societe->address = $tiers['address'];
+			$societe->zip = $tiers['zip'];
+			$societe->town = $tiers['town'];
+			$societe->email = $tiers['email'];
+			$societe->country_id = $tiers['country_id'] ? $tiers['country_id'] : 1;
+			$societe->array_options = $tiers['array_options'];
+			
+			$socid = $societe->create($user);
+		} else {
+			// Si le tiers existe on récupère son id
+			$socid = $checktiers->rowid;
+		}
+
+		if (!is_null($affair) && $socid) {
+			$projet = new Project($this->db);
+
+			$sql = "SELECT *";
+			$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+			$sql .= " WHERE p.ref = \"".$affair['ref']."\"";
+
+			$result = $this->db->query($sql);
+			$checkaffair = $this->db->fetch_object($result);
+
+			if (is_null($checkaffair)) {
+				// Si l'affaire n'existe pas, on la créée et on récupère son id
 				$projet->title = $affair['title'];
 				$projet->description = $affair['description'];
 				$projet->socid = $socid;
@@ -126,31 +165,41 @@ class AvoloiEvent extends DolibarrApi
 				$projet->opp_status = $affair['opp_status'];
 
 				$affairid = $projet->create($user);
-				print "AFFAIR ID : $affairid<br>";
-			// }
-		// }
+			} else {
+				// Si l'affaire existe on récupère son id
+				$affairid = $checkaffair->rowid;
+			}
+		}
 
-		// $event = new ActionComm($this->db);
+		if (!is_null($affair) && $affairid <= 0) {
+			throw new RestException(418, 'Problem occurs while creating an affair, event agenda has not been created Check ref does not already exist');
+		}
 
-		// $event->socid = $affairid;
-		// $event->userownerid = $agendaevent['userownerid'];
-		// $event->type_id = $agendaevent['type_id'];
-		// $event->datep = $agendaevent['datep'];
-		// $event->datef = $agendaevent['datef'];
-		// $event->note = $agendaevent['note'];
-		// $event->userdoneid = $agendaevent['userdoneid'];
-		// $event->contactid = $socid;
+		// Création de l'eventagenda
+		$event = new ActionComm($this->db);
 
-		// $eventcreated = $event->create($user);
+		$event->socid = $affairid;
+		$event->userownerid = $agendaevent['userownerid'];
+		$event->type_id = $agendaevent['type_id'];
+		$event->datep = $agendaevent['datep'];
+		$event->datef = $agendaevent['datef'];
+		$event->note = $agendaevent['note'];
+		$event->userdoneid = $agendaevent['userdoneid'];
+		$event->contactid = $socid;
 
-		// // TODO Envoi de la notification push
+		$eventcreated = $event->create($user);
 
-		// $rtd = array();
+		// TODO Envoi de la notification push
 
-		// $rtd['tiers_id'] = $socid;
-		// $rtd['affair_id'] = $affairid;
-		// $rtd['event'] = $eventcreated;
+		// Constitution de la réponse
+		$rtd = array();
 
-		// return $rtd;
+		$rtd['tiers_id'] = $socid;
+		if (!is_null($affair)) {
+			$rtd['affair_id'] = $affairid;
+		}
+		$rtd['event_id'] = $eventcreated;
+
+		return $rtd;
 	}
 }
