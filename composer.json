@@ -34,7 +34,8 @@
 		"restler/framework" : "3.0.0-RC6",
 		"tecnickcom/tcpdf" : "^6.2",
 		"atgp/factur-x" : "^1.0",
-		"luracast/restler": "^3.0"
+		"luracast/restler": "^3.0",
+		"phpoffice/phpword": "^0.16.0"
 	},
 	"require-dev" : {
 		"jakub-onderka/php-parallel-lint" : "^0",
