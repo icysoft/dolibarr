@@ -418,6 +418,31 @@ class Documents extends DolibarrApi
 		return $filearray;
 	}
 
+	/**
+	 * Return the list of all documents
+	 *
+	 * @param	string	$sortfield		Sort criteria ('','fullname','relativename','name','date','size')
+	 * @param	string	$sortorder		Sort order ('asc' or 'desc')
+	 * @return	array					Array of documents with path
+	 *
+	 * @throws 200
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 500
+	 *
+	 * @url GET /all
+	 */
+	public function getDocumentsList($sortfield = '', $sortorder = '')
+	{
+		global $conf;
+		$upload_dir = '/var/www/documents/';
+
+		$filearray = dol_dir_list($upload_dir, "all", 1, '', '(\.meta|_preview.*\.png)$', $sortfield, (strtolower($sortorder)=='desc'?SORT_DESC:SORT_ASC), 1, 1);
+
+		return $filearray;
+	}
+
 
 	/**
 	 * Return a document.

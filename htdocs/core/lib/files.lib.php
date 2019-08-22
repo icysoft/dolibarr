@@ -67,6 +67,9 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 
 	$loaddate=($mode==1||$mode==2)?true:false;
 	$loadsize=($mode==1||$mode==3)?true:false;
+	$loadcreate=($mode==1)?true:false;
+	$loadcaccess=($mode==1)?true:false;
+	$loadmd5=($mode==1)?true:false;
 
 	// Clean parameters
 	$path=preg_replace('/([\\/]+)$/i', '', $path);
@@ -91,6 +94,9 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 				'sortorder' => $sortorder,
 				'loaddate' => $loaddate,
 				'loadsize' => $loadsize,
+				'loadcreate' => $loadcreate,
+				'loadcaccess' => $loadcaccess,
+				'loadmd5' => $loadmd5,
 				'mode' => $mode
 		);
 		$reshook=$hookmanager->executeHooks('getDirList', $parameters, $object);
@@ -104,7 +110,10 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 		if ($dir = opendir($newpath))
 		{
 			$filedate='';
+			$filecreate='';
+			$fileaccess='';
 			$filesize='';
+			$filemd5='';
 
 			while (false !== ($file = readdir($dir)))        // $file is always a basename (into directory $newpath)
 			{
@@ -140,6 +149,9 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 						{
 							if ($loaddate || $sortcriteria == 'date') $filedate=dol_filemtime($path."/".$file);
 							if ($loadsize || $sortcriteria == 'size') $filesize=dol_filesize($path."/".$file);
+							if ($loadcreate || $sortcriteria == 'date') $filecreate=dol_filectime($path."/".$file);
+							if ($loadcaccess || $sortcriteria == 'date') $fileaccess=dol_fileatime($path."/".$file);
+							if ($loadmd5 || $sortcriteria == 'md5') $filemd5=dol_filemd5($path."/".$file);
 
 							if (! $filter || preg_match('/'.$filter.'/i', $file))	// We do not search key $filter into all $path, only into $file part
 							{
@@ -152,6 +164,9 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 										"relativename" => ($relativename?$relativename.'/':'').$file,
 										"fullname" => $path.'/'.$file,
 										"date" => $filedate,
+										"create" => $filecreate,
+										"access" => $fileaccess,
+										"md5" => $filemd5,
 										"size" => $filesize,
 										"type" => 'dir'
 								);
@@ -173,6 +188,9 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 						// Add file into file_list array
 						if ($loaddate || $sortcriteria == 'date') $filedate=dol_filemtime($path."/".$file);
 						if ($loadsize || $sortcriteria == 'size') $filesize=dol_filesize($path."/".$file);
+						if ($loadcreate || $sortcriteria == 'date') $filecreate=dol_filectime($path."/".$file);
+						if ($loadcaccess || $sortcriteria == 'date') $fileaccess=dol_fileatime($path."/".$file);
+						if ($loadmd5 || $sortcriteria == 'md5') $filemd5=dol_filemd5($path."/".$file);
 
 						if (! $filter || preg_match('/'.$filter.'/i', $file))	// We do not search key $filter into $path, only into $file
 						{
@@ -185,6 +203,9 @@ function dol_dir_list($path, $types = "all", $recursive = 0, $filter = "", $excl
 									"relativename" => ($relativename?$relativename.'/':'').$file,
 									"fullname" => $path.'/'.$file,
 									"date" => $filedate,
+									"create" => $filecreate,
+									"access" => $fileaccess,
+									"md5" => $filemd5,
 									"size" => $filesize,
 									"type" => 'file'
 							);
@@ -572,6 +593,42 @@ function dol_filemtime($pathoffile)
 {
 	$newpathoffile=dol_osencode($pathoffile);
 	return @filemtime($newpathoffile); // @Is to avoid errors if files does not exists
+}
+
+/**
+ * Return creation time of a file
+ *
+ * @param 	string		$pathoffile		Path of file
+ * @return 	int					Time of file
+ */
+function dol_filectime($pathoffile)
+{
+	$newpathoffile=dol_osencode($pathoffile);
+	return @filectime($newpathoffile); // @Is to avoid errors if files does not exists
+}
+
+/**
+ * Return access time of a file
+ *
+ * @param 	string		$pathoffile		Path of file
+ * @return 	int					Time of file
+ */
+function dol_fileatime($pathoffile)
+{
+	$newpathoffile=dol_osencode($pathoffile);
+	return @fileatime($newpathoffile); // @Is to avoid errors if files does not exists
+}
+
+/**
+ * Return md5 of a file
+ *
+ * @param 	string		$pathoffile		Path of file
+ * @return 	int					Time of file
+ */
+function dol_filemd5($pathoffile)
+{
+	$newpathoffile=dol_osencode($pathoffile);
+	return @md5_file($newpathoffile); // @Is to avoid errors if files does not exists
 }
 
 /**
