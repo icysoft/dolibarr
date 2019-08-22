@@ -67,8 +67,7 @@ class AvoloiEvent extends DolibarrApi
 	 *
 	 * @url POST /createavoloievent
 	 */
-	public function createavoloievent($avoloi_event)
-	{
+	public function createavoloievent($avoloi_event) {
 		global $conf, $langs, $user;
 
 		$avoloi_event = (object) $avoloi_event;
@@ -92,22 +91,24 @@ class AvoloiEvent extends DolibarrApi
 		$tiers['email'] = trim($tiers['email']);
 		$tiers['phone'] = trim($tiers['phone']);
 
-		if (empty($tiers['email']) && empty($tiers['phone'])) {
+		if (empty($tiers['email']) && empty($tiers['phone']) && empty($tiers['mobile'])) {
 			throw new RestException(400, 'Email and/or phone is needed for tiers');
 		}
 
+		// Concaténation de la requête pour vérifier l'éxistence d'un tiers
 		$sql = "SELECT *";
-		$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
-		if (!empty($tiers['email']) && !empty($tiers['phone'])) {
-			// Search on email and phone
-			$sql .= " WHERE p.email = \"".$tiers['email']."\" OR p.phone = \"".$tiers['phone']."\"";
-		} else if (!empty($tiers['email'])) {
-			// Search only on email
-			$sql .= " WHERE p.email = \"".$tiers['email']."\"";
-		} else {
-			// Search only on phone
-			$sql .= " WHERE p.phone = \"".$tiers['phone']."\"";
+		$sql .= " FROM ".MAIN_DB_PREFIX."societe as s WHERE ";
+		$rqtarray = array();
+		if (!empty($tiers['email'])) {
+			array_push($rqtarray, "s.email = \"".$tiers['email']."\"");
 		}
+		if (!empty($tiers['phone'])) {
+			array_push($rqtarray, "s.phone = \"".$tiers['phone']."\"");
+		}
+		if (!empty($tiers['mobile'])) {
+			array_push($rqtarray, "s.fax = \"".$tiers['mobile']."\"");
+		}
+		$sql .= join(" OR ", $rqtarray);
 
 		$result = $this->db->query($sql);
 		$checktiers = $this->db->fetch_object($result);
@@ -132,6 +133,8 @@ class AvoloiEvent extends DolibarrApi
 			$societe->zip = $tiers['zip'];
 			$societe->town = $tiers['town'];
 			$societe->email = $tiers['email'];
+			$societe->phone = $tiers['phone'];
+			$societe->fax = $tiers['mobile'];
 			$societe->country_id = $tiers['country_id'] ? $tiers['country_id'] : 1;
 			$societe->array_options = $tiers['array_options'];
 			
@@ -183,6 +186,7 @@ class AvoloiEvent extends DolibarrApi
 		$event->type_id = $agendaevent['type_id'];
 		$event->datep = $agendaevent['datep'];
 		$event->datef = $agendaevent['datef'];
+		$event->label = $agendaevent['label'];
 		$event->note = $agendaevent['note'];
 		$event->userdoneid = $agendaevent['userdoneid'];
 		$event->contactid = $socid;
@@ -201,5 +205,162 @@ class AvoloiEvent extends DolibarrApi
 		$rtd['event_id'] = $eventcreated;
 
 		return $rtd;
+	}
+
+	/**
+	 * Update an Avoloi event.
+	 * 
+	 * @param   array   $avoloi_event
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url PUT /update/avoloievent
+	 */
+	public function updateavoloievent($avoloi_event) {
+		global $conf, $langs, $user;
+
+		$avoloi_event = (object) $avoloi_event;
+
+		$agendaevent = $avoloi_event->agendaevent;
+		$lead_id = $avoloi_event->lead_id;
+
+		// Vérification du lead_id
+		if (is_null($lead_id)) {
+			throw new RestException(400, 'Lead id is missing');
+		}
+
+		// Récupération de l'ID du tiers suivant le lead id
+		$tiersid = $this->gettiresid($lead_id);
+
+		if ($tiersid === -1) {
+			throw new RestException(418, 'None tiers find with lead id : '.$lead_id);
+		}
+
+		// Récupération du rendez-vous lié au tiers
+		$sql = "SELECT *";
+		$sql .= " FROM ".MAIN_DB_PREFIX."actioncomm as a";
+		$sql .= " WHERE a.fk_contact = \"$tiersid\"";
+
+		$result = $this->db->query($sql);
+
+		if (is_null($result)) {
+			throw new RestException(418, 'None event find with lead id : '.$lead_id);
+		}
+
+		$existingevent = $this->db->fetch_object($result);
+
+		// Instanciation de l'eventagenda
+		$event = new ActionComm($this->db);
+
+		// On fetch l'event pour le mettre en mémoire
+		$event->fetch($existingevent->id);
+
+		$event->datep = $agendaevent['datep'] != '' ? $agendaevent['datep'] : $existingevent->datep;
+		$event->datef = $agendaevent['datef'] != '' ? $agendaevent['datef'] : $existingevent->datep2;
+		$event->label = $agendaevent['label'] != '' ? $agendaevent['label'] : $existingevent->label;
+		$event->note = $agendaevent['note'] != '' ? $agendaevent['note'] : $existingevent->note;
+
+		// Update de l'event
+		$eventupdated = $event->update($user);
+
+		if ($eventupdated !== 1) {
+			throw new RestException(418, 'Error occured while updating agenda event : '.$existingevent->id);
+		}
+
+		// TODO Envoi de la notification push
+
+		return "Succesfully updated";
+	}
+
+	/**
+	 * Update an Avoloi tiers.
+	 * 
+	 * @param   array   $avoloi_tiers
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url PUT /update/tiers
+	 */
+	public function updatetiers($avoloi_tiers) {
+		global $conf, $langs, $user;
+
+		$tiers = (object) $avoloi_tiers;
+
+		$lead_id = $tiers->lead_id;
+		$soc = $tiers->tiers;
+
+		// Vérification du lead_id
+		if (is_null($lead_id)) {
+			throw new RestException(400, 'Lead id is missing');
+		}
+
+		// Récupération de l'ID du tiers suivant le lead id
+		$tiersid = $this->gettiresid($lead_id);
+
+		if ($tiersid === -1) {
+			throw new RestException(418, 'None tiers find with lead id : '.$lead_id);
+		}
+
+		// Récupération du tiers
+		$sql = "SELECT *";
+		$sql .= " FROM ".MAIN_DB_PREFIX."societe as s";
+		$sql .= " WHERE s.rowid = \"$tiersid\"";
+
+		$result = $this->db->query($sql);
+		$existingtiers = $this->db->fetch_object($result);
+
+		// Instanciation du tiers
+		$societe = new Societe($this->db);
+
+		// Fetch le tiers pour le mettre en mémoire
+		$societe->fetch($tiersid);
+
+		$societe->name = $soc['name'] ? $soc['name'] : $existingtiers->name;
+		$societe->address = $soc['address'] ? $soc['address'] : $existingtiers->address;
+		$societe->zip = $soc['zip'] ? $soc['zip'] : $existingtiers->zip;
+		$societe->town = $soc['town'] ? $soc['town'] : $existingtiers->town;
+		$societe->phone = $soc['phone'] ? $soc['phone'] : $existingtiers->phone;
+		$societe->fax = $soc['mobile'] ? $soc['mobile'] : $existingtiers->fax;
+		$societe->email = $soc['email'] ? $soc['email'] : $existingtiers->email;
+
+		// Update du tiers
+		$updatedtiers = $societe->update($tiersid);
+
+		if ($updatedtiers !== 1) {
+			throw new RestException(418, 'Error occured while updating tiers : '.$tiersid);
+		}
+
+		return "Succesfully updated";
+
+	}
+
+	private function gettiresid($lead_id) {
+		global $conf, $langs, $user;
+
+		$sql = "SELECT *";
+		$sql .= " FROM ".MAIN_DB_PREFIX."societe_extrafields as e";
+		$sql .= " WHERE e.lead_id = \"$lead_id\"";
+
+		$result = $this->db->query($sql);
+		$tiers = $this->db->fetch_object($result);
+
+		// Si la requête ne renvoie pas de résultat, retourner -1 pour lever une erreur
+		if (is_null($tiers)) {
+			return -1;
+		} else {
+			return $tiers->fk_object;
+		}
 	}
 }
