@@ -325,8 +325,8 @@ class Avoloisetup extends DolibarrApi
 
         dolibarr_set_const($this->db, 'FACTURE_ADDON', 'mod_facture_mercure');
 
-        if ($setup_infos->invoice_nomenclature) dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', $setup_infos->invoice_nomenclature);
-        if ($setup_infos->credit_nomenclature) dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $setup_infos->credit_nomenclature);
+        if ($setup_infos->invoice_nomenclature || $setup_infos->invoice_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', $setup_infos->invoice_nomenclature);
+        if ($setup_infos->credit_nomenclature || $setup_infos->invoice_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $setup_infos->credit_nomenclature);
         if ($setup_infos->client_time_limit) dolibarr_set_const($this->db, 'CLIENT_TIME_LIMIT', $setup_infos->client_time_limit);
         if ($setup_infos->provider_time_limit) dolibarr_set_const($this->db, 'PROVIDER_TIME_LIMIT', $setup_infos->provider_time_limit);
 
