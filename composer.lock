@@ -525,12 +525,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Luracast/Restler-Framework.git",
-                "reference": "0f6b0f26152f83e43a2a86820206c455095fb2b0"
+                "reference": "6bc0968f8c8aa47c9a62d548b9d7e34f1ed4fc09"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Luracast/Restler-Framework/zipball/0f6b0f26152f83e43a2a86820206c455095fb2b0",
-                "reference": "0f6b0f26152f83e43a2a86820206c455095fb2b0",
+                "url": "https://api.github.com/repos/Luracast/Restler-Framework/zipball/6bc0968f8c8aa47c9a62d548b9d7e34f1ed4fc09",
+                "reference": "6bc0968f8c8aa47c9a62d548b9d7e34f1ed4fc09",
                 "shasum": ""
             },
             "require": {
@@ -577,7 +577,7 @@
                 "rest",
                 "server"
             ],
-            "time": "2019-05-12T15:15:11+00:00"
+            "time": "2018-01-06T01:39:27+00:00"
         },
         {
             "name": "setasign/fpdf",
