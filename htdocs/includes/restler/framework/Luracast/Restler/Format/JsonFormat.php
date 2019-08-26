@@ -1,5 +1,4 @@
 <?php
-
 namespace Luracast\Restler\Format;
 
 use Luracast\Restler\Data\Obj;
@@ -128,9 +127,9 @@ class JsonFormat extends Format
 
     public function decode($data)
     {
-        if (empty($data)) {
-            return null;
-        }
+	if(empty($data)){
+	    return null; 
+	}
 
         $options = 0;
         if (self::$bigIntAsString) {
@@ -148,7 +147,7 @@ class JsonFormat extends Format
         }
 
         try {
-            $decoded = json_decode($data, true, 512, $options);
+            $decoded = json_decode($data, $options);
             $this->handleJsonError();
         } catch (\RuntimeException $e) {
             throw new RestException(400, $e->getMessage());
@@ -158,13 +157,13 @@ class JsonFormat extends Format
             throw new RestException(400, 'Error parsing JSON');
         }
 
-        return $decoded; //Obj::toArray($decoded);
+        return Obj::toArray($decoded);
     }
 
     /**
      * Pretty print JSON string
      *
-     * @param string $json
+     * @param  string $json
      *
      * @return string formatted json
      */
@@ -272,7 +271,7 @@ class JsonFormat extends Format
         }
 
         if (isset($message)) {
-            throw new \RuntimeException('Error encoding/decoding JSON: ' . $message);
+            throw new \RuntimeException('Error encoding/decoding JSON: '. $message);
         }
     }
 }
