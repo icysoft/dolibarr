@@ -193,7 +193,10 @@ class AvoloiEvent extends DolibarrApi
 
 		$eventcreated = $event->create($user);
 
-		// TODO Envoi de la notification push
+		// Formatage des date et heurs pour les notifications push
+		$concat = $this->concatDateHour($event->datep);
+		// Envoi de la notification push
+		$this->sendNotification($concat['date'], $concat['hour']);
 
 		// Constitution de la réponse
 		$rtd = array();
@@ -236,7 +239,7 @@ class AvoloiEvent extends DolibarrApi
 		}
 
 		// Récupération de l'ID du tiers suivant le lead id
-		$tiersid = $this->gettiresid($lead_id);
+		$tiersid = $this->gettiersid($lead_id);
 
 		if ($tiersid === -1) {
 			throw new RestException(418, 'None tiers find with lead id : '.$lead_id);
@@ -273,7 +276,10 @@ class AvoloiEvent extends DolibarrApi
 			throw new RestException(418, 'Error occured while updating agenda event : '.$existingevent->id);
 		}
 
-		// TODO Envoi de la notification push
+		// Formatage des date et heurs pour les notifications push
+		$concat = $this->concatDateHour($event->datep);
+		// Envoi de la notification push
+		$this->sendNotification($concat['date'], $concat['hour']);
 
 		return "Succesfully updated";
 	}
@@ -307,7 +313,7 @@ class AvoloiEvent extends DolibarrApi
 		}
 
 		// Récupération de l'ID du tiers suivant le lead id
-		$tiersid = $this->gettiresid($lead_id);
+		$tiersid = $this->gettiersid($lead_id);
 
 		if ($tiersid === -1) {
 			throw new RestException(418, 'None tiers find with lead id : '.$lead_id);
@@ -320,6 +326,8 @@ class AvoloiEvent extends DolibarrApi
 
 		$result = $this->db->query($sql);
 		$existingtiers = $this->db->fetch_object($result);
+		print_r($result);
+		print_r($existingtiers);
 
 		// Instanciation du tiers
 		$societe = new Societe($this->db);
@@ -346,7 +354,192 @@ class AvoloiEvent extends DolibarrApi
 
 	}
 
-	private function gettiresid($lead_id) {
+	/**
+	 * Search mutitiers.
+	 * 
+	 * @param   string   $value	Value to find
+	 * @return  array						List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /findmultitiers
+	 */
+	public function findmultitiers($value) {
+		global $conf, $langs, $user;
+
+		return $this->getmultipletiersid($value);
+	}
+
+	/**
+	 * Get FCM tokens.
+	 * 
+	 * @return  array						List of tokens
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /getFcmTokens
+	 */
+	public function getfcmtokens() {
+		global $conf, $langs, $user;
+
+		dol_include_once('/core/lib/admin.lib.php');
+
+		// Récupération des tokens existant
+		$tokens = dolibarr_get_const($this->db, 'FCM_TOKEN', 1);
+
+		// Vérification de l'existence du token
+		$tokensArray = array();
+		$tokensArray = explode(';', $tokens);
+		$tokensArray = array_diff($tokensArray, ['']);	// Retire les chaînes vides du tableau
+
+		// Constitution du return
+		$rtd = array();
+		$rtd['tokens'] = $tokensArray;
+
+		return $rtd;
+	}
+
+	/**
+	 * Set FCM token.
+	 * 
+	 * @param   string   $token	Value to add
+	 * @return  array						List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url POST /setFcmToken
+	 */
+	public function setfcmtoken($token) {
+		global $conf, $langs, $user;
+
+		dol_include_once('/core/lib/admin.lib.php');
+
+		// Récupération des tokens existant
+		$tokens = dolibarr_get_const($this->db, 'FCM_TOKEN', 1);
+
+		// Vérification de l'existence du token
+		$tokensArray = array();
+		$tokensArray = explode(';', $tokens);
+		$tokensArray = array_diff($tokensArray, ['']);	// Retire les chaînes vides du tableau
+
+		foreach ($tokensArray as &$value) {
+			if ($value === $token) {
+				return "Token $token already exists";
+			}
+		}
+
+		// Si le token n'existe pas, il est concaténé à la chaîne existante et enregistré
+		array_push($tokensArray, $token);
+
+		$tokens = implode(';', $tokensArray);
+
+		dolibarr_set_const($this->db, 'FCM_TOKEN', $tokens);
+
+		return "Saved token : $token";
+	}
+
+	/**
+	 * Delete FCM token.
+	 * 
+	 * @param   string   $token	Value to delete
+	 * @return  array						List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url DELETE /deleteFcmToken
+	 */
+	public function deletefcmtoken($token) {
+		global $conf, $langs, $user;
+
+		dol_include_once('/core/lib/admin.lib.php');
+
+		// Récupération des tokens existant
+		$tokens = dolibarr_get_const($this->db, 'FCM_TOKEN', 1);
+
+		$tokensArray = array();
+		$tokensArray = explode(';', $tokens);
+		$tokensArray = array_diff($tokensArray, ['']);	// Retire les chaînes vides du tableau
+
+		// Suppression du token
+		$tokensArray = array_diff($tokensArray, [$token]);	// Retire les chaînes vides du tableau
+
+		$tokens = implode(';', $tokensArray);
+
+		dolibarr_set_const($this->db, 'FCM_TOKEN', $tokens);
+
+		return "Token $token has been deleted";
+	}
+
+	// // // // //	PRIVATE METHODES	// // // // //
+
+	private function sendNotification($date, $hour) {
+		global $conf, $langs, $user;
+
+		dol_include_once('/core/lib/admin.lib.php');
+
+		// Récupération des tokens existant
+		$tokens = dolibarr_get_const($this->db, 'FCM_TOKEN', 1);
+
+		$urlPush = "https://us-central1-avoloi-firebase.cloudfunctions.net/sendNotificationPush";
+
+		$tokensArray = array();
+		$tokensArray = explode(';', $tokens);
+		$tokensArray = array_diff($tokensArray, ['']);	// Retire les chaînes vides du tableau
+
+		// Appeler la Firebase Function d'envoi de notification
+		$data = array(
+			"token" => $tokensArray,
+			"date" => $date,
+			"hour" => $hour
+		);
+		$dataString = json_encode($data);
+		$ch = curl_init($urlPush);                                                                     
+
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);                                                                  
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
+				'Content-Type: application/json',                                                                                
+				'Content-Length: ' . strlen($dataString))                                                                       
+		);
+
+		$result = curl_exec($ch);
+		
+	}
+
+	private function concatDateHour($timestamp) {
+		$date = date('d/m/Y', $timestamp);
+		$hour = date('H', $timestamp);
+		$hour .= 'h';
+		$hour .= date('i', $timestamp);
+
+		return array(
+			"date" => $date,
+			"hour" => $hour
+		);
+	}
+
+	private function gettiersid($lead_id) {
 		global $conf, $langs, $user;
 
 		$sql = "SELECT *";
@@ -361,6 +554,38 @@ class AvoloiEvent extends DolibarrApi
 			return -1;
 		} else {
 			return $tiers->fk_object;
+		}
+	}
+
+	private function getmultipletiersid($value) {
+		global $conf, $langs, $user;
+
+		$sql = "SELECT *";
+		$sql .= " FROM ".MAIN_DB_PREFIX."projet_extrafields as p";
+		$sql .= " WHERE p.multitiers LIKE \"%$value%\"";
+
+		$result = $this->db->query($sql);
+
+		if ($result)
+		{
+				$num = $this->db->num_rows($result);
+				$min = min($num, ($limit <= 0 ? $num : $limit));
+				while ($i < $min)
+				{
+						$obj = $this->db->fetch_object($result);
+						$project_static = new Project($this->db);
+						if($project_static->fetch($obj->rowid)) {
+								$obj_ret[] = $this->_cleanObjectDatas($project_static);
+						}
+						$i++;
+				}
+		}
+
+		// Si la requête ne renvoie pas de résultat, retourner -1 pour lever une erreur
+		if (is_null($obj_ret)) {
+			return -1;
+		} else {
+			return $obj_ret;
 		}
 	}
 }
