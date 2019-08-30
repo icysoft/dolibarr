@@ -233,6 +233,14 @@ class docx_generator extends ModeleThirdPartyDoc
 								$object->lines[] = $obj;
 							}
 						}
+						if ($object->fk_mode_reglement && $object->fk_mode_reglement == 2 && $object->fk_account) {
+							$sql = "SELECT *";
+							$sql .= " FROM ".MAIN_DB_PREFIX."bank_account as p";
+							$sql .= " WHERE p.rowid = ".$object->fk_account;
+	
+							$result = $this->db->query($sql);
+							$bankAccount = $this->db->fetch_object($result);
+						}
 						break;
 					case 'acte':
 						$sql = "SELECT *";
@@ -269,6 +277,24 @@ class docx_generator extends ModeleThirdPartyDoc
 
 						$result = $this->db->query($sql);
 						$object = $this->db->fetch_object($result);
+
+						$sql = "SELECT *";
+						$sql .= " FROM ".MAIN_DB_PREFIX."projet_extrafields as p";
+						$sql .= " WHERE p.fk_object = ".$idType;
+
+						$result = $this->db->query($sql);
+						$object->arrayOptions = $this->db->fetch_object($result);
+						if ($object->arrayOptions && $object->arrayOptions->multitiers) {
+							$object->arrayOptions->multitiers = json_decode($object->arrayOptions->multitiers);
+						}
+						foreach($object->arrayOptions->multitiers as $tiers) {
+							$sql = "SELECT *";
+							$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
+							$sql .= " WHERE p.rowid = ".$tiers->idTiers;
+
+							$result = $this->db->query($sql);
+							$tiers->detail = $this->db->fetch_object($result);
+						}
 						break;
 				}
 
@@ -402,6 +428,35 @@ class docx_generator extends ModeleThirdPartyDoc
 					{
 						// setValue failed, probably because key not found
                         dol_syslog($e->getMessage(), LOG_INFO);
+					}
+				}
+				if ($object->arrayOptions && $object->arrayOptions->multitiers) {
+					foreach($object->arrayOptions->multitiers as $tiers) {
+						$keys = get_object_vars($tiers->detail);
+						$templateProcessor->setValue($tiers->typeTiers.$tiers->postype.'_type', $tiers->typeTiers);
+						foreach($keys as $key=>$value) {
+							if (preg_match('/logo$/', $key))	// Image
+							{
+								if (file_exists($value)) $templateProcessor->setImageValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+								else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
+							} else {
+								$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+							}
+						}
+					}
+				}
+
+				// HOW TO :
+				// Get the value
+				// $companybic = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_BIC', 1);
+				// if ($companybic) {
+					// Set the value in the template
+				// 	$templateProcessor->setValue('COMPANY_BIC', $companybic);
+				// }
+				if ($bankAccount) {
+					$keys = get_object_vars($bankAccount);
+					foreach($keys as $key=>$value) {
+						$templateProcessor->setValue('BANK_'.$key, $value);
 					}
 				}
 				if ($object->lines) {
