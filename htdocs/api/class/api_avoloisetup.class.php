@@ -81,6 +81,7 @@ class Avoloisetup extends DolibarrApi
         $companycode_contact = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', 1);
         $companyprofession = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', 1);
         $companytype_profil = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', 1);
+        $companytype_barreau = dolibarr_get_const($this->db, 'BARREAU_LABEL', 1);
         $companylogo_filename = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_LOGO', 1);
 
         // STEP 2
@@ -124,6 +125,7 @@ class Avoloisetup extends DolibarrApi
         $list['code_contact']=$companycode_contact;
         $list['profession']=$companyprofession;
         $list['type_profil']=$companytype_profil;
+        $list['barreau']=$companytype_barreau;
         $list['logo_filename']=$companylogo_filename;
 
         // STEP 2
@@ -236,6 +238,7 @@ class Avoloisetup extends DolibarrApi
         if ($setup_infos->code_contact) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', $setup_infos->code_contact);
         if ($setup_infos->profession) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', $setup_infos->profession);
         if ($setup_infos->type_profil) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', $setup_infos->type_profil);
+        if ($setup_infos->barreau) dolibarr_set_const($this->db, 'BARREAU_LABEL', $setup_infos->barreau);
         if ($setup_infos->logo_filename) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_LOGO', $setup_infos->logo_filename);
 
         // STEP 2

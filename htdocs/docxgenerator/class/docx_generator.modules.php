@@ -30,6 +30,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/doc.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/includes/phpoffice/phpword/bootstrap.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 
 
 /**
@@ -515,6 +516,12 @@ class docx_generator extends ModeleThirdPartyDoc
 					{
                         dol_syslog($e->getMessage(), LOG_INFO);
 					}
+				}
+
+				// Set barreau
+				$barreau = dolibarr_get_const($this->db, 'BARREAU_LABEL', 1);
+				if ($barreau) {
+					$templateProcessor->setValue('BARREAU_label', $barreau);
 				}
 
 				// Call the beforeODTSave hook
