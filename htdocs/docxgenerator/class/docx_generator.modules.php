@@ -31,6 +31,11 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/doc.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/includes/phpoffice/phpword/bootstrap.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 
 
 /**
@@ -61,7 +66,7 @@ class docx_generator extends ModeleThirdPartyDoc
 		global $conf, $langs, $mysoc;
 
 		// Load translation files required by the page
-        $langs->loadLangs(array("main","companies"));
+    $langs->loadLangs(array("main","companies"));
 
 		$this->db = $db;
 		$this->name = "DOCX templates";
@@ -101,20 +106,14 @@ class docx_generator extends ModeleThirdPartyDoc
         // phpcs:enable
 		global $user,$langs,$conf,$mysoc,$hookmanager;
 
-		// if (empty($srctemplatepath))
-		// {
-		// 	dol_syslog("doc_generic_docx::write_file parameter srctemplatepath empty", LOG_WARNING);
-		// 	return -1;
-        // }
-
-                // Add odtgeneration hook
-                if (! is_object($hookmanager))
-                {
-                        include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
-                        $hookmanager=new HookManager($this->db);
-                }
-                $hookmanager->initHooks(array('odtgeneration'));
-                global $action;
+    // Add odtgeneration hook
+    if (! is_object($hookmanager))
+    {
+            include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
+            $hookmanager=new HookManager($this->db);
+    }
+    $hookmanager->initHooks(array('odtgeneration'));
+    global $action;
 
 		if (! is_object($outputlangs)) $outputlangs=$langs;
 		$sav_charset_output=$outputlangs->charset_output;
@@ -123,530 +122,467 @@ class docx_generator extends ModeleThirdPartyDoc
 		// Load translation files required by the page
 		$outputlangs->loadLangs(array("main", "dict", "companies", "projects"));
 
-		// if ($conf->societe->multidir_output[$object->entity])
-		// {
-		// 	$dir = $conf->societe->multidir_output[$object->entity];
-		// 	$objectref = dol_sanitizeFileName($object->id);
-		// 	if (! preg_match('/specimen/i', $objectref)) $dir.= "/" . $objectref;
+		$newfile=basename($srctemplatepath);
+		$newfiletmp=preg_replace('/\.docx/i', '', $newfile);
+		$newfiletmp=preg_replace('/template_/i', '', $newfiletmp);
+		$newfiletmp=preg_replace('/modele_/i', '', $newfiletmp);
 
-		// 	if (! file_exists($dir))
-		// 	{
-		// 		if (dol_mkdir($dir) < 0)
-		// 		{
-		// 			$this->error=$langs->transnoentities("ErrorCanNotCreateDir", $dir);
-		// 			return -1;
-		// 		}
-		// 	}
+		// Get extension (ods or odt)
+		$newfileformat=substr($newfile, strrpos($newfile, '.')+1);
+		if ( ! empty($conf->global->MAIN_DOC_USE_OBJECT_THIRDPARTY_NAME))
+		{
+		    $newfiletmp = 'test-'.$newfiletmp;
+		    // $newfiletmp = dol_sanitizeFileName(dol_string_nospecial($object->name)).'-'.$newfiletmp;
+		}
+		if ( ! empty($conf->global->MAIN_DOC_USE_TIMING))
+		{
+		    $format=$conf->global->MAIN_DOC_USE_TIMING;
+		    if ($format == '1') $format='%Y%m%d%H%M%S';
+			$filename=$newfiletmp.'-'.dol_print_date(dol_now(), $format).'.'.$newfileformat;
+		}
+		else
+		{
+			$filename=$newfiletmp.'.'.$newfileformat;
+		}
+		$file=$dir.'/'.$filename;
 
-		// 	if (file_exists($dir))
-		// 	{
-				//print "srctemplatepath=".$srctemplatepath;	// Src filename
-				$newfile=basename($srctemplatepath);
-				$newfiletmp=preg_replace('/\.docx/i', '', $newfile);
-				$newfiletmp=preg_replace('/template_/i', '', $newfiletmp);
-				$newfiletmp=preg_replace('/modele_/i', '', $newfiletmp);
-				// Get extension (ods or odt)
-				$newfileformat=substr($newfile, strrpos($newfile, '.')+1);
-				if ( ! empty($conf->global->MAIN_DOC_USE_OBJECT_THIRDPARTY_NAME))
-				{
-				    $newfiletmp = 'test-'.$newfiletmp;
-				    // $newfiletmp = dol_sanitizeFileName(dol_string_nospecial($object->name)).'-'.$newfiletmp;
-				}
-				if ( ! empty($conf->global->MAIN_DOC_USE_TIMING))
-				{
-				    $format=$conf->global->MAIN_DOC_USE_TIMING;
-				    if ($format == '1') $format='%Y%m%d%H%M%S';
-					$filename=$newfiletmp.'-'.dol_print_date(dol_now(), $format).'.'.$newfileformat;
-				}
-				else
-				{
-					$filename=$newfiletmp.'.'.$newfileformat;
-				}
-				$file=$dir.'/'.$filename;
-				// $object->builddoc_filename=$filename; // For triggers
-				//print "newfileformat=".$newfileformat;
-				//print "newdir=".$dir;
-				//print "newfile=".$newfile;
-				//print "file=".$file;
-				//print "conf->societe->dir_temp=".$conf->societe->dir_temp;
-				//exit;
+    // Open and load template
+		$phpWord = new \PhpOffice\PhpWord\PhpWord();
 
-				// dol_mkdir($conf->societe->multidir_temp[$object->entity]);
+		try {
+			switch ($typeDocument) {
+				case 'invoice':
+					$template = DOL_DATA_ROOT.'/doctemplates/invoices/'.$templateName;
+					break;
+				case 'acte':
+					$template = DOL_DATA_ROOT.'/doctemplates/acte/'.$templateName;
+					break;
+				case 'proposal':
+					$template = DOL_DATA_ROOT.'/doctemplates/proposals/'.$templateName;
+					break;
+				case 'project':
+					$template = DOL_DATA_ROOT.'/doctemplates/projects/'.$templateName;
+					break;
+			}
+			$templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($template);
+		}
+		catch(Exception $e)
+		{
+			$this->error=$e->getMessage();
+			dol_syslog($e->getMessage(), LOG_INFO);
+			return -1;
+		}
 
-                // Open and load template
-                $phpWord = new \PhpOffice\PhpWord\PhpWord();
-				try {
-					switch ($typeDocument) {
-						case 'invoice':
-							$template = DOL_DATA_ROOT.'/doctemplates/invoices/'.$templateName;
-							break;
-						case 'acte':
-							$template = DOL_DATA_ROOT.'/doctemplates/acte/'.$templateName;
-							break;
-						case 'proposal':
-							$template = DOL_DATA_ROOT.'/doctemplates/proposals/'.$templateName;
-							break;
-						case 'project':
-							$template = DOL_DATA_ROOT.'/doctemplates/projects/'.$templateName;
-							break;
-					}
-                    $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($template);
-				    // require_once ODTPHP_PATH.'odf.php';
-                    // $odfHandler = new odf(
-					//     $srctemplatepath,
-					//     array(
-	    			// 		'PATH_TO_TMP'	  => $conf->societe->multidir_temp[$object->entity],
-	    			// 		'ZIP_PROXY'		  => 'PclZipProxy',	// PhpZipProxy or PclZipProxy. Got "bad compression method" error when using PhpZipProxy.
-	    			// 		'DELIMITER_LEFT'  => '{',
-	    			// 		'DELIMITER_RIGHT' => '}'
-					// 	)
-					// );
-				}
-				catch(Exception $e)
-				{
-					$this->error=$e->getMessage();
-					dol_syslog($e->getMessage(), LOG_INFO);
-					return -1;
-				}
-				//print $odfHandler->__toString()."\n";
-
-                // Replace tags of lines for contacts
-				$contact_arrray=array();
+    // Replace tags of lines for contacts
+		$contact_arrray=array();
 				
-				// On récupère l'objet correspondant en fonction du typeDocument
+		// On récupère l'objet correspondant en fonction du typeDocument
+		switch ($typeDocument) {
+			case 'invoice':
+				// $sql = "SELECT *";
+				// $sql .= " FROM ".MAIN_DB_PREFIX."facture as p";
+				// $sql .= " WHERE p.rowid = ".$idType;
+
+				// $result = $this->db->query($sql);
+				// $object = $this->db->fetch_object($result);
+				// $sql = "SELECT *";
+				// $sql .= " FROM ".MAIN_DB_PREFIX."facturedet as p";
+				// $sql .= " WHERE p.fk_facture = ".$object->rowid;
+
+				// $result = $this->db->query($sql);
+
+				$object = $this->getInvoice($idType);
+
+				if ($object->mode_reglement_id && $object->mode_reglement_id == 2 && $object->fk_account) {
+					$bankAccount = $this->getBankAccount($object->fk_account);
+				}
+				break;
+				// ACTE n'est actuellement pas utilisé. PROJECT le remplace
+				// case 'acte':
+				// 	$sql = "SELECT *";
+				// 	$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
+				// 	$sql .= " WHERE p.rowid = ".$idType;
+
+			// 	$result = $this->db->query($sql);
+			// 	$object = $this->db->fetch_object($result);
+			// 	break;
+			case 'proposal':
+				$object = $this->getProposal($idType);
+				break;
+			case 'project':
+				$object = $this->getAffaire($idType);
+
+				if ($object->array_options && $object->array_options['options_multitiers']) {
+					$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
+				}
+				foreach($object->array_options['options_multitiers'] as $tiers) {
+					$societe = $this->getSociety($tiers->idTiers);
+				}
+				break;
+		}
+
+		if ($object->fk_soc) {
+			$tiers = $this->getSociety($object->fk_soc);
+		}
+
+		if ($object->socid) {
+			$tiers = $this->getSociety($object->socid);
+		}
+
+		if ($object->fk_projet) {
+			$affaire = $this->getAffaire($object->fk_projet);
+
+			if ($affaire->array_options && $affaire->array_options['options_multitiers']) {
+				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
+			}
+
+			foreach($affaire->array_options['options_multitiers'] as $tiers) {
+				$tiers->detail = $this->getSociety($tiers->idTiers);
+			}
+		}
+
+		if ($object->fk_project) {
+			$affaire = $this->getAffaire($object->fk_project);
+
+			if ($affaire->array_options && $affaire->array_options['options_multitiers']) {
+				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
+			}
+			foreach($affaire->array_options['options_multitiers'] as $tiers) {
+				$tiers->detail = $this->getSociety($tiers->idTiers);
+			}
+		}
+
+		// Code pour récupérer les contacts associés à un tiers
+		// N'utilisant pas les contacts actuellement le code est commenté.
+    // $sql = "SELECT p.rowid";
+    // $sql .= " FROM ".MAIN_DB_PREFIX."socpeople as p";
+    // $sql .= " WHERE p.fk_soc = ".$object->id;
+
+    // $result = $this->db->query($sql);
+    // $num = $this->db->num_rows($result);
+
+    // if ($num)
+    // {
+		// 	require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
+
+		// 	$i=0;
+		// 	$contactstatic = new Contact($this->db);
+
+    //   while($i < $num)
+    //   {
+    //     $obj = $this->db->fetch_object($result);
+
+    //     $contact_arrray[$i] = $obj->rowid;
+    //     $i++;
+    //   }
+		// }
+
+    // TODO : Vérifier existence des segments
+
+    // Make substitutions into odt
+    $array_user=$this->get_substitutionarray_user($user, $outputlangs);
+    $array_soc=$this->get_substitutionarray_mysoc($mysoc, $outputlangs);
+    $array_thirdparty=$this->get_substitutionarray_thirdparty($object, $outputlangs);
+		$array_other=$this->get_substitutionarray_other($outputlangs);
+
+    $tmparray = array_merge($array_user, $array_soc, $array_thirdparty, $array_other);
+    complete_substitutions_array($tmparray, $outputlangs, $object);
+
+    // Call the ODTSubstitution hook
+    $parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
+		$reshook=$hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+
+    // Replace variables into document
+		foreach($tmparray as $key=>$value)
+		{
+			try {
+				if (preg_match('/logo$/', $key))	// Image
+				{
+					if (file_exists($value)) $templateProcessor->setImageValue($key, $value);
+					else $templateProcessor->setValue($key, 'ErrorFileNotFound');
+				}
+				else	// Text
+				{
+					$templateProcessor->setValue($key, $value);
+				}
+			}
+			catch (OdfException $e)
+			{
+				// setValue failed, probably because key not found
+        dol_syslog($e->getMessage(), LOG_INFO);
+			}
+		}
+
+		if ($object->array_options && $object->array_options['options_multitiers']) {
+			$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
+
+			foreach($object->array_options['options_multitiers'] as $tiers) {
+				$keys = get_object_vars($tiers->detail);
+				$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_type', $tiers->typeTiers);
+
+				foreach($keys as $key=>$value) {
+					if (preg_match('/logo$/', $key))	// Image
+					{
+						if (file_exists($value)) $templateProcessor->setImageValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+						else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
+					} else {
+						if (is_object($value) || is_array($value)) {
+							if ($key === 'array_options') {
+								foreach ($value as $key_array=>$value_array) {
+									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key_array, $value_array);
+								}
+							}
+						} else {
+							$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+						}
+					}
+				}
+			}
+		}
+
+		if ($affaire->array_options && $affaire->array_options['options_multitiers']) {
+
+			foreach($affaire->array_options['options_multitiers'] as $tiers) {
+				$keys = get_object_vars($tiers->detail);
+				$templateProcessor->setValue($tiers->typeTiers.$tiers->postype.'_type', $tiers->typeTiers);
+
+				foreach($keys as $key=>$value) {
+					if (preg_match('/logo$/', $key))	// Image
+					{
+						if (file_exists($value)) $templateProcessor->setImageValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+						else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
+					} else {
+						if (is_object($value) || is_array($value)) {
+							foreach ($value as $key_array=>$value_array) {
+								if ($key === 'array_options') {
+									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key_array, $value_array);
+								}
+							}
+						} else {
+							$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+						}
+					}
+				}
+			}
+		}
+
+		// HOW TO :
+		// Get the value
+		// $companybic = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_BIC', 1);
+		// if ($companybic) {
+		// Set the value in the template
+		// 	$templateProcessor->setValue('COMPANY_BIC', $companybic);
+		// }
+		if ($bankAccount) {
+			$keys = get_object_vars($bankAccount);
+			foreach($keys as $key=>$value) {
+				if (!is_array($value) && !is_object($value)) {
+					if (is_numeric($value)) {
+						$value = number_format($value, 2);
+					}
+					$templateProcessor->setValue('BANK_'.$key, $value);
+				}
+			}
+		}
+
+		if ($object->lines) {
+			try {
+				$templateProcessor->cloneRow('TABLE_description', count($object->lines));
+				for ($i = 1; $i <= count($object->lines); $i++) {
+					if ($object->lines[$i-1]) {
+						$keys = get_object_vars($object->lines[$i-1]);
+						foreach($keys as $key=>$value) {
+							if (!is_array($value) && !is_object($value)) {
+								if (is_numeric($value)) {
+									$value = number_format($value, 2);
+								}
+								$templateProcessor->setValue('TABLE_'.$key.'#'.$i, $value);
+							}
+						}
+					}
+				}
+			}
+			catch (Exception $e) {}
+						
+			try {
+				$templateProcessor->cloneBlock('COPYBLOC', count($object->lines));
+				for ($i = 0; $i <= count($object->lines); $i++) {
+					if ($object->lines[$i]) {
+						$keys = get_object_vars($object->lines[$i]);
+						foreach($keys as $key=>$value) {
+							if (!is_array($value) && !is_object($value)) {
+								if (is_numeric($value)) {
+									$value = number_format($value, 2);
+								}
+								$templateProcessor->setValue($key, $value, 1);
+							}
+						}
+					}
+				}
+			}
+			catch (Exception $e) {}
+		}
+
+		// Replace labels translated
+		$tmparray=$outputlangs->get_translations_for_substitutions();
+		foreach($tmparray as $key=>$value)
+		{
+			try {
+				$templateProcessor->setValue($key, $value);
+			}
+			catch (OdfException $e)
+			{
+                    dol_syslog($e->getMessage(), LOG_INFO);
+			}
+		}
+
+		// Set barreau
+		$barreau = dolibarr_get_const($this->db, 'BARREAU_LABEL', 1);
+		if ($barreau) {
+			$templateProcessor->setValue('BARREAU_label', $barreau);
+		}
+
+		// Call the beforeODTSave hook
+		$parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
+		$reshook=$hookmanager->executeHooks('beforeODTSave', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+
+		// Write new file
+		if (!empty($conf->global->MAIN_ODT_AS_PDF)) {
+			try {
+				$templateProcessor->exportAsAttachedPDF($file);
+			} catch (Exception $e) {
+				$this->error=$e->getMessage();
+                     dol_syslog($e->getMessage(), LOG_INFO);
+				return -1;
+			}
+		}
+		else {
+		  try {
+        $properties = $phpWord->getDocInfo();
+        $properties->setCreator($user->getFullName($outputlangs));
+        $properties->setTitle($object->builddoc_filename);
+				$properties->setSubject($object->builddoc_filename);
+
+        if (! empty($conf->global->ODT_ADD_DOLIBARR_ID))
+        {
+         	$templateProcessor->userdefined['dol_id'] = $object->id;
+         	$templateProcessor->userdefined['dol_element'] = $object->element;
+				}
+
 				switch ($typeDocument) {
 					case 'invoice':
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."facture as p";
-						$sql .= " WHERE p.rowid = ".$idType;
-
-						$result = $this->db->query($sql);
-						$object = $this->db->fetch_object($result);
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."facturedet as p";
-						$sql .= " WHERE p.fk_facture = ".$object->rowid;
-
-						$result = $this->db->query($sql);
-						$object->lines = array();
-						$num = $this->db->num_rows($sql);
-						if ($num) {
-							while ( $obj = $this->db->fetch_object($sql) ) {
-								$object->lines[] = $obj;
+						if ($tiers) {
+							$path = '/tiers/'.$tiers->nom.'/facture';
+							if ($affaire) {
+								$path = $path.'/'.$affaire->title;
 							}
+						} else if ($affaire) {
+							$path = '/affaire/'.$affaire->title.'/facture';
+						} else {
+							$path = '/facture';
 						}
-						if ($object->fk_mode_reglement && $object->fk_mode_reglement == 2 && $object->fk_account) {
-							$sql = "SELECT *";
-							$sql .= " FROM ".MAIN_DB_PREFIX."bank_account as p";
-							$sql .= " WHERE p.rowid = ".$object->fk_account;
-	
-							$result = $this->db->query($sql);
-							$bankAccount = $this->db->fetch_object($result);
+						if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/facture'))) {
+							mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/facture'), 0700, true);
 						}
+						$storage = 'facture/'.$name.'_'.time().'_'. $templateName;
 						break;
 					case 'acte':
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
-						$sql .= " WHERE p.rowid = ".$idType;
-
-						$result = $this->db->query($sql);
-						$object = $this->db->fetch_object($result);
+						if ($tiers) {
+							$path = '/tiers/'.$tiers->nom.'/acte';
+							if ($affaire) {
+								$path = $path.'/'.$affaire->title;
+							}
+						} else if ($affaire) {
+							$path = '/affaire/'.$affaire->title.'/acte';
+						} else {
+							$path = '/acte';
+						}
+						if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/acte'))) {
+							mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/acte'), 0700, true);
+						}
+						$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
 						break;
 					case 'proposal':
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."propal as p";
-						$sql .= " WHERE p.rowid = ".$idType;
-
-						$result = $this->db->query($sql);
-						$object = $this->db->fetch_object($result);
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."propaldet as p";
-						$sql .= " WHERE p.fk_propal = ".$object->rowid;
-
-						$result = $this->db->query($sql);
-						$object->lines = array();
-						$num = $this->db->num_rows($sql);
-						if ($num) {
-							while ( $obj = $this->db->fetch_object($sql) ) {
-								$object->lines[] = $obj;
+						if ($tiers) {
+							$path = '/tiers/'.$tiers->nom.'/propale';
+							if ($affaire) {
+								$path = $path.'/'.$affaire->title;
 							}
+						} else if ($affaire) {
+							$path = '/affaire/'.$affaire->title.'/propale';
+						} else {
+							$path = '/propale';
 						}
+						if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/propale'))) {
+							mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/propale'), 0700, true);
+						}
+						$storage = 'propale/'.$name.'_'.time().'_'. $templateName;
 						break;
 					case 'project':
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
-						$sql .= " WHERE p.rowid = ".$idType;
-
-						$result = $this->db->query($sql);
-						$object = $this->db->fetch_object($result);
-
-						$sql = "SELECT *";
-						$sql .= " FROM ".MAIN_DB_PREFIX."projet_extrafields as p";
-						$sql .= " WHERE p.fk_object = ".$idType;
-
-						$result = $this->db->query($sql);
-						$object->arrayOptions = $this->db->fetch_object($result);
-						if ($object->arrayOptions && $object->arrayOptions->multitiers) {
-							$object->arrayOptions->multitiers = json_decode($object->arrayOptions->multitiers);
+						if ($tiers) {
+							$path = '/tiers/'.$tiers->nom.'/affaire';
+							if ($object) {
+								$path = $path.'/'.$object->title;
+							}
+						} else if ($object) {
+							$path = '/affaire/'.$object->title;
+						} else {
+							$path = '/affaire';
 						}
-						foreach($object->arrayOptions->multitiers as $tiers) {
-							$sql = "SELECT *";
-							$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
-							$sql .= " WHERE p.rowid = ".$tiers->idTiers;
-
-							$result = $this->db->query($sql);
-							$tiers->detail = $this->db->fetch_object($result);
+						if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path))) {
+							mkdir($this->sanitizePath(DOL_DATA_ROOT.$path), 0700, true);
 						}
+						$storage = '/'.$object->title.'_'.time().'_'. $templateName;
 						break;
 				}
 
-				if ($object->fk_soc) {
-					$sql = "SELECT *";
-					$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
-					$sql .= " WHERE p.rowid = ".$object->fk_soc;
-	
-					$result = $this->db->query($sql);
-					$tiers = $this->db->fetch_object($result);
-				}
+				$newtmpfile = $templateProcessor->saveAs($this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));
 
-				if ($object->socid) {
-					$sql = "SELECT *";
-					$sql .= " FROM ".MAIN_DB_PREFIX."societe as p";
-					$sql .= " WHERE p.rowid = ".$object->socid;
-	
-					$result = $this->db->query($sql);
-					$tiers = $this->db->fetch_object($result);
-				}
+			} catch (Exception $e){
+				$this->error=$e->getMessage();
+                     dol_syslog($e->getMessage(), LOG_INFO);
+				return -1;
+			}
+		}
+		$parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
+		$reshook=$hookmanager->executeHooks('afterODTCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
 
-				if ($object->fk_projet) {
-					$sql = "SELECT *";
-					$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
-					$sql .= " WHERE p.rowid = ".$object->fk_projet;
-
-					$result = $this->db->query($sql);
-					$affaire = $this->db->fetch_object($result);
-				}
-
-				if ($object->fk_project) {
-					$sql = "SELECT *";
-					$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
-					$sql .= " WHERE p.rowid = ".$object->fk_project;
-
-					$result = $this->db->query($sql);
-					$affaire = $this->db->fetch_object($result);
-				}
-
-                $sql = "SELECT p.rowid";
-                $sql .= " FROM ".MAIN_DB_PREFIX."socpeople as p";
-                $sql .= " WHERE p.fk_soc = ".$object->id;
-
-                $result = $this->db->query($sql);
-                $num = $this->db->num_rows($result);
-
-                if ($num)
-                {
-                    require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
-
-                	$i=0;
-                	$contactstatic = new Contact($this->db);
-
-                	while($i < $num)
-                	{
-                		$obj = $this->db->fetch_object($result);
-
-                		$contact_arrray[$i] = $obj->rowid;
-                		$i++;
-                	}
-				}
-
-                // TODO : Vérifier existence des segments
-
-                // if((is_array($contact_arrray) && count($contact_arrray) > 0))
-                // {
-                // 	try
-                // 	{
-                // 		$listlines = $templateProcessor->setSegment('companycontacts');
-
-                // 		foreach($contact_arrray as $array_key => $contact_id)
-                // 		{
-                // 			$res_contact = $contactstatic->fetch($contact_id);
-                // 			$tmparray=$this->get_substitutionarray_contact($contactstatic, $outputlangs, 'contact');
-                // 			foreach($tmparray as $key => $val)
-                // 			{
-                // 				try
-                // 				{
-                // 					$listlines->setValue($key, $val);
-                // 				}
-                // 				catch(OdfException $e)
-                // 				{
-				// 					dol_syslog($e->getMessage(), LOG_INFO);
-                // 				}
-                // 				catch(SegmentException $e)
-                // 				{
-				// 					dol_syslog($e->getMessage(), LOG_INFO);
-                // 				}
-                // 			}
-                // 			$listlines->merge();
-                // 		}
-                // 		$odfHandler->mergeSegment($listlines);
-                // 	}
-                // 	catch(OdfException $e)
-                // 	{
-                // 		$this->error=$e->getMessage();
-                // 		dol_syslog($this->error, LOG_WARNING);
-                // 		//return -1;
-                // 	}
-                // }
-
-                // Make substitutions into odt
-                $array_user=$this->get_substitutionarray_user($user, $outputlangs);
-                $array_soc=$this->get_substitutionarray_mysoc($mysoc, $outputlangs);
-                $array_thirdparty=$this->get_substitutionarray_thirdparty($object, $outputlangs);
-				$array_other=$this->get_substitutionarray_other($outputlangs);
-
-                $tmparray = array_merge($array_user, $array_soc, $array_thirdparty, $array_other);
-                complete_substitutions_array($tmparray, $outputlangs, $object);
-
-                // Call the ODTSubstitution hook
-                $parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
-				$reshook=$hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
-
-                // Replace variables into document
-				foreach($tmparray as $key=>$value)
-				{
-					try {
-						if (preg_match('/logo$/', $key))	// Image
-						{
-							if (file_exists($value)) $templateProcessor->setImageValue($key, $value);
-							else $templateProcessor->setValue($key, 'ErrorFileNotFound');
-						}
-						else	// Text
-						{
-							$templateProcessor->setValue($key, $value);
-                        }
-                        // $templateProcessor->setValue($key, $value);
-					}
-					catch (OdfException $e)
-					{
-						// setValue failed, probably because key not found
-                        dol_syslog($e->getMessage(), LOG_INFO);
-					}
-				}
-				if ($object->arrayOptions && $object->arrayOptions->multitiers) {
-					foreach($object->arrayOptions->multitiers as $tiers) {
-						$keys = get_object_vars($tiers->detail);
-						$templateProcessor->setValue($tiers->typeTiers.$tiers->postype.'_type', $tiers->typeTiers);
-						foreach($keys as $key=>$value) {
-							if (preg_match('/logo$/', $key))	// Image
-							{
-								if (file_exists($value)) $templateProcessor->setImageValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
-								else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
-							} else {
-								$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
-							}
-						}
-					}
-				}
-
-				// HOW TO :
-				// Get the value
-				// $companybic = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_BIC', 1);
-				// if ($companybic) {
-					// Set the value in the template
-				// 	$templateProcessor->setValue('COMPANY_BIC', $companybic);
-				// }
-				if ($bankAccount) {
-					$keys = get_object_vars($bankAccount);
-					foreach($keys as $key=>$value) {
-						$templateProcessor->setValue('BANK_'.$key, $value);
-					}
-				}
-				if ($object->lines) {
-					try {
-						$templateProcessor->cloneRow('TABLE_description', count($object->lines));
-						for ($i = 1; $i <= count($object->lines); $i++) {
-							if ($object->lines[$i-1]) {
-								$keys = get_object_vars($object->lines[$i-1]);
-								foreach($keys as $key=>$value) {
-									if (is_numeric($value)) {
-										$value = number_format($value, 2);
-									}
-									$templateProcessor->setValue('TABLE_'.$key.'#'.$i, $value);
-								}
-							}
-							// $templateProcessor->setValue('TABLE_line_fulldesc#'.$i, $object->lines[$i-1]->description);
-							// $templateProcessor->setValue('TABLE_line_price_ttc#'.$i, $object->lines[$i-1]->total_ttc);
-						}
-					}
-					catch (Exception $e) {}
-						
-					try {
-						$templateProcessor->cloneBlock('COPYBLOC', count($object->lines));
-						for ($i = 0; $i <= count($object->lines); $i++) {
-							if ($object->lines[$i]) {
-								$keys = get_object_vars($object->lines[$i]);
-								foreach($keys as $key=>$value) {
-									if (is_numeric($value)) {
-										$value = number_format($value, 2);
-									}
-									$templateProcessor->setValue($key, $value, 1);
-								}
-							}
-							// $templateProcessor->setValue('line_fulldesc', $object->lines[$i]->description, 1);
-							// $templateProcessor->setValue('line_price_ttc', $object->lines[$i]->total_ttc, 1);
-						}
-					}
-					catch (Exception $e) {}
-					// $values = array();
-					// foreach($object->lines as $line) {
-						// array_push($values, array(
-						// 	'line_fulldesc' => $line->description
-						// ));
-					// }
-					// $templateProcessor->cloneRowAndSetValues('line_fulldesc', $values);
-				}
-
-				// Replace labels translated
-				$tmparray=$outputlangs->get_translations_for_substitutions();
-				foreach($tmparray as $key=>$value)
-				{
-					try {
-						$templateProcessor->setValue($key, $value);
-					}
-					catch (OdfException $e)
-					{
-                        dol_syslog($e->getMessage(), LOG_INFO);
-					}
-				}
-
-				// Set barreau
-				$barreau = dolibarr_get_const($this->db, 'BARREAU_LABEL', 1);
-				if ($barreau) {
-					$templateProcessor->setValue('BARREAU_label', $barreau);
-				}
-
-				// Call the beforeODTSave hook
-				$parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
-				$reshook=$hookmanager->executeHooks('beforeODTSave', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
-
-				// Write new file
-				if (!empty($conf->global->MAIN_ODT_AS_PDF)) {
-					try {
-						$templateProcessor->exportAsAttachedPDF($file);
-					} catch (Exception $e) {
-						$this->error=$e->getMessage();
-                        dol_syslog($e->getMessage(), LOG_INFO);
-						return -1;
-					}
-				}
-				else {
-				    try {
-                        $properties = $phpWord->getDocInfo();
-                        $properties->setCreator($user->getFullName($outputlangs));
-                        $properties->setTitle($object->builddoc_filename);
-                        $properties->setSubject($object->builddoc_filename);
-
-                        if (! empty($conf->global->ODT_ADD_DOLIBARR_ID))
-                        {
-                            $templateProcessor->userdefined['dol_id'] = $object->id;
-                            $templateProcessor->userdefined['dol_element'] = $object->element;
-						}
-						switch ($typeDocument) {
-							case 'invoice':
-								if ($tiers) {
-									$path = '/tiers/'.$tiers->nom.'/facture';
-									if ($affaire) {
-										$path = $path.'/'.$affaire->title;
-									}
-								} else if ($affaire) {
-									$path = '/affaire/'.$affaire->title.'/facture';
-								} else {
-									$path = '/facture';
-								}
-								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/facture'))) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/facture'), 0700, true);
-								}
-								$storage = 'facture/'.$name.'_'.time().'_'. $templateName;
-								break;
-							case 'acte':
-								if ($tiers) {
-									$path = '/tiers/'.$tiers->nom.'/acte';
-									if ($affaire) {
-										$path = $path.'/'.$affaire->title;
-									}
-								} else if ($affaire) {
-									$path = '/affaire/'.$affaire->title.'/acte';
-								} else {
-									$path = '/acte';
-								}
-								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/acte'))) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/acte'), 0700, true);
-								}
-								$storage = 'affaire/'.$idType.'_'.time().'_'. $templateName;
-								break;
-							case 'proposal':
-								if ($tiers) {
-									$path = '/tiers/'.$tiers->nom.'/propale';
-									if ($affaire) {
-										$path = $path.'/'.$affaire->title;
-									}
-								} else if ($affaire) {
-									$path = '/affaire/'.$affaire->title.'/propale';
-								} else {
-									$path = '/propale';
-								}
-								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path.'/propale'))) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path.'/propale'), 0700, true);
-								}
-								$storage = 'propale/'.$name.'_'.time().'_'. $templateName;
-								break;
-							case 'project':
-								if ($tiers) {
-									$path = '/tiers/'.$tiers->nom.'/affaire';
-									if ($object) {
-										$path = $path.'/'.$object->title;
-									}
-								} else if ($object) {
-									$path = '/affaire/'.$object->title;
-								} else {
-									$path = '/affaire';
-								}
-								if (!dol_is_dir($this->sanitizePath(DOL_DATA_ROOT.$path))) {
-									mkdir($this->sanitizePath(DOL_DATA_ROOT.$path), 0700, true);
-								}
-								$storage = '/'.$object->title.'_'.time().'_'. $templateName;
-								break;
-						}
-                        $newtmpfile = $templateProcessor->saveAs($this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));
-                        // $file = $phpWord->save('invoice.docx', 'Word2007');
-                        //    $templateProcessor->saveToDisk($file);
-					} catch (Exception $e){
-						$this->error=$e->getMessage();
-                        dol_syslog($e->getMessage(), LOG_INFO);
-						return -1;
-					}
-				}
-				$parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$object,'outputlangs'=>$outputlangs,'substitutionarray'=>&$tmparray);
-				$reshook=$hookmanager->executeHooks('afterODTCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
-
-				// if (! empty($conf->global->MAIN_UMASK))
-				// @chmod($file, octdec($conf->global->MAIN_UMASK));
-
-				$templateProcessor=null;	// Destroy object
-                $phpWord=null;	// Destroy object
-                return array('code'=> 1, 'documentPath'=>$this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));
-				// $this->result = array('fullpath'=>$file);
-
-				// return 1;   // Success
-		// 	}
-		// 	else
-		// 	{
-		// 		$this->error=$langs->transnoentities("ErrorCanNotCreateDir", $dir);
-		// 		return -1;
-		// 	}
-		// }
+		$templateProcessor=null;	// Destroy object
+    $phpWord=null;	// Destroy object
+    return array('code'=> 1, 'documentPath'=>$this->sanitizePath(DOL_DATA_ROOT.$path.'/'.$storage));
 
 		$this->error='UnknownError';
 		return -1;
+	}
+
+	private function getSociety($id) {
+		$societe = new Societe($this->db);
+		$societe->fetch($id);
+		return $societe;
+	}
+
+	private function getProposal($id) {
+		$propal = new Propal($this->db);
+		$propal->fetch($id);
+		return $propal;
+	}
+
+	private function getAffaire($id) {
+		$affaire = new Project($this->db);
+		$affaire->fetch($id);
+		return $affaire;
+	}
+
+	private function getInvoice($id) {
+		$invoice = new Facture($this->db);
+		$invoice->fetch($id);
+		return $invoice;
+	}
+
+	private function getBankAccount($id) {
+		$account = new Account($this->db);
+		$account->fetch($id);
+		return $account;
 	}
 
 	public function sanitizePath($str) {
