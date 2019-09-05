@@ -65,7 +65,7 @@ class AvoloiSetup extends DolibarrApi
      * 
      * @throws 	RestException
      *
-     * @url	GET /accounting-infos
+     * @url	GET /
      */
     public function get()
     {
