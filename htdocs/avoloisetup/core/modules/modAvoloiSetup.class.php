@@ -19,11 +19,11 @@
  */
 
 /**
- * 	\defgroup   avoloievent     Module MyModule
+ * 	\defgroup   avoloisetup     Module MyModule
  *  \brief      MyModule module descriptor.
  *
- *  \file       htdocs/avoloievent/core/modules/modAvoloiEvent.class.php
- *  \ingroup    avoloievent
+ *  \file       htdocs/avoloisetup/core/modules/modAvoloiSetup.class.php
+ *  \ingroup    avoloisetup
  *  \brief      Description and activation file for module MyModule
  */
 include_once DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php';
@@ -31,7 +31,7 @@ include_once DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php';
 /**
  *  Description and activation class for module MyModule
  */
-class modAvoloiEvent extends DolibarrModules
+class modAvoloiSetup extends DolibarrModules
 {
     /**
      * Constructor. Define names, constants, directories, boxes, permissions
@@ -45,9 +45,9 @@ class modAvoloiEvent extends DolibarrModules
 
         // Id for module (must be unique).
         // Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
-        $this->numero = 565464; // TODO Go on page https://wiki.dolibarr.org/index.php/List_of_modules_id to reserve an id number for your module
+        $this->numero = 565465; // TODO Go on page https://wiki.dolibarr.org/index.php/List_of_modules_id to reserve an id number for your module
         // Key text used to identify module (for permissions, menus, etc...)
-        $this->rights_class = 'avoloievent';
+        $this->rights_class = 'avoloisetup';
         // Family can be 'base' (core modules),'crm','financial','hr','projects','products','ecm','technic' (transverse modules),'interface' (link with external tools),'other','...'
         // It is used to group modules by family in module setup page
         $this->family = "other";
@@ -58,9 +58,9 @@ class modAvoloiEvent extends DolibarrModules
         // Module label (no space allowed), used if translation string 'ModuleMyModuleName' not found (MyModule is name of module).
         $this->name = preg_replace('/^mod/i', '', get_class($this));
         // Module description, used if translation string 'ModuleMyModuleDesc' not found (MyModule is name of module).
-        $this->description = "Dolibarr module to create Avoloi agenda events";
+        $this->description = "Dolibarr module to handle Avoloi setup informations";
         // Used only if file README.md and README-LL.md not found.
-        $this->descriptionlong = "Create Avoloi agenda event";
+        $this->descriptionlong = "Handle Avoloi setup informations";
         $this->editor_name = 'Icysoft SAS';
         $this->editor_url = 'http://www.icysoft.fr';
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
@@ -117,7 +117,7 @@ class modAvoloiEvent extends DolibarrModules
         $this->depends = array();
         $this->requiredby = array();	// List of module class names as string to disable if this one is disabled. Example: array('modModuleToDisable1', ...)
         $this->conflictwith = array();	// List of module class names as string this module is in conflict with. Example: array('modModuleToDisable1', ...)
-        $this->langfiles = array("avoloievent@avoloievent");
+        $this->langfiles = array("avoloisetup@avoloisetup");
         $this->phpmin = array(5,5);					    // Minimum version of PHP required by module
         $this->need_dolibarr_version = array(8,0);		// Minimum version of Dolibarr required by module
         $this->warnings_activation = array();			// Warning to show when we activate module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
@@ -237,7 +237,7 @@ class modAvoloiEvent extends DolibarrModules
         // Add here entries to declare new permissions
         /* BEGIN MODULEBUILDER PERMISSIONS */
         $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
-        $this->rights[$r][1] = 'Create Avoloi event';	// Permission label
+        $this->rights[$r][1] = 'Handle Avoloi setup informations';	// Permission label
         $this->rights[$r][3] = 0;	// Permission label
         $this->rights[$r][4] = 'write';				// In php code, permission will be checked by test if ($user->rights->mymodule->level1->level2)
         $this->rights[$r][5] = '';				    // In php code, permission will be checked by test if ($user->rights->mymodule->level1->level2)

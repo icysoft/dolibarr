@@ -17,7 +17,8 @@
  */
 
 use Luracast\Restler\RestException;
-// require 'main.inc.php';
+use Luracast\Restler\Format\UploadFormat;
+
 require_once DOL_DOCUMENT_ROOT.'/main.inc.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
@@ -28,26 +29,21 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 
-
-
 /**
- * \file    htdocs/modulebuilder/template/class/api_mymodule.class.php
- * \ingroup mymodule
- * \brief   File for API management of myobject.
- */
-
-/**
- * API class for mymodule myobject
+ * API class for receive files
  *
  * @access protected
- * @class  DolibarrApiAccess {@requires user,external}
+ * @class AvoloiSetup {@requires user,external}
  */
-class Avoloisetup extends DolibarrApi
+class AvoloiSetup extends DolibarrApi
 {
-    /**
-     * @var AvoloiSetup $myobject {@type MyObject}
-     */
-    public $avoloi_setup;
+
+	/**
+	 * @var array   $DOCUMENT_FIELDS     Mandatory fields, checked when create and update object
+	 */
+	static $DOCUMENT_FIELDS = array(
+		'modulepart'
+	);
 
     /**
      * Constructor
@@ -58,15 +54,18 @@ class Avoloisetup extends DolibarrApi
         $this->db = $db;
     }
 
+    // public functio
+
     /**
      * Get properties of an avoloi_setup object
      *
      * Return an array with avoloi_setup informations
      *
      * @return 	array|mixed data without useless information
-     *
-     * @url	GET /
+     * 
      * @throws 	RestException
+     *
+     * @url	GET /accounting-infos
      */
     public function get()
     {
