@@ -475,7 +475,7 @@ class Documents extends DolibarrApi
 	public function getDocumentsList($sortfield = '', $sortorder = '')
 	{
 		global $conf;
-		$upload_dir = '/var/www/documents/';
+		$upload_dir = '/var/www/documents/ecm';
 
 		$filearray = dol_dir_list($upload_dir, "all", 1, '', '(\.meta|_preview.*\.png)$', $sortfield, (strtolower($sortorder)=='desc'?SORT_DESC:SORT_ASC), 1, 1);
 
