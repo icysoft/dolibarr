@@ -208,6 +208,13 @@ class docx_generator extends ModeleThirdPartyDoc
 			// 	break;
 			case 'proposal':
 				$object = $this->getProposal($idType);
+
+				if ($object->array_options && $object->array_options['options_multitiers']) {
+					$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
+				}
+				foreach($object->array_options['options_multitiers'] as $tiers) {
+					$societe = $this->getSociety($tiers->idTiers);
+				}
 				break;
 			case 'project':
 				$object = $this->getAffaire($idType);
@@ -247,8 +254,10 @@ class docx_generator extends ModeleThirdPartyDoc
 			if ($affaire->array_options && $affaire->array_options['options_multitiers']) {
 				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
 			}
-			foreach($affaire->array_options['options_multitiers'] as $tiers) {
-				$tiers->detail = $this->getSociety($tiers->idTiers);
+			if ($affaire->array_options['options_multitiers'] && is_array($affaire->array_options['options_multitiers'])) {
+				foreach($affaire->array_options['options_multitiers'] as $tiers) {
+					$tiers->detail = $this->getSociety($tiers->idTiers);
+				}
 			}
 		}
 
