@@ -196,7 +196,7 @@ class AvoloiEvent extends DolibarrApi
 		// Formatage des date et heurs pour les notifications push
 		$concat = $this->concatDateHour($event->datep);
 		// Envoi de la notification push
-		$this->sendNotification($concat['date'], $concat['hour']);
+		$this->sendNotification($concat['date'], $concat['hour'], $eventcreated);
 
 		// Constitution de la réponse
 		$rtd = array();
@@ -279,7 +279,7 @@ class AvoloiEvent extends DolibarrApi
 		// Formatage des date et heurs pour les notifications push
 		$concat = $this->concatDateHour($event->datep);
 		// Envoi de la notification push
-		$this->sendNotification($concat['date'], $concat['hour']);
+		$this->sendNotification($concat['date'], $concat['hour'], $even->id);
 
 		return "Succesfully updated";
 	}
@@ -492,7 +492,7 @@ class AvoloiEvent extends DolibarrApi
 
 	// // // // //	PRIVATE METHODES	// // // // //
 
-	private function sendNotification($date, $hour) {
+	private function sendNotification($date, $hour, $eventId) {
 		global $conf, $langs, $user;
 
 		dol_include_once('/core/lib/admin.lib.php');
@@ -510,10 +510,11 @@ class AvoloiEvent extends DolibarrApi
 		$data = array(
 			"token" => $tokensArray,
 			"date" => $date,
-			"hour" => $hour
+			"hour" => $hour,
+			"eventId" => $eventId
 		);
 		$dataString = json_encode($data);
-		$ch = curl_init($urlPush);                                                                     
+		$ch = curl_init($urlPush);                                                                    
 
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);                                                                  
