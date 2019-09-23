@@ -363,4 +363,84 @@ class AvoloiSetup extends DolibarrApi
 
         return $list;
     }
+
+
+    /**
+     * Get properties of an accounting_setup object
+     *
+     * Return an array with accounting_setup informations
+     *
+     * @return 	array|mixed data without useless information
+     *
+     * @url	GET /canCreateInvoices
+     * @throws 	RestException
+     */
+    public function canCreateInvoices() {
+        // Récupération des différentes valeurs à vérifier
+        $companysociete_type = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE', 1);
+        $companyformejuridique = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_FORME_JURIDIQUE', 1);
+        $companyname = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM', 1);
+        $companyname_lettres = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM_LETTRES', 1);
+        $companyname_actes = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM_ACTES', 1);
+        $companycode_contact = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', 1);
+        $companyprofession = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', 1);
+        // $companytype_profil = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', 1);
+        $companyemail = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_MAIL', 1);
+        $companyphone_fix = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TEL_FIX', 1);
+        $companyphone_mobile = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TEL_MOBILE', 1);
+        $companyaddress = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ADDRESS', 1);
+        $companyzip = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ZIP', 1);
+        $companytown = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TOWN', 1);
+        $companycountry_coordonnees = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_COUNTRY_COORDONNEES', 1);
+        $companyid_country_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', 1);
+        $companyvta_liable = dolibarr_get_const($this->db, 'FACTURE_TVAOPTION', 1);
+        $companycode_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_CODE_RCS', 1);
+        $companyville_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_VILLE_RCS', 1);
+        $companytva_intracommunautaire = dolibarr_get_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', 1);
+        $companysiren = dolibarr_get_const($this->db, 'MAIN_INFO_SIREN', 1);
+        $companysiret = dolibarr_get_const($this->db, 'MAIN_INFO_SIRET', 1);
+        $companyape = dolibarr_get_const($this->db, 'MAIN_INFO_APE', 1);
+        $companyident_reg_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_REG_COMMERCE', 1);
+        $companycapital = dolibarr_get_const($this->db, 'MAIN_INFO_CAPITAL', 1);
+        $companycnbe = dolibarr_get_const($this->db, 'MAIN_INFO_CNBE', 1);
+        $companycarpa = dolibarr_get_const($this->db, 'MAIN_INFO_CARPA', 1);
+
+        // Vérification de l'existence d'un compte bancaire
+		$sql = "SELECT *";
+		$sql .= " FROM ".MAIN_DB_PREFIX."bank_account as b";
+
+        $result = $this->db->query($sql);
+
+        if (!$result->num_rows || $result->num_rows <= 0
+            || (!$companysociete_type || $companysociete_type === '')
+            || (!$companyformejuridique || $companyformejuridique === '')
+            || (!$companyname || $companyname === '')
+            || (!$companyname_lettres || $companyname_lettres === '')
+            || (!$companyname_actes || $companyname_actes === '')
+            || (!$companycode_contact || $companycode_contact === '')
+            || (!$companyprofession || $companyprofession === '')
+            || (!$companyemail || $companyemail === '')
+            || (!$companyphone_fix || $companyphone_fix === '')
+            || (!$companyphone_mobile || $companyphone_mobile === '')
+            || (!$companyaddress || $companyaddress === '')
+            || (!$companyzip || $companyzip === '')
+            || (!$companytown || $companytown === '')
+            || (!$companycountry_coordonnees || $companycountry_coordonnees === '')
+            || (!$companyid_country_commerce || $companyid_country_commerce === '')
+            || (!$companyvta_liable || $companyvta_liable === '')
+            || (!$companycode_rcs || $companycode_rcs === '')
+            || (!$companyville_rcs || $companyville_rcs === '')
+            || (!$companytva_intracommunautaire || $companytva_intracommunautaire === '')
+            || (!$companysiren || $companysiren === '')
+            || (!$companysiret || $companysiret === '')
+            || (!$companyape || $companyape === '')
+            || (!$companyident_reg_commerce || $companyident_reg_commerce === '')
+            || (!$companycapital || $companycapital === '')
+            || (!$companycnbe || $companycnbe === '')
+            || (!$companycarpa || $companycarpa === '')) {
+                return false;
+        } else {
+            return true;
+        }
+    }
 }
