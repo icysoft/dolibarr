@@ -149,7 +149,7 @@ class AvoloiEvent extends DolibarrApi
 
 			$sql = "SELECT *";
 			$sql .= " FROM ".MAIN_DB_PREFIX."projet as p";
-			$sql .= " WHERE p.ref = \"".$affair['ref']."\"";
+			$sql .= " WHERE p.ref = \"".$affair['refs']."\"";
 
 			$result = $this->db->query($sql);
 			$checkaffair = $this->db->fetch_object($result);
@@ -159,7 +159,7 @@ class AvoloiEvent extends DolibarrApi
 				$projet->title = $affair['title'];
 				$projet->description = $affair['description'];
 				$projet->socid = $socid;
-				$projet->ref = $affair['ref'];
+				$projet->ref = $affair['refs'];
 				$projet->statut = $affair['statut'];
 				$projet->date_start = $affair['date_start'];
 				$projet->date_end = $affair['date_end'];
