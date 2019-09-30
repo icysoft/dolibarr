@@ -181,7 +181,7 @@ class AvoloiEvent extends DolibarrApi
 		// Création de l'eventagenda
 		$event = new ActionComm($this->db);
 
-		$event->socid = $affairid;
+		$event->fk_project = $affairid;
 		$event->userownerid = $agendaevent['userownerid'];
 		$event->type_id = $agendaevent['type_id'];
 		$event->datep = $agendaevent['datep'];
@@ -190,6 +190,7 @@ class AvoloiEvent extends DolibarrApi
 		$event->note = $agendaevent['note'];
 		$event->userdoneid = $agendaevent['userdoneid'];
 		$event->contactid = $socid;
+		$event->socid = $socid;
 
 		$eventcreated = $event->create($user);
 
