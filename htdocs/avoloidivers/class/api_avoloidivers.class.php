@@ -66,7 +66,7 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchtiers
 	 */
-	public function searchtiers($searched) {
+	public function searchtiers($searched, $page = "-1", $limit = "-1") {
 		global $conf, $langs, $user;
 
 		// Find contacts
@@ -77,13 +77,10 @@ class AvoloiDivers extends DolibarrApi
 
 		$rtdArr = [];
 
-		// foreach ($societies as $test) {
-		// 	print $test->array_options["options_is_society"]."<br>";
-		// }
-
 		foreach ($contacts as $c) {
 			$contact = array();
 			$contact["is_individual"] = $this->isIndividual($c->socid);
+			$contact["is_contact"] = true;
 			$contact["contact_firstname"] = $c->firstname;
 			$contact["contact_lastname"] = $c->lastname;
 			$contact["contact_firstname"] = $c->firstname;
@@ -95,7 +92,8 @@ class AvoloiDivers extends DolibarrApi
 		
 		foreach ($societies as $s) {
 			$society = array();
-			$society["is_individual"] = false;
+			$society["is_individual"] = $this->isIndividual($s->id);
+			$society["is_contact"] = false;
 			$society["contact_firstname"] = null;
 			$society["contact_lastname"] = null;
 			$society["contact_firstname"] = null;
@@ -105,35 +103,39 @@ class AvoloiDivers extends DolibarrApi
 			$rtdArr[] = $society;
 		}
 
-		// // Retirer les doublons
-		// $indexArr = [];
-		// foreach ($rtdArr as $key => $ra) {
-		// 	if ($ra["is_society"]) {
-		// 		foreach ($rtdArr as $raBis) {
-		// 			if (!$raBis["is_society"]) {
-		// 				if ($ra["society_name"] === $raBis["contact_firstname"]." ".$raBis["contact_lastname"]) {
-		// 					$indexArr[] = $key;
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
+		// Retirer les doublons
+		$tmp = array_filter($rtdArr, function ($t) {
+			if ($t["is_individual"] && !$t["is_contact"]) {
+				return false;
+			}
+			return true;
+		});
+		$rtdArr = [];
+		foreach ($tmp as $t) {
+			$rtdArr[] = $t;
+		}
 
-		// foreach ($indexArr ) {}
+		// Pagination
+		if ($page !== -1 && $limit !== -1) {
+			$tmppage = (int) $page;
+			$tmplimit = (int) $limit;
+			$tmp = array_slice($rtdArr, $tmppage, $tmplimit);			
 
-		// TODO Pagination
+			$rtdArr = [];
+			foreach ($tmp as $t) {
+				$rtdArr[] = $t;
+			}
+		}
 
-		$rtdArr["length"] = count($rtdArr);
 		return $rtdArr;
-
 	}
 
 	private function isIndividual($socid) {
 		$society = new Societe($this->db);
 		$society->fetch($socid);
-		$society = $this->_cleanObjectDatas($societies);
+		$society = $this->_cleanObjectDatas($society);
 
-		return $society->array_options["options_is_society"] === 1 ? false : true;
+		return $society->array_options["options_is_society"] === '1' ? false : true;
 	}
 
 	private function getContacts($value) {
