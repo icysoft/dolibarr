@@ -41,6 +41,10 @@ class AvoloiDivers extends DolibarrApi
 		'modulepart'
 	);
 
+	public $clientFilter = "-1";
+	public $prospectFilter = "-1";
+	public $tiersFilter = "-1";
+
 	/**
 	 * Constructor
 	 */
@@ -66,8 +70,11 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchtiers
 	 */
-	public function searchtiers($searched, $page = "-1", $limit = "-1") {
+	public function searchtiers($searched, $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1") {
 		global $conf, $langs, $user;
+		$this->clientFilter = $clientFilter;
+		$this->prospectFilter = $prospectFilter;
+		$this->tiersFilter = $tiersFilter;
 
 		// Find contacts
 		$contacts = $this->getContacts($searched);
@@ -103,6 +110,15 @@ class AvoloiDivers extends DolibarrApi
 			$rtdArr[] = $society;
 		}
 
+		// Filtrer sur le(s) type(s) de tiers (client, propect, tiers)
+		$tmp = array_filter($rtdArr, function ($ra) {
+			return $this->typeTiersFilter($ra, $this->clientFilter, $this->prospectFilter, $this->tiersFilter);
+		});
+		$rtdArr = [];
+		foreach ($tmp as $t) {
+			$rtdArr[] = $t;
+		}
+
 		// Retirer les doublons
 		$tmp = array_filter($rtdArr, function ($t) {
 			if ($t["is_individual"] && !$t["is_contact"]) {
@@ -119,7 +135,7 @@ class AvoloiDivers extends DolibarrApi
 		if ($page !== -1 && $limit !== -1) {
 			$tmppage = (int) $page;
 			$tmplimit = (int) $limit;
-			$tmp = array_slice($rtdArr, $tmppage, $tmplimit);			
+			$tmp = array_slice($rtdArr, $tmppage * $tmplimit, $tmplimit);
 
 			$rtdArr = [];
 			foreach ($tmp as $t) {
@@ -136,6 +152,21 @@ class AvoloiDivers extends DolibarrApi
 		$society = $this->_cleanObjectDatas($society);
 
 		return $society->array_options["options_is_society"] === '1' ? false : true;
+	}
+
+	private function typeTiersFilter($soc, $clientFilter, $prospectFilter, $tiersFilter) {
+		$society = new Societe($this->db);
+		$society->fetch($soc["society_id"]);
+		$society = $this->_cleanObjectDatas($society);
+
+		if (($clientFilter === -1 && $prospectFilter === -1 && $tiersFilter === -1)
+				|| ($clientFilter !== -1 && $society->client === "1")
+				|| ($prospectFilter !== -1 && $society->client === "2")
+				|| ($tiersFilter !== -1 && $society->client === "0")) {
+			return true;
+		} else {
+			return false;;
+		}
 	}
 
 	private function getContacts($value) {
