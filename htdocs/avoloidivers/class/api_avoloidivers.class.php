@@ -70,7 +70,7 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchtiers
 	 */
-	public function searchtiers($searched, $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1") {
+	public function searchtiers($searched = '', $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1") {
 		global $conf, $langs, $user;
 		$this->clientFilter = $clientFilter;
 		$this->prospectFilter = $prospectFilter;
@@ -88,13 +88,13 @@ class AvoloiDivers extends DolibarrApi
 			$contact = array();
 			$contact["is_individual"] = $this->isIndividual($c->socid);
 			$contact["is_contact"] = true;
+			$contact["is_primary_contact"] = $this->isPrimaryContact($c);
 			$contact["contact_firstname"] = $c->firstname;
 			$contact["contact_lastname"] = $c->lastname;
 			$contact["contact_firstname"] = $c->firstname;
 			$contact["contact_id"] = $c->id;
 			$contact["society_id"] = $c->socid;
 			$contact["society_name"] = $c->socname;
-
 			$contact['contact_object'] = $c;
 			$contact['society_object'] = $this->getSociety($c->socid);
 
@@ -105,13 +105,13 @@ class AvoloiDivers extends DolibarrApi
 			$society = array();
 			$society["is_individual"] = $this->isIndividual($s->id);
 			$society["is_contact"] = false;
+			$contact["is_primary_contact"] = false;
 			$society["contact_firstname"] = null;
 			$society["contact_lastname"] = null;
 			$society["contact_firstname"] = null;
 			$society["contact_id"] = null;
 			$society["society_id"] = $s->id;
 			$society["society_name"] = $s->name;
-
 			$society['contact_object'] = null;
 			$society['society_object'] = $this->getSociety($s->id);
 
@@ -168,6 +168,14 @@ class AvoloiDivers extends DolibarrApi
 		return $this->_cleanObjectDatas($society);
 	}
 
+	private function isPrimaryContact($contact) {
+		if ($contact->socname === $contact->firstname." ".$contact->lastname) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	private function typeTiersFilter($soc, $clientFilter, $prospectFilter, $tiersFilter) {
 		$society = new Societe($this->db);
 		$society->fetch($soc["society_id"]);
@@ -187,7 +195,6 @@ class AvoloiDivers extends DolibarrApi
 		global $conf, $langs, $user;
 
 		$obj_ret = array();
-
 
 		$sql = "SELECT *";
 		$sql.= " FROM ".MAIN_DB_PREFIX."socpeople as c";
