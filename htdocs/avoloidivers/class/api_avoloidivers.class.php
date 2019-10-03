@@ -94,6 +94,10 @@ class AvoloiDivers extends DolibarrApi
 			$contact["contact_id"] = $c->id;
 			$contact["society_id"] = $c->socid;
 			$contact["society_name"] = $c->socname;
+
+			$contact['contact_object'] = $c;
+			$contact['society_object'] = $this->getSociety($c->socid);
+
 			$rtdArr[] = $contact;
 		}
 		
@@ -107,6 +111,10 @@ class AvoloiDivers extends DolibarrApi
 			$society["contact_id"] = null;
 			$society["society_id"] = $s->id;
 			$society["society_name"] = $s->name;
+
+			$society['contact_object'] = null;
+			$society['society_object'] = $this->getSociety($s->id);
+
 			$rtdArr[] = $society;
 		}
 
@@ -152,6 +160,12 @@ class AvoloiDivers extends DolibarrApi
 		$society = $this->_cleanObjectDatas($society);
 
 		return $society->array_options["options_is_society"] === '1' ? false : true;
+	}
+
+	private function getSociety($id) {
+		$society = new Societe($this->db);
+		$society->fetch($id);
+		return $this->_cleanObjectDatas($society);
 	}
 
 	private function typeTiersFilter($soc, $clientFilter, $prospectFilter, $tiersFilter) {
