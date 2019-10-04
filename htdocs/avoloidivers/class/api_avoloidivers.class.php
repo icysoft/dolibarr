@@ -77,13 +77,15 @@ class AvoloiDivers extends DolibarrApi
 		$this->tiersFilter = $tiersFilter;
 
 		// Find contacts
-		$contacts = $this->getContacts($searched);
+		if ($searched) {
+			$contacts = $this->getContacts($searched);
+		}
 
 		// Find societies
 		$societies = $this->getSocieties($searched);
 
 		$rtdArr = [];
-		
+
 		foreach ($societies as $s) {
 			$society = array();
 			$society["is_individual"] = $this->isIndividual($s->id);
@@ -101,30 +103,34 @@ class AvoloiDivers extends DolibarrApi
 			$rtdArr[] = $society;
 
 			// Récupération des contacts liés à chaque sociétés
-			$societyContacts = $this->getContactsOfSociety($s->id);
-			foreach ($societyContacts as $c) {
-				$contacts[] = $c;
+			if ($searched) {
+				$societyContacts = $this->getContactsOfSociety($s->id);
+				foreach ($societyContacts as $c) {
+					$contacts[] = $c;
+				}
 			}
 		}
 
 		// Filtrer les doublons sur $contacts
-		$contacts = array_unique($contacts, $c->id);
-
-		foreach ($contacts as $c) {
-			$contact = array();
-			$contact["is_individual"] = $this->isIndividual($c->socid);
-			$contact["is_contact"] = true;
-			$contact["is_primary_contact"] = $this->isPrimaryContact($c);
-			$contact["contact_firstname"] = $c->firstname;
-			$contact["contact_lastname"] = $c->lastname;
-			$contact["contact_firstname"] = $c->firstname;
-			$contact["contact_id"] = $c->id;
-			$contact["society_id"] = $c->socid;
-			$contact["society_name"] = $c->socname;
-			$contact['contact_object'] = $c;
-			$contact['society_object'] = $this->getSociety($c->socid);
-
-			$rtdArr[] = $contact;
+		if ($searched) {
+			$contacts = array_unique($contacts, $c->id);
+			
+			foreach ($contacts as $c) {
+				$contact = array();
+				$contact["is_individual"] = $this->isIndividual($c->socid);
+				$contact["is_contact"] = true;
+				$contact["is_primary_contact"] = $this->isPrimaryContact($c);
+				$contact["contact_firstname"] = $c->firstname;
+				$contact["contact_lastname"] = $c->lastname;
+				$contact["contact_firstname"] = $c->firstname;
+				$contact["contact_id"] = $c->id;
+				$contact["society_id"] = $c->socid;
+				$contact["society_name"] = $c->socname;
+				$contact['contact_object'] = $c;
+				$contact['society_object'] = $this->getSociety($c->socid);
+				
+				$rtdArr[] = $contact;
+			}
 		}
 
 		// Filtrer sur le(s) type(s) de tiers (client, propect, tiers)
@@ -137,15 +143,17 @@ class AvoloiDivers extends DolibarrApi
 		}
 
 		// Retirer les doublons
-		$tmp = array_filter($rtdArr, function ($t) {
-			if (($t["is_individual"] && !$t["is_contact"]) || (!$t["is_individual"] && !$t["is_contact"])) {
-				return false;
+		if ($searched) {
+			$tmp = array_filter($rtdArr, function ($t) {
+				if (($t["is_individual"] && !$t["is_contact"]) || (!$t["is_individual"] && !$t["is_contact"])) {
+					return false;
+				}
+				return true;
+			});
+			$rtdArr = [];
+			foreach ($tmp as $t) {
+				$rtdArr[] = $t;
 			}
-			return true;
-		});
-		$rtdArr = [];
-		foreach ($tmp as $t) {
-			$rtdArr[] = $t;
 		}
 
 		// Pagination
