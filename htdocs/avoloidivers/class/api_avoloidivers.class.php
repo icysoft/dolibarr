@@ -83,6 +83,32 @@ class AvoloiDivers extends DolibarrApi
 		$societies = $this->getSocieties($searched);
 
 		$rtdArr = [];
+		
+		foreach ($societies as $s) {
+			$society = array();
+			$society["is_individual"] = $this->isIndividual($s->id);
+			$society["is_contact"] = false;
+			$contact["is_primary_contact"] = false;
+			$society["contact_firstname"] = null;
+			$society["contact_lastname"] = null;
+			$society["contact_firstname"] = null;
+			$society["contact_id"] = null;
+			$society["society_id"] = $s->id;
+			$society["society_name"] = $s->name;
+			$society['contact_object'] = null;
+			$society['society_object'] = $this->getSociety($s->id);
+
+			$rtdArr[] = $society;
+
+			// Récupération des contacts liés à chaque sociétés
+			$societyContacts = $this->getContactsOfSociety($s->id);
+			foreach ($societyContacts as $c) {
+				$contacts[] = $c;
+			}
+		}
+
+		// Filtrer les doublons sur $contacts
+		$contacts = array_unique($contacts, $c->id);
 
 		foreach ($contacts as $c) {
 			$contact = array();
@@ -100,23 +126,6 @@ class AvoloiDivers extends DolibarrApi
 
 			$rtdArr[] = $contact;
 		}
-		
-		foreach ($societies as $s) {
-			$society = array();
-			$society["is_individual"] = $this->isIndividual($s->id);
-			$society["is_contact"] = false;
-			$contact["is_primary_contact"] = false;
-			$society["contact_firstname"] = null;
-			$society["contact_lastname"] = null;
-			$society["contact_firstname"] = null;
-			$society["contact_id"] = null;
-			$society["society_id"] = $s->id;
-			$society["society_name"] = $s->name;
-			$society['contact_object'] = null;
-			$society['society_object'] = $this->getSociety($s->id);
-
-			$rtdArr[] = $society;
-		}
 
 		// Filtrer sur le(s) type(s) de tiers (client, propect, tiers)
 		$tmp = array_filter($rtdArr, function ($ra) {
@@ -129,7 +138,7 @@ class AvoloiDivers extends DolibarrApi
 
 		// Retirer les doublons
 		$tmp = array_filter($rtdArr, function ($t) {
-			if ($t["is_individual"] && !$t["is_contact"]) {
+			if (($t["is_individual"] && !$t["is_contact"]) || (!$t["is_individual"] && !$t["is_contact"])) {
 				return false;
 			}
 			return true;
@@ -200,6 +209,34 @@ class AvoloiDivers extends DolibarrApi
 		$sql.= " FROM ".MAIN_DB_PREFIX."socpeople as c";
 		$sql.= " WHERE (c.lastname LIKE '%".$value."%')";
 		$sql.= " OR (c.firstname LIKE '%".$value."%')";
+
+		$resql=$this->db->query($sql);
+
+		if ($resql) {
+			$num = $this->db->num_rows($resql);
+			$min = min($num, ($limit <= 0 ? $num : $limit));
+			while ($i < $min)
+			{
+					$obj = $this->db->fetch_object($resql);
+					$contacts = new Contact($this->db);
+					if($obj->fk_soc && $contacts->fetch($obj->rowid)) {
+							$obj_ret[] = $this->_cleanObjectDatas($contacts);
+					}
+					$i++;
+			}
+		}
+
+		return $obj_ret;
+	}
+
+	private function getContactsOfSociety($socid) {
+		global $conf, $langs, $user;
+
+		$obj_ret = array();
+
+		$sql = "SELECT *";
+		$sql.= " FROM ".MAIN_DB_PREFIX."socpeople as c";
+		$sql.= " WHERE (c.fk_soc = $socid)";
 
 		$resql=$this->db->query($sql);
 
