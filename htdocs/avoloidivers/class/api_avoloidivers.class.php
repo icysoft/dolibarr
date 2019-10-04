@@ -84,37 +84,41 @@ class AvoloiDivers extends DolibarrApi
 		// Find societies
 		$societies = $this->getSocieties($searched);
 
-		$rtdArr = [];
+		$scArr = [];
+		$conArr = [];
 
 		foreach ($societies as $s) {
-			$society = array();
-			$society["is_individual"] = $this->isIndividual($s->id);
-			$society["is_contact"] = false;
-			$contact["is_primary_contact"] = false;
-			$society["contact_firstname"] = null;
-			$society["contact_lastname"] = null;
-			$society["contact_firstname"] = null;
-			$society["contact_id"] = null;
-			$society["society_id"] = $s->id;
-			$society["society_name"] = $s->name;
-			$society['contact_object'] = null;
-			$society['society_object'] = $this->getSociety($s->id);
+			$is_individual = $this->isIndividual($s->id);
+			if ($is_individual) {
+				$contactsSc = $this->getContactsOfSociety($s->id);
 
-			$rtdArr[] = $society;
-
-			// Récupération des contacts liés à chaque sociétés
-			if ($searched) {
-				$societyContacts = $this->getContactsOfSociety($s->id);
-				foreach ($societyContacts as $c) {
-					$contacts[] = $c;
+				if (count($contactsSc) > 0) {
+					foreach ($contactsSc as $c) {
+						if ($c->socname === $c->firstname." ".$c->lastname) {
+							$tmpContact = $c;
+						}
+					}
 				}
 			}
+
+			$society = array();
+			$society["is_individual"] = $is_individual;
+			$society["is_contact"] = false;
+			$contact["is_primary_contact"] = false;
+			$society["contact_firstname"] = $tmpContact && $tmpContact->firstname ? $tmpContact->firstname : null;
+			$society["contact_lastname"] = $tmpContact && $tmpContact->lastname ? $tmpContact->lastname : null;
+			$society["contact_id"] = $tmpContact && $tmpContact->id ? $tmpContact->id : null;
+			$society["society_id"] = $s->id;
+			$society["society_name"] = $s->name;
+			$society['contact_object'] = $tmpContact;
+			$society['society_object'] = $this->getSociety($s->id);
+
+			$scArr[] = $society;
 		}
 
 		// Filtrer les doublons sur $contacts
 		if ($searched) {
 			$contacts = array_unique($contacts, $c->id);
-			
 			foreach ($contacts as $c) {
 				$contact = array();
 				$contact["is_individual"] = $this->isIndividual($c->socid);
@@ -122,39 +126,46 @@ class AvoloiDivers extends DolibarrApi
 				$contact["is_primary_contact"] = $this->isPrimaryContact($c);
 				$contact["contact_firstname"] = $c->firstname;
 				$contact["contact_lastname"] = $c->lastname;
-				$contact["contact_firstname"] = $c->firstname;
 				$contact["contact_id"] = $c->id;
 				$contact["society_id"] = $c->socid;
 				$contact["society_name"] = $c->socname;
 				$contact['contact_object'] = $c;
 				$contact['society_object'] = $this->getSociety($c->socid);
 				
-				$rtdArr[] = $contact;
+				$foundDuplicateIndividual = false;
+				foreach ($scArr as $sc) {
+					if ($sc["is_individual"] && $contact["society_id"]==$sc["society_id"]) {
+						$foundDuplicateIndividual = true;
+						break;
+					}
+				}
+
+				// Si le contact n'est pas le contact d'une societé particulier on peut l'ajouter
+				if (!$foundDuplicateIndividual) {
+					$conArr[] = $contact;
+				}				
 			}
 		}
+		$rtdArr = array_merge($scArr, $conArr);
 
 		// Filtrer sur le(s) type(s) de tiers (client, propect, tiers)
-		$tmp = array_filter($rtdArr, function ($ra) {
+		$rtdArr = array_filter($rtdArr, function ($ra) {
 			return $this->typeTiersFilter($ra, $this->clientFilter, $this->prospectFilter, $this->tiersFilter);
 		});
-		$rtdArr = [];
-		foreach ($tmp as $t) {
-			$rtdArr[] = $t;
-		}
 
 		// Retirer les doublons
-		if ($searched) {
-			$tmp = array_filter($rtdArr, function ($t) {
-				if (($t["is_individual"] && !$t["is_contact"]) || (!$t["is_individual"] && !$t["is_contact"])) {
-					return false;
-				}
-				return true;
-			});
-			$rtdArr = [];
-			foreach ($tmp as $t) {
-				$rtdArr[] = $t;
-			}
-		}
+		// if ($searched) {
+		// 	$tmp = array_filter($rtdArr, function ($t) {
+		// 		if (($t["is_individual"] && !$t["is_contact"]) || (!$t["is_individual"] && !$t["is_contact"])) {
+		// 			return false;
+		// 		}
+		// 		return true;
+		// 	});
+		// 	$rtdArr = [];
+		// 	foreach ($tmp as $t) {
+		// 		$rtdArr[] = $t;
+		// 	}
+		// }
 
 		// Pagination
 		if ($page !== -1 && $limit !== -1) {
