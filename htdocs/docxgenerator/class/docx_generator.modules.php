@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
+require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
 
 
 /**
@@ -212,8 +213,10 @@ class docx_generator extends ModeleThirdPartyDoc
 				if ($object->array_options && $object->array_options['options_multitiers']) {
 					$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
 				}
-				foreach($object->array_options['options_multitiers'] as $tiers) {
-					$societe = $this->getSociety($tiers->idTiers);
+				if (is_array($object->array_options['options_multitiers'])) {
+					foreach($object->array_options['options_multitiers'] as $tiers) {
+						$societe = $this->getSociety($tiers->idTiers);
+					}
 				}
 				break;
 			case 'project':
@@ -307,8 +310,9 @@ class docx_generator extends ModeleThirdPartyDoc
 			try {
 				if (preg_match('/logo$/', $key))	// Image
 				{
-					if (file_exists($value)) $templateProcessor->setImageValue($key, $value);
-					else $templateProcessor->setValue($key, 'ErrorFileNotFound');
+					// TODO NON FONCTIONNEL !!
+					// if (file_exists($value)) $templateProcessor->setImageValue($key, $value);
+					// else $templateProcessor->setValue($key, 'ErrorFileNotFound');
 				}
 				else	// Text
 				{
@@ -336,6 +340,18 @@ class docx_generator extends ModeleThirdPartyDoc
 						else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
 					} else {
 						if (is_object($value) || is_array($value)) {
+							if ($value->array_options->options_primary_contact) {
+								// Get contact by ID
+								$contact = $this->getContact($value->array_options->options_primary_contact);
+								foreach ($contact as $keyContact => $valueContact) {
+									// Set primary contact in tiers
+									if (!is_object($valueContact) && !is_array($valueContact))
+									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_primary_contact_'.$keyContact, $valueContact);
+								}
+							}
+
+
+	
 							if ($key === 'array_options') {
 								foreach ($value as $key_array=>$value_array) {
 									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key_array, $value_array);
@@ -393,6 +409,8 @@ class docx_generator extends ModeleThirdPartyDoc
 				}
 			}
 		}
+
+		// print_r($object);
 
 		if ($object->lines) {
 			try {
@@ -592,6 +610,12 @@ class docx_generator extends ModeleThirdPartyDoc
 		$account = new Account($this->db);
 		$account->fetch($id);
 		return $account;
+	}
+
+	private function getContact($id) {
+		$contact = new Contact($this->db);
+		$contact->fetch($id);
+		return $contact;
 	}
 
 	public function sanitizePath($str) {
