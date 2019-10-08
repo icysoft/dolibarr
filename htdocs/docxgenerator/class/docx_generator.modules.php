@@ -37,6 +37,8 @@ require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
+require_once DOL_DOCUMENT_ROOT.'/avoloidivers/class/api_avoloidivers.class.php';
+require_once DOL_DOCUMENT_ROOT.'/main.inc.php';
 
 
 /**
@@ -214,8 +216,8 @@ class docx_generator extends ModeleThirdPartyDoc
 					$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
 				}
 				if (is_array($object->array_options['options_multitiers'])) {
-					foreach($object->array_options['options_multitiers'] as $tiers) {
-						$societe = $this->getSociety($tiers->idTiers);
+					foreach($object->array_options['options_multitiers'] as $tiersFromMulti) {
+						$societe = $this->getSociety($tiersFromMulti->idTiers);
 					}
 				}
 				break;
@@ -225,8 +227,8 @@ class docx_generator extends ModeleThirdPartyDoc
 				if ($object->array_options && $object->array_options['options_multitiers']) {
 					$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
 				}
-				foreach($object->array_options['options_multitiers'] as $tiers) {
-					$societe = $this->getSociety($tiers->idTiers);
+				foreach($object->array_options['options_multitiers'] as $tiersFromMulti) {
+					$societe = $this->getSociety($tiersFromMulti->idTiers);
 				}
 				break;
 		}
@@ -246,8 +248,8 @@ class docx_generator extends ModeleThirdPartyDoc
 				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
 			}
 
-			foreach($affaire->array_options['options_multitiers'] as $tiers) {
-				$tiers->detail = $this->getSociety($tiers->idTiers);
+			foreach($affaire->array_options['options_multitiers'] as $tiersAffaire) {
+				$tiersAffaire->detail = $this->getSociety($tiersAffaire->idTiers);
 			}
 		}
 
@@ -258,8 +260,8 @@ class docx_generator extends ModeleThirdPartyDoc
 				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
 			}
 			if ($affaire->array_options['options_multitiers'] && is_array($affaire->array_options['options_multitiers'])) {
-				foreach($affaire->array_options['options_multitiers'] as $tiers) {
-					$tiers->detail = $this->getSociety($tiers->idTiers);
+				foreach($affaire->array_options['options_multitiers'] as $tiersAffaire) {
+					$tiersAffaire->detail = $this->getSociety($tiersAffaire->idTiers);
 				}
 			}
 		}
@@ -329,36 +331,59 @@ class docx_generator extends ModeleThirdPartyDoc
 		if ($object->array_options && $object->array_options['options_multitiers']) {
 			$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
 
-			foreach($object->array_options['options_multitiers'] as $tiers) {
-				$keys = get_object_vars($tiers->detail);
-				$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_type', $tiers->typeTiers);
+			foreach($object->array_options['options_multitiers'] as $tiersFromMulti) {
+				// Récupération du tiers grace à son ID
+				$avoDivers = new AvoloiDivers($this->db);
+				$keys = $avoDivers->getSociety($tiersFromMulti->idTiers);
+				$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_type', $tiersFromMulti->typeTiers);
 
 				foreach($keys as $key=>$value) {
 					if (preg_match('/logo$/', $key))	// Image
 					{
-						if (file_exists($value)) $templateProcessor->setImageValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
-						else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
+						if (file_exists($value)) $templateProcessor->setImageValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key, $value);
+						else $templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key, 'ErrorFileNotFound');
 					} else {
 						if (is_object($value) || is_array($value)) {
-							if ($value->array_options->options_primary_contact) {
-								// Get contact by ID
-								$contact = $this->getContact($value->array_options->options_primary_contact);
-								foreach ($contact as $keyContact => $valueContact) {
-									// Set primary contact in tiers
-									if (!is_object($valueContact) && !is_array($valueContact))
-									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_primary_contact_'.$keyContact, $valueContact);
-								}
-							}
-
-
-	
 							if ($key === 'array_options') {
 								foreach ($value as $key_array=>$value_array) {
-									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key_array, $value_array);
+									$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key_array, $value_array);
+								}
+
+								// Pour variabiliser le contact principal
+								if ($value["options_primary_contact"]) {
+									// Get contact by ID
+									$contact = $this->getContact($value["options_primary_contact"]);
+									foreach ($contact as $keyContact => $valueContact) {
+										// Set primary contact in tiers
+										if (!is_object($valueContact) && !is_array($valueContact))
+										$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_primary_contact_'.$keyContact, $valueContact);
+									}
+								}
+
+								// Pour variabiliser les autres contacts
+								$contact = new AvoloiDivers($this->db);
+								$contacts = $contact->getContactsOfSociety($tiersFromMulti->idTiers);
+								if (is_array($contacts) && count($contacts) > 1) {
+
+									// Retirer le primary_contact de la liste de contacts
+									$tmpContacts = [];
+									foreach ($contacts as $valueContact) {
+										if ($valueContact->id !== $value["options_primary_contact"]) {
+											$tmpContacts[] = $valueContact;
+										}
+									}
+									$contacts = [];
+									$contacts = $tmpContacts;
+
+									foreach ($contacts as $keyc => $c) {
+										foreach ($c as $keycbis => $valuecontactbis) {
+											$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_contacts_'.($keyc + 1).'_'.$keycbis, $valuecontactbis);
+										}
+									}
 								}
 							}
 						} else {
-							$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+							$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key, $value);
 						}
 					}
 				}
@@ -366,25 +391,61 @@ class docx_generator extends ModeleThirdPartyDoc
 		}
 
 		if ($affaire->array_options && $affaire->array_options['options_multitiers']) {
+			$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
 
-			foreach($affaire->array_options['options_multitiers'] as $tiers) {
-				$keys = get_object_vars($tiers->detail);
-				$templateProcessor->setValue($tiers->typeTiers.$tiers->postype.'_type', $tiers->typeTiers);
+			foreach($affaire->array_options['options_multitiers'] as $tiersFromMulti) {
+				// Récupération du tiers grace à son ID
+				$avoDivers = new AvoloiDivers($this->db);
+				$keys = $avoDivers->getSociety($tiersFromMulti->idTiers);
+				$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_type', $tiersFromMulti->typeTiers);
 
 				foreach($keys as $key=>$value) {
 					if (preg_match('/logo$/', $key))	// Image
 					{
-						if (file_exists($value)) $templateProcessor->setImageValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
-						else $templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, 'ErrorFileNotFound');
+						if (file_exists($value)) $templateProcessor->setImageValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key, $value);
+						else $templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key, 'ErrorFileNotFound');
 					} else {
 						if (is_object($value) || is_array($value)) {
-							foreach ($value as $key_array=>$value_array) {
-								if ($key === 'array_options') {
-									$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key_array, $value_array);
+							if ($key === 'array_options') {
+								foreach ($value as $key_array=>$value_array) {
+									$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key_array, $value_array);
+								}
+
+								// Pour variabiliser le contact principal
+								if ($value["options_primary_contact"]) {
+									// Get contact by ID
+									$contact = $this->getContact($value["options_primary_contact"]);
+									foreach ($contact as $keyContact => $valueContact) {
+										// Set primary contact in tiers
+										if (!is_object($valueContact) && !is_array($valueContact))
+										$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_primary_contact_'.$keyContact, $valueContact);
+									}
+								}
+
+								// Pour variabiliser les autres contacts
+								$contact = new AvoloiDivers($this->db);
+								$contacts = $contact->getContactsOfSociety($tiersFromMulti->idTiers);
+								if (is_array($contacts) && count($contacts) > 1) {
+
+									// Retirer le primary_contact de la liste de contacts
+									$tmpContacts = [];
+									foreach ($contacts as $valueContact) {
+										if ($valueContact->id !== $value["options_primary_contact"]) {
+											$tmpContacts[] = $valueContact;
+										}
+									}
+									$contacts = [];
+									$contacts = $tmpContacts;
+
+									foreach ($contacts as $keyc => $c) {
+										foreach ($c as $keycbis => $valuecontactbis) {
+											$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_contacts_'.($keyc + 1).'_'.$keycbis, $valuecontactbis);
+										}
+									}
 								}
 							}
 						} else {
-							$templateProcessor->setValue($tiers->typeTiers.$tiers->posType.'_'.$key, $value);
+							$templateProcessor->setValue($tiersFromMulti->typeTiers.$tiersFromMulti->posType.'_'.$key, $value);
 						}
 					}
 				}
@@ -467,6 +528,51 @@ class docx_generator extends ModeleThirdPartyDoc
 		$barreau = dolibarr_get_const($this->db, 'BARREAU_LABEL', 1);
 		if ($barreau) {
 			$templateProcessor->setValue('BARREAU_label', $barreau);
+		}
+
+		// Set society
+		if ($tiers) {
+			foreach ($tiers as $tkey => $tvalue) {
+				if (!is_object($tvalue) && !is_array($tvalue)) {
+					$templateProcessor->setValue('tiers_'.$tkey, $tvalue);
+				}
+			}
+
+			if ($tiers->array_options) {
+
+				// Pour variabiliser le contact principal
+				if ($tiers->array_options["options_primary_contact"]) {
+					// Get contact by ID
+					$contact = $this->getContact($tiers->array_options["options_primary_contact"]);
+					foreach ($contact as $keyContact => $valueContact) {
+						// Set primary contact in tiers
+						if (!is_object($valueContact) && !is_array($valueContact))
+						$templateProcessor->setValue('tiers_primary_contact_'.$keyContact, $valueContact);
+					}
+				}
+
+				// Pour variabiliser les autres contacts
+				$contact = new AvoloiDivers($this->db);
+				$contacts = $contact->getContactsOfSociety($tiers->id);
+				if (is_array($contacts) && count($contacts) > 1) {
+
+					// Retirer le primary_contact de la liste de contacts
+					$tmpContacts = [];
+					foreach ($contacts as $valueContact) {
+						if ($valueContact->id !== $tiers->array_options["options_primary_contact"]) {
+							$tmpContacts[] = $valueContact;
+						}
+					}
+					$contacts = [];
+					$contacts = $tmpContacts;
+
+					foreach ($contacts as $keyc => $c) {
+						foreach ($c as $keycbis => $valuecontactbis) {
+							$templateProcessor->setValue('tiers_contacts_'.($keyc + 1).'_'.$keycbis, $valuecontactbis);
+						}
+					}
+				}
+			}
 		}
 
 		// Call the beforeODTSave hook

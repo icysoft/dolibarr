@@ -205,7 +205,7 @@ class AvoloiDivers extends DolibarrApi
 		return $society->array_options["options_is_society"] === '1' ? false : true;
 	}
 
-	private function getSociety($id) {
+	public function getSociety($id) {
 		$society = new Societe($this->db);
 		$society->fetch($id);
 		return $this->_cleanObjectDatas($society);
@@ -261,7 +261,7 @@ class AvoloiDivers extends DolibarrApi
 		return $obj_ret;
 	}
 
-	private function getContactsOfSociety($socid) {
+	public function getContactsOfSociety($socid) {
 		global $conf, $langs, $user;
 
 		$obj_ret = array();
