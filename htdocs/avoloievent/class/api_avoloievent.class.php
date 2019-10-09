@@ -25,6 +25,7 @@ require_once DOL_DOCUMENT_ROOT.'/main.inc.php';
 require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
 
 /**
  * API class for receive files
@@ -74,6 +75,7 @@ class AvoloiEvent extends DolibarrApi
 
 		$agendaevent = $avoloi_event->agendaevent;
 		$tiers = $avoloi_event->tiers;
+		$contact = $avoloi_event->contact;
 		$affair = $avoloi_event->affair;
 
 		// Vérification d'un eventagenda envoyé en paramètre
@@ -115,6 +117,16 @@ class AvoloiEvent extends DolibarrApi
 
 		if (is_null($checktiers)) {
 			// Si le tiers n'existe pas, on le créé et on récupère son id
+			if (!$tiers["is_society"]) {
+				$tiers["name"] = $contact["firstname"]." ".$contact["lastname"];
+				$tiers["address"] = $contact['address'];
+				$tiers["zip"] = $contact["zip"];
+				$tiers["town"] = $contact['town'];
+				$tiers["email"] = $contact['email'];
+				$tiers["phone"] = $contact['phone_perso'];
+				$tiers["fax"] = $contact['phone_mobile'];
+			}
+
 			$societe->name = $tiers['name'];
 			$societe->name_alias = $tiers['name_alias'];
 			$societe->client = $tiers['client'];
@@ -137,8 +149,35 @@ class AvoloiEvent extends DolibarrApi
 			$societe->fax = $tiers['mobile'];
 			$societe->country_id = $tiers['country_id'] ? $tiers['country_id'] : 1;
 			$societe->array_options = $tiers['array_options'];
+
+			if ($tiers["is_society"]) {
+				$societe->array_options["options_is_society"] = '1';
+			} else {
+				$societe->array_options["options_is_society"] = '0';
+			}
 			
 			$socid = $societe->create($user);
+
+			if ($contact && $socid) {
+				$contactTmp = new Contact($this->db);
+
+				$contactTmp->firstname = $contact['firstname'];
+				$contactTmp->lastname = $contact['lastname'];
+				$contactTmp->email = $contact['email'];
+				$contactTmp->phone_perso = $contact['phone_perso'];
+				$contactTmp->phone_mobile = $contact['phone_mobile'];
+				$contactTmp->address = $contact['address'];
+				$contactTmp->zip = $contact['zip'];
+				$contactTmp->town = $contact['town'];
+				$contactTmp->socid = $socid;
+
+				$contactId = $contactTmp->create($user);
+
+				if ($contactId) {
+					$societe->array_options["options_primary_contact"] = $contactId;
+					$societe->update($socid);
+				}
+			}
 		} else {
 			// Si le tiers existe on récupère son id
 			$socid = $checktiers->rowid;
@@ -166,6 +205,7 @@ class AvoloiEvent extends DolibarrApi
 				$projet->budget_amount = $affair['budget_amount'];
 				$projet->opp_percent = $affair['opp_percent'];
 				$projet->opp_status = $affair['opp_status'];
+				$projet->array_options["options_is_inclusion"] = $affair['is_inclusion'] ? '1' : '0';
 
 				$affairid = $projet->create($user);
 			} else {
@@ -189,6 +229,7 @@ class AvoloiEvent extends DolibarrApi
 		$event->label = $agendaevent['label'];
 		$event->note = $agendaevent['note'];
 		$event->userdoneid = $agendaevent['userdoneid'];
+		$event->array_options["options_is_inclusion"] = $agendaevent['is_inclusion'] ? '1' : '0';
 		$event->contactid = $socid;
 		$event->socid = $socid;
 
