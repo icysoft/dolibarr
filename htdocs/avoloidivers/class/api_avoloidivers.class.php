@@ -24,6 +24,7 @@ use Luracast\Restler\Format\UploadFormat;
 require_once DOL_DOCUMENT_ROOT.'/main.inc.php';
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
+require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 
 /**
  * API class for receive files
@@ -195,6 +196,52 @@ class AvoloiDivers extends DolibarrApi
 		}
 
 		return $rtdArr;
+	}
+
+	/**
+	 * Search a propal by it's name
+	 * 
+	 * @param   string   $searched
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /searchpropalsbyname
+	 */
+	public function searchpropalsbyname($searched) {
+		global $conf, $langs, $user;
+
+		$obj_ret = array();
+
+		// TODO Récupérer IDs des propals dans llx_propal_extrafields sur title
+		$sql = "SELECT fk_object";
+		$sql.= " FROM ".MAIN_DB_PREFIX."propal_extrafields as p";
+		$sql.= " WHERE p.titre LIKE '%".$searched."%'";
+
+		$resql=$this->db->query($sql);
+
+		// TODO Récupérer les propals avec les IDs récupérés précédement
+		if ($resql) {
+			$num = $this->db->num_rows($resql);
+			$min = min($num, ($limit <= 0 ? $num : $limit));
+			while ($i < $min)
+			{
+					$obj = $this->db->fetch_object($resql);
+					$propals = new Propal($this->db);
+					if($propals->fetch($obj->fk_object)) {
+							$obj_ret[] = $this->_cleanObjectDatas($propals);
+					}
+					$i++;
+			}
+		}
+
+		// TODO Retourner le résultat
+		return $obj_ret;
 	}
 
 	private function isIndividual($socid) {
