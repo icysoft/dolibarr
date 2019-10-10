@@ -247,6 +247,9 @@ class AvoloiEvent extends DolibarrApi
 		if (!is_null($affair)) {
 			$rtd['affair_id'] = $affairid;
 		}
+		if (!is_null($contactId)) {
+			$rtd['contact_id'] = $contactId;
+		}
 		$rtd['event_id'] = $eventcreated;
 
 		return $rtd;
