@@ -328,7 +328,8 @@ class AvoloiSetup extends DolibarrApi
         dolibarr_set_const($this->db, 'FACTURE_ADDON', 'mod_facture_mercure');
 
         if ($setup_infos->invoice_nomenclature || $setup_infos->invoice_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', $setup_infos->invoice_nomenclature);
-        if ($setup_infos->credit_nomenclature || $setup_infos->invoice_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $setup_infos->credit_nomenclature);
+        if ($setup_infos->credit_nomenclature || $setup_infos->credit_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $setup_infos->credit_nomenclature);
+        if ($setup_infos->tiers_nomenclature || $setup_infos->tiers_nomenclature == '') dolibarr_set_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', $setup_infos->tiers_nomenclature);
         if ($setup_infos->client_time_limit) dolibarr_set_const($this->db, 'CLIENT_TIME_LIMIT', $setup_infos->client_time_limit);
         if ($setup_infos->provider_time_limit) dolibarr_set_const($this->db, 'PROVIDER_TIME_LIMIT', $setup_infos->provider_time_limit);
 
@@ -351,6 +352,7 @@ class AvoloiSetup extends DolibarrApi
 
         $invoice_nomenclature = dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', 1);
         $credit_nomenclature = dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', 1);
+        $tiers_nomenclature = dolibarr_get_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', 1);
         $client_time_limit = dolibarr_get_const($this->db, 'CLIENT_TIME_LIMIT', 1);
         $provider_time_limit = dolibarr_get_const($this->db, 'PROVIDER_TIME_LIMIT', 1);
 
@@ -358,6 +360,7 @@ class AvoloiSetup extends DolibarrApi
 
         $list['invoice_nomenclature']=$invoice_nomenclature;
         $list['credit_nomenclature']=$credit_nomenclature;
+        $list['tiers_nomenclature']=$tiers_nomenclature;
         $list['client_time_limit']=$client_time_limit;
         $list['provider_time_limit']=$provider_time_limit;
 
