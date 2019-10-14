@@ -226,9 +226,10 @@ class docx_generator extends ModeleThirdPartyDoc
 
 				if ($object->array_options && $object->array_options['options_multitiers']) {
 					$object->array_options['options_multitiers'] = json_decode($object->array_options['options_multitiers']);
-				}
-				foreach($object->array_options['options_multitiers'] as $tiersFromMulti) {
-					$societe = $this->getSociety($tiersFromMulti->idTiers);
+
+					foreach($object->array_options['options_multitiers'] as $tiersFromMulti) {
+						$societe = $this->getSociety($tiersFromMulti->idTiers);
+					}
 				}
 				break;
 		}
