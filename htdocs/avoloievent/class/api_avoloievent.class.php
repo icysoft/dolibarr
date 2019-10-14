@@ -232,6 +232,7 @@ class AvoloiEvent extends DolibarrApi
 		$event->array_options["options_is_inclusion"] = $agendaevent['is_inclusion'] ? '1' : '0';
 		$event->contactid = $socid;
 		$event->socid = $socid;
+		$event->array_options["options_lead_id"] = $tiers['array_options']['options_lead_id'];
 
 		$eventcreated = $event->create($user);
 
