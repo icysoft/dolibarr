@@ -648,8 +648,11 @@ class Documents extends DolibarrApi
 		dol_delete_file($destfiletmp);
 		//var_dump($original_file);exit;
 
+		if (!dol_is_dir(dirname($destfiletmp))) {
+			mkdir(dirname($destfiletmp), 0700, true);
+		}
+
 		if (!dol_is_dir(dirname($destfile))) {
-			// throw new RestException(401, 'Directory not exists PUTAIN d\'ENCULE DE SA MAMAN LE DOLI : '.dirname($destfile));
 			mkdir(dirname($destfile), 0700, true);
 		}
 
