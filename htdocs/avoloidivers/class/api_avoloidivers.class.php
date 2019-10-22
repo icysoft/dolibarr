@@ -316,6 +316,7 @@ class AvoloiDivers extends DolibarrApi
 		$sql = "SELECT *";
 		$sql.= " FROM ".MAIN_DB_PREFIX."socpeople as c";
 		$sql.= " WHERE (c.fk_soc = $socid)";
+		$sql.= " ORDER BY c.lastname ASC";
 
 		$resql=$this->db->query($sql);
 
@@ -344,6 +345,7 @@ class AvoloiDivers extends DolibarrApi
 		$sql = "SELECT *";
 		$sql.= " FROM ".MAIN_DB_PREFIX."societe as s";
 		$sql.= " WHERE (s.nom LIKE '%".$value."%')";
+		$sql.= " ORDER BY s.nom ASC";
 
 		$resql=$this->db->query($sql);
 
