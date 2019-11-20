@@ -7,13 +7,17 @@ $baseDir = dirname(dirname($vendorDir));
 
 return array(
     'setasign\\Fpdi\\' => array($vendorDir . '/setasign/fpdi/src'),
-    'phpDocumentor\\Reflection\\' => array($vendorDir . '/phpdocumentor/reflection-common/src', $vendorDir . '/phpdocumentor/type-resolver/src', $vendorDir . '/phpdocumentor/reflection-docblock/src'),
+    'phpDocumentor\\Reflection\\' => array($vendorDir . '/phpdocumentor/reflection-common/src', $vendorDir . '/phpdocumentor/reflection-docblock/src', $vendorDir . '/phpdocumentor/type-resolver/src'),
     'Zend\\Escaper\\' => array($vendorDir . '/zendframework/zend-escaper/src'),
     'Webmozart\\Assert\\' => array($vendorDir . '/webmozart/assert/src'),
     'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
+    'Psr\\SimpleCache\\' => array($vendorDir . '/psr/simple-cache/src'),
     'PhpOffice\\PhpWord\\' => array($vendorDir . '/phpoffice/phpword/src/PhpWord'),
+    'PhpOffice\\PhpSpreadsheet\\' => array($vendorDir . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet'),
     'PhpOffice\\Common\\' => array($vendorDir . '/phpoffice/common/src/Common'),
     'Mike42\\' => array($vendorDir . '/mike42/escpos-php/src/Mike42'),
+    'Matrix\\' => array($vendorDir . '/markbaker/matrix/classes/src'),
     'Doctrine\\Instantiator\\' => array($vendorDir . '/doctrine/instantiator/src/Doctrine/Instantiator'),
+    'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
     'Atgp\\FacturX\\' => array($vendorDir . '/atgp/factur-x/src'),
 );
