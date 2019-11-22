@@ -66,6 +66,8 @@ class AvoloiCustomTypes extends DolibarrApi
 	 */
 	public function contacttypecolor($id, $color_code = "#737373") {
 		global $conf, $langs, $user;
+
+		// print "COLOR : ".$color_code."<br>";
 		
 		$sql = "UPDATE `avo_custom_contact_type`";
 		$sql.= " SET `color`='$color_code',";
@@ -110,13 +112,10 @@ class AvoloiCustomTypes extends DolibarrApi
 			while ($i < $min)
 			{
 				$obj = $this->db->fetch_object($resql);
+				$obj->datec = $this->db->jdate($obj->datec);
 				$rtdObject[] = $obj;
 				$i++;
 			}
-		}
-
-		foreach ($rtdObject as &$r) {
-			$r->datec = $this->db->jdate($r->datec);
 		}
 
 		return $rtdObject;
