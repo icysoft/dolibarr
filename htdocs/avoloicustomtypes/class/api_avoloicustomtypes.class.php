@@ -48,12 +48,14 @@ class AvoloiCustomTypes extends DolibarrApi
 		$this->db = $db;
 	}
 
+	/////////////// PARTIE TYPE DE CONTACT ///////////////
+
 	/**
 	 * Update color of a contact type
 	 * 
-	 * @param string    $id  					Type ID
-	 * @param string    $color_code  	Type string
-	 * @return  string								Updated type ID
+	 * @param 	string    $id  					Type ID
+	 * @param 	string    $color_code  	Type string
+	 * @return  string									Updated type ID
 	 *
 	 * @throws 500
 	 * @throws 501
@@ -80,10 +82,8 @@ class AvoloiCustomTypes extends DolibarrApi
 	}
 
 	/**
-	 * Update color of a contact type
+	 * Get list of contact types
 	 * 
-	 * @param string    $id  					Type ID
-	 * @param string    $color_code  	Type string
 	 * @return  string								Updated type ID
 	 *
 	 * @throws 500
@@ -119,5 +119,118 @@ class AvoloiCustomTypes extends DolibarrApi
 		}
 
 		return $rtdObject;
+	}
+
+	/////////////// PARTIE TYPE DE TIERS ///////////////
+
+	/**
+	 * Get list of tiers types
+	 * 
+	 * @param string    $id  					Type ID
+	 * @return  string								Updated type ID
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /tierstypes
+	 */
+	public function gettierstypes() {
+		global $conf, $langs, $user;
+		
+		$sql = "SELECT * FROM `avo_custom_tiers_type`";
+
+		$resql=$this->db->query($sql);
+
+		$test = $this->_cleanObjectDatas($resql);
+
+		$rtdObject = array();
+
+		if ($resql) {
+			$num = $this->db->num_rows($resql);
+			$min = min($num, ($limit <= 0 ? $num : $limit));
+			while ($i < $min)
+			{
+				$obj = $this->db->fetch_object($resql);
+				$obj->datec = $this->db->jdate($obj->datec);
+				$obj->datem = $this->db->jdate($obj->datem);
+				$rtdObject[] = $obj;
+				$i++;
+			}
+		}
+
+		return $rtdObject;
+	}
+
+	/**
+	 * Create a tiers type
+	 * 
+	 * @param 	string    		$tiersType			Tiers type
+	 * @return  string											Updated type ID
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url POST /createtierstype
+	 */
+	public function createtierstype($tiersType) {
+		global $conf, $langs, $user;
+
+		$sql = "INSERT INTO `avo_custom_tiers_type` (`datec`, `datem`, `type`, `fk_pays`)";
+		$sql.= " VALUES (";
+		$sql.= "'".date('Y/m/d h:i:s')."'";
+		$sql.= ", '".date('Y/m/d h:i:s')."'";
+		$sql.= ", \"".$tiersType."\"";
+		$sql.= ", '1')";
+
+		$resql = $this->db->query($sql);
+
+		if ($resql) {
+			$sql = "SELECT rowid FROM avo_custom_tiers_type ORDER BY rowid DESC LIMIT 1";
+			$resql = $this->db->query($sql);
+			$rtd = $this->db->fetch_object($resql);
+			return $rtd->rowid;
+		} else {
+			throw new RestException(405, "Problème lors de l\'enregistrement des données");
+		}
+	}
+
+	/**
+	 * Get a tiers type
+	 * 
+	 * @param 	string    		$id						Tiers type ID
+	 * @return  string											Updated type ID
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /tierstype
+	 */
+	public function tierstype($id) {
+		global $conf, $langs, $user;
+		
+		$sql = "SELECT * FROM avo_custom_tiers_type WHERE rowid=$id";
+		$resql = $this->db->query($sql);
+
+		if ($resql) {
+			$rtd = $this->db->fetch_object($resql);
+			$rtd->datec = $this->db->jdate($rtd->datec);
+			$rtd->datem = $this->db->jdate($rtd->datem);
+
+			return $rtd;
+		} else {
+			throw new RestException(405, "Problème lors de la récupération du type de tiers");
+		}
 	}
 }
