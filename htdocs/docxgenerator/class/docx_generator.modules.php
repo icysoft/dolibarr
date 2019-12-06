@@ -23,6 +23,7 @@
  *	\ingroup    societe
  *	\brief      File of class to build Docx documents for third parties
  */
+use Luracast\Restler\RestException;
 
 require_once DOL_DOCUMENT_ROOT . '/core/modules/societe/modules_societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
@@ -234,6 +235,7 @@ class docx_generator extends ModeleThirdPartyDoc
 		if ($object->socid) {
 			$tiers = $this->getSociety($object->socid);
 		}
+
 
 		if ($object->fk_projet) {
 			$affaire = $this->getAffaire($object->fk_projet);
@@ -670,8 +672,170 @@ class docx_generator extends ModeleThirdPartyDoc
 		return -1;
 	}
 
-	private function getSociety($id)
-	{
+	/**
+	 *	Function to create an affaire's docx
+	 *
+	 *	@param		int			$affaire_id			id of the affaire
+	 * 	@param		string 		$template_path		template's path
+	 *	@param		Translate	$output_langs		Lang output object
+	 * 	@param		string 		$output_name		new file last characters
+	 *	@return		int         					1 if OK, <=0 if KO
+	 */
+	public function createDocxAffaire($affaire_id, $template_path, $output_langs) {
+
+		global $user, $langs, $conf, $mysoc, $hookmanager, $action;
+
+		
+		if (! is_object($output_langs)) $output_langs=$langs;
+		$sav_charset_output=$output_langs->charset_output;
+		$output_langs->charset_output='UTF-8';
+		
+		// Load translation files required by the page
+		@$output_langs->loadLangs(array("main", "dict", "companies", "projects"));
+		
+		// Add odtgeneration hook
+		if (! is_object($hookmanager))
+		{
+			include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
+			$hookmanager=new HookManager($this->db);
+		}
+		$hookmanager->initHooks(array('odtgeneration'));
+
+		$newfile=basename($template_path);
+
+		// Get extension (ods or odt)
+		$newfileformat=substr($newfile, strrpos($newfile, '.')+1);
+    	// Open and load template
+		$phpWord = new \PhpOffice\PhpWord\PhpWord();
+
+		try {
+			$template = DOL_DOCUMENT_ROOT . $template_path;
+			$templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($template);
+		}
+		catch(Exception $e)
+		{
+			$this->error=$e->getMessage();
+			dol_syslog($e->getMessage(), LOG_INFO);
+			return -1;
+		}
+
+		$affaire = $this->getAffaire($affaire_id);
+
+		if ($affaire->socid) {
+			$affaire->tiers = $this->getSociety($affaire->socid);
+
+			if ($affaire->tiers->array_options && $affaire->tiers->array_options['options_primary_contact']) {
+				$affaire->tiers->primaryContact = $this->getContact($affaire->tiers->array_options['options_primary_contact']);
+			}
+		}
+
+		$affaire->multitiers = array();
+
+		if ($affaire->array_options) {
+			if ($affaire->array_options['options_multitiers']) {
+				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
+	
+				foreach($affaire->array_options['options_multitiers'] as $tiersFromArray) {
+					$tiers = $this->getSociety($tiersFromArray->idTiers);
+	
+					if ($tiers->array_options && $tiers->array_options['options_primary_contact']) {
+						$tiers->primaryContact = $this->getContact($tiers->array_options['options_primary_contact']);
+					}
+	
+					array_push($affaire->multitiers, $tiers);
+				}
+			}
+
+			if ($affaire->array_options['options_changelog']) {
+				$affaire->notes = json_decode($affaire->array_options['options_changelog']);
+			}
+		} 
+		
+		$affaire->tasks = $this->getTasks($affaire_id);
+		$affaire->invoices = $this->getInvoices($affaire_id);
+		$affaire->documents = $this->getDocuments($affaire_id, $affaire->socid);
+		$affaire->propals = $this->getPropals($affaire_id);
+
+		// Make substitutions into odt
+		$array_user=$this->get_substitutionarray_user($user, $output_langs);
+		$array_soc=$this->get_substitutionarray_mysoc($mysoc, $output_langs);
+		$array_thirdparty=$this->get_substitutionarray_thirdparty($affaire, $output_langs);
+		$array_other=$this->get_substitutionarray_other($output_langs);
+		$array_else=$this->getSubArrayAffaire($affaire, $output_langs);
+
+		$tmp_array = array_merge($array_user, $array_soc, $array_thirdparty, $array_other, $array_else);
+
+		$parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$affaire,'outputlangs'=>$output_langs,'substitutionarray'=>&$tmp_array);
+		$reshook=$hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+		
+		$this->setValues($templateProcessor, $tmp_array);
+
+		// Call the beforeODTSave hook
+		$parameters = array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$affaire,'outputlangs'=>$output_langs,'substitutionarray'=>&$tmp_array);
+		$reshook=$hookmanager->executeHooks('beforeODTSave', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+
+		// Write new file
+		try {
+			$properties = $phpWord->getDocInfo();
+			$properties->setCreator($user->getFullName($outputlangs));
+			$properties->setTitle($affaire->builddoc_filename);
+			$properties->setSubject($affaire->builddoc_filename);
+	
+			if (! empty($conf->global->ODT_ADD_DOLIBARR_ID))
+			{
+				$templateProcessor->userdefined['dol_id'] = $affaire->id;
+				$templateProcessor->userdefined['dol_element'] = $affaire->element;
+			}
+	
+			$path = '/exportedAffaires';
+
+			if (!dol_is_dir($this->sanitizePath(DOL_DOCUMENT_ROOT.$path))) {
+				mkdir($this->sanitizePath(DOL_DOCUMENT_ROOT.$path), 0700, true);
+			}
+
+			$filename = $affaire->title.'_at_'.time().'.docx';
+
+			$newtmpfile = $templateProcessor->saveAs($this->sanitizePath(DOL_DOCUMENT_ROOT.$path.'/'.$filename));
+	
+		} catch (Exception $e){
+			$this->error=$e->getMessage();
+			dol_syslog($e->getMessage(), LOG_INFO);
+			return -1;
+		}
+		
+
+		$parameters = array('odfHandler'=>&$templateProcessor, 'file'=>$file, 'object'=>$affaire, 'outputlangs'=>$output_langs, 'substitutionarray'=>&$tmp_array);
+		$reshook = $hookmanager->executeHooks('afterODTCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
+
+		$templateProcessor = null;	// Destroy object
+		$phpWord = null;	// Destroy object
+		return array('code'=> 1, 'documentPath'=>$this->sanitizePath(DOL_DOCUMENT_ROOT . $path . '/' . $filename));
+  
+		$this->error='UnknownError';
+		return -1;
+	}
+
+	private function setValues($templateProcessor, $values, $index = '') {
+		foreach($values as $key=>$value) {
+			$newKey = $key.$index;
+			if (is_array($value) && substr($key, 0, 6) === 'block_') {
+				$templateProcessor->cloneBlock($newKey, count($value), true, true);
+				$i = 1;
+				foreach($value as $key2=>$value2) {
+					$this->setValues($templateProcessor, $value2, $index.'#'.$i);
+					$i++;
+				}
+			} else {
+				$templateProcessor->setValue($newKey, $value);
+			}
+		}
+	}
+
+	private function mapArr(&$item, $key) {
+
+	}
+
+	private function getSociety($id) {
 		$societe = new Societe($this->db);
 		$societe->fetch($id);
 		return $societe;
@@ -684,22 +848,75 @@ class docx_generator extends ModeleThirdPartyDoc
 		return $propal;
 	}
 
-	private function getAffaire($id)
-	{
+	private function getPropals($affaire_id) {
+		require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/api_proposals.class.php';
+
+		$propalApi = new Proposals();
+
+		try {
+			$propals = $propalApi->index(null, null, null, null, '', "(t.fk_projet:=:'".$affaire_id."')");
+		} catch (Exception $ex) {
+			$propals = array();
+		}
+
+		return $propals;
+	}
+
+	private function getAffaire($id) {
 		$affaire = new Project($this->db);
 		$affaire->fetch($id);
 		return $affaire;
 	}
 
-	private function getInvoice($id)
-	{
+	private function getTasks($affaire_id) {
+		require_once DOL_DOCUMENT_ROOT . '/projet/class/api_tasks.class.php';
+
+		$taskApi = new Tasks();
+
+		try {
+			$tasks = $taskApi->index(null, null, null, null, "(t.fk_projet:=:'".$affaire_id."')");
+		} catch (Exception $ex) {
+			$tasks = array();
+		}
+
+		return $tasks;
+	}
+
+	private function getInvoice($id) {
 		$invoice = new Facture($this->db);
 		$invoice->fetch($id);
 		return $invoice;
 	}
 
-	private function getBankAccount($id)
-	{
+	private function getInvoices($affaire_id) {
+
+		require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/api_invoices.class.php';
+
+		$invoiceApi = new Invoices();
+		try {
+			$invoices = $invoiceApi->index(null, null, null, null, '', '', "(t.fk_projet:=:'".$affaire_id."')");
+		} catch (Exception $ex) {
+			$invoices = array();
+		}
+
+		return $invoices;
+	}
+
+	private function getDocuments($affaire_id, $tiers_id) {
+		require_once DOL_DOCUMENT_ROOT . '/docxgenerator/class/api_docxgenerator.class.php';
+
+		$documents = new Docxgenerator();
+
+		try {
+			$documents = $documents->getDocumentsListByElement('project', $affaire_id, $tiers_id);
+		} catch (Exception $ex) {
+			$documents = array();
+		}
+
+		return $documents;
+	}
+
+	private function getBankAccount($id) {
 		$account = new Account($this->db);
 		$account->fetch($id);
 		return $account;
@@ -710,6 +927,152 @@ class docx_generator extends ModeleThirdPartyDoc
 		$contact = new Contact($this->db);
 		$contact->fetch($id);
 		return $contact;
+	}
+
+	private function getSubArrayAffaire($affaire, $outputLang) {
+		$baseDatas = array(
+			'affaire_titre'=>$affaire->title,
+			'affaire_date_creation'=>dol_print_date($affaire->date_start, 'day', 'tzuser', $outputLang),
+			'affaire_description'=>$affaire->description
+		);
+
+		$tiersDatas = array(
+			'tiers_principal_nom'=>$affaire->tiers->name,
+			'tiers_principal_ref_client'=>$affaire->tiers->code_client,
+			'tiers_principal_tel_fixe'=>$affaire->tiers->phone,
+			'tiers_principal_tel_mobile'=>$affaire->tiers->fax,
+			'tiers_principal_email'=>$affaire->tiers->email,
+			'tiers_principal_adresse'=>$affaire->tiers->address,
+			'tiers_principal_code_postal'=>$affaire->tiers->zip,
+			'tiers_principal_ville'=>$affaire->tiers->town			
+		);
+
+		$tiersContactDatas = array(
+			'contact_principal_nom'=>$affaire->tiers->primaryContact->lastname,
+			'contact_principal_prenom'=>$affaire->tiers->primaryContact->firstname,
+			'contact_principal_tel_fixe'=>$affaire->tiers->primaryContact->phone_perso,
+			'contact_principal_tel_mobile'=>$affaire->tiers->primaryContact->phone_mobile,
+			'contact_principal_email'=>$affaire->tiers->primaryContact->email,
+			'contact_principal_adresse'=>$affaire->tiers->primaryContact->address,
+			'contact_principal_code_postal'=>$affaire->tiers->primaryContact->zip,
+			'contact_principal_ville'=>$affaire->tiers->primaryContact->town
+		);
+
+		$multitiersDatas = array();
+		foreach($affaire->multitiers as $index=>$multitiers) {
+			array_push($multitiersDatas, array(
+				'multitiers_nom'=>$multitiers->name,
+				'multitiers_ref_client'=>$multitiers->code_client,
+				'multitiers_tel_fixe'=>$multitiers->phone,
+				'multitiers_tel_mobile'=>$multitiers->fax,
+				'multitiers_email'=>$multitiers->email,
+				'multitiers_addresse'=>$multitiers->address,
+				'multitiers_code_postal'=>$multitiers->zip,
+				'multitiers_ville'=>$multitiers->town,
+				'multitiers_contact_principal_nom'=>$multitiers->primaryContact->lastName,
+				'multitiers_contact_principal_prenom'=>$multitiers->primaryContact->firstName,
+				'multitiers_contact_principal_tel_fixe'=>$multitiers->primaryContact->phone_perso,
+				'multitiers_contact_principal_tel_mobile'=>$multitiers->primaryContact->phone_mobile,
+				'multitiers_contact_principal_email'=>$multitiers->primaryContact->email,
+				'multitiers_contact_principal_adresse'=>$multitiers->primaryContact->address,
+				'multitiers_contact_principal_code_postal'=>$multitiers->primaryContact->zip,
+				'multitiers_contact_principal_ville'=>$multitiers->primaryContact->town,
+			));
+		}
+
+		$notesDatas = array();
+		foreach($affaire->notes as $index=>$note) {
+			array_push($notesDatas, array(
+				'note_nom_utilisateur'=>$note->username,
+				'note_contenu'=>$note->content,
+				'note_date'=>dol_print_date($note->date, 'dayhour', 'tzuser', $outputLang),
+			));
+		}
+
+		$tasksDatas = array();
+		foreach($affaire->tasks as $index=>$task) {
+			array_push($tasksDatas, array(
+				'task_description'=>$task->label,
+				'task_date'=>dol_print_date($task->date_start, 'day', 'tzuser', $outputLang),
+				'task_duree'=>number_format(($task->planned_workload / 3600), 2, ',', ' '),
+				'task_type_act'=>$task->array_options['options_type_rdv']
+			));
+		}
+		
+		$documentsDatas = array();
+		foreach($affaire->documents as $index=>$document) {
+			array_push($documentsDatas, array(
+				'document_titre'=>$document->name
+			));
+		}
+
+		$invoicesDatas = array();
+		foreach($affaire->invoices as $index=>$invoice) {
+			$factLineDatas = array();
+
+			foreach($invoice->lines as $index2=>$line) {
+				array_push($factLineDatas, array(
+					'linefact_description'=>$line->description,
+					'linefact_tarif_horaire'=>number_format($line->multicurrency_subprice, 3, ',', ' '),
+					'linefact_taux_tva'=>number_format($line->tva_tx, 3, ',', ' '),
+					'linefact_nb_heures'=>number_format($line->qty, 0, ',', ' '),
+					'linefact_remise'=>number_format($line->remise_percent, 3, ',', ' '),
+					'linefact_total_ht'=>number_format($line->total_ht, 3, ',', ' '),
+					'linefact_total_ttc'=>number_format($line->total_ttc, 3, ',', ' '),
+				));
+			}
+
+			array_push($invoicesDatas, array(
+				'invoice_ref'=>$invoice->ref,
+				'invoice_date'=>dol_print_date($invoice->date, 'day', 'tzuser', $outputLang),
+				'invoice_libelle'=>$invoice->array_options['options_titre'],
+				'invoice_mode_paiement'=>$invoice->mode_reglement_code,
+				'invoice_cond_paiement'=>$invoice->cond_reglement_code,
+				'block_invoice_lines'=>$factLineDatas
+			));			
+		}
+
+		$propalDatas = array();
+		foreach($affaire->propals as $index=>$propal) {
+			$propalLineDatas = array();
+
+			foreach($propal->lines as $index2=>$line) {
+				array_push($propalLineDatas, array(
+					'linefact_description'=>$line->description,
+					'linefact_tarif_horaire'=>number_format($line->multicurrency_subprice, 3, ',', ' '),
+					'linefact_taux_tva'=>number_format($line->tva_tx, 3, ',', ' '),
+					'linefact_nb_heures'=>number_format($line->qty, 0, ',', ' '),
+					'linefact_remise'=>number_format($line->remise_percent, 3, ',', ' '),
+					'linefact_total_ht'=>number_format($line->total_ht, 3, ',', ' '),
+					'linefact_total_ttc'=>number_format($line->total_ttc, 3, ',', ' '),
+				));
+			}
+
+			array_push($propalDatas, array(
+				'propal_titre'=>$propal->array_options['options_titre'],
+				'propal_date'=>dol_print_date($propal->date, 'day', 'tzuser', $outputLang),
+				'propal_duree_valid'=>number_format(($propal->fin_validite - $propal->date) / 86400, 0, ',', ' '),
+				'propal_mode_paiement'=>$propal->mode_reglement_code,
+				'propal_cond_paiement'=>$propal->cond_reglement_code,
+				'block_propals_lines'=>$propalLineDatas
+			));
+		}
+
+		$listDatas = array(
+			'block_multitiers'=>$multitiersDatas,
+			'block_notes'=>$notesDatas,
+			'block_tasks'=>$tasksDatas,
+			'block_documents'=>$documentsDatas,
+			'block_invoices'=>$invoicesDatas,
+			'block_propals'=>$propalDatas
+		);
+
+		return array_merge(
+			$baseDatas, 
+			$tiersDatas, 
+			$tiersContactDatas,
+			$listDatas
+		);
 	}
 
 	public function sanitizePath($str)
