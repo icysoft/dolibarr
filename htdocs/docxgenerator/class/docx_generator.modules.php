@@ -1013,10 +1013,10 @@ class docx_generator extends ModeleThirdPartyDoc
 			foreach($invoice->lines as $index2=>$line) {
 				array_push($factLineDatas, array(
 					'linefact_description'=>$line->description,
-					'linefact_tarif_horaire'=>number_format($line->multicurrency_subprice, 3, ',', ' '),
-					'linefact_taux_tva'=>number_format($line->tva_tx, 3, ',', ' '),
+					'linefact_tarif_horaire'=>number_format($line->multicurrency_subprice, 1, ',', ' '),
+					'linefact_taux_tva'=>number_format($line->tva_tx, 0, ',', ' '),
 					'linefact_nb_heures'=>number_format($line->qty, 0, ',', ' '),
-					'linefact_remise'=>number_format($line->remise_percent, 3, ',', ' '),
+					'linefact_remise'=>number_format($line->remise_percent, 0, ',', ' '),
 					'linefact_total_ht'=>number_format($line->total_ht, 3, ',', ' '),
 					'linefact_total_ttc'=>number_format($line->total_ttc, 3, ',', ' '),
 				));
@@ -1039,10 +1039,10 @@ class docx_generator extends ModeleThirdPartyDoc
 			foreach($propal->lines as $index2=>$line) {
 				array_push($propalLineDatas, array(
 					'linefact_description'=>$line->description,
-					'linefact_tarif_horaire'=>number_format($line->multicurrency_subprice, 3, ',', ' '),
-					'linefact_taux_tva'=>number_format($line->tva_tx, 3, ',', ' '),
+					'linefact_tarif_horaire'=>number_format($line->multicurrency_subprice, 1, ',', ' '),
+					'linefact_taux_tva'=>number_format($line->tva_tx, 0, ',', ' '),
 					'linefact_nb_heures'=>number_format($line->qty, 0, ',', ' '),
-					'linefact_remise'=>number_format($line->remise_percent, 3, ',', ' '),
+					'linefact_remise'=>number_format($line->remise_percent, 0, ',', ' '),
 					'linefact_total_ht'=>number_format($line->total_ht, 3, ',', ' '),
 					'linefact_total_ttc'=>number_format($line->total_ttc, 3, ',', ' '),
 				));
