@@ -94,7 +94,7 @@ class docx_generator extends ModeleThirdPartyDoc
 		if (!$this->emetteur->country_code) $this->emetteur->country_code = substr($langs->defaultlang, -2);    // Par defaut, si n'etait pas defini
 	}
 
-	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
+    // phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
 	/**
 	 *	Function to build a document on disk using the generic odt module.
 	 *
@@ -235,7 +235,6 @@ class docx_generator extends ModeleThirdPartyDoc
 		if ($object->socid) {
 			$tiers = $this->getSociety($object->socid);
 		}
-
 
 		if ($object->fk_projet) {
 			$affaire = $this->getAffaire($object->fk_projet);
@@ -678,7 +677,6 @@ class docx_generator extends ModeleThirdPartyDoc
 	 *	@param		int			$affaire_id			id of the affaire
 	 * 	@param		string 		$template_path		template's path
 	 *	@param		Translate	$output_langs		Lang output object
-	 * 	@param		string 		$output_name		new file last characters
 	 *	@return		int         					1 if OK, <=0 if KO
 	 */
 	public function createDocxAffaire($affaire_id, $template_path, $output_langs) {
@@ -930,6 +928,27 @@ class docx_generator extends ModeleThirdPartyDoc
 	}
 
 	private function getSubArrayAffaire($affaire, $outputLang) {
+		$paiementCondMode = array(
+			"RECEP" => "A réception",
+			"30D" => "30 jours",
+			"30DENDMONTH" => "30 jours fin de mois",
+			"60D" => "60 jours",
+			"60DENDMONTH" => "60 jours fin de mois",
+			"PT_ORDER" => "A commande",
+			"PT_DELIVERY" => "A livraison",
+			"PT_5050" => "50/50",
+			"10D" => "10 jours",
+			"10DENDMONTH" => "10 jours fin de mois",
+			"14D" => "14 jours",
+			"14DENDMONTH" => "14 jours fin de mois",
+			"CB" => "Carte bancaire",
+			"CHQ" => "Chèque",
+			"LIQ" => "Espèce",
+			"PRE" => "Ordre de prélèvement",
+			"VIR" => "Virement bancaire"
+		);
+
+
 		$baseDatas = array(
 			'affaire_titre'=>$affaire->title,
 			'affaire_date_creation'=>dol_print_date($affaire->date_start, 'day', 'tzuser', $outputLang),
@@ -1026,8 +1045,8 @@ class docx_generator extends ModeleThirdPartyDoc
 				'invoice_ref'=>$invoice->ref,
 				'invoice_date'=>dol_print_date($invoice->date, 'day', 'tzuser', $outputLang),
 				'invoice_libelle'=>$invoice->array_options['options_titre'],
-				'invoice_mode_paiement'=>$invoice->mode_reglement_code,
-				'invoice_cond_paiement'=>$invoice->cond_reglement_code,
+				'invoice_mode_paiement'=>$paiementCondMode[$invoice->mode_reglement_code],
+				'invoice_cond_paiement'=>$paiementCondMode[$invoice->cond_reglement_code],
 				'block_invoice_lines'=>$factLineDatas
 			));			
 		}
@@ -1052,8 +1071,8 @@ class docx_generator extends ModeleThirdPartyDoc
 				'propal_titre'=>$propal->array_options['options_titre'],
 				'propal_date'=>dol_print_date($propal->date, 'day', 'tzuser', $outputLang),
 				'propal_duree_valid'=>number_format(($propal->fin_validite - $propal->date) / 86400, 0, ',', ' '),
-				'propal_mode_paiement'=>$propal->mode_reglement_code,
-				'propal_cond_paiement'=>$propal->cond_reglement_code,
+				'propal_mode_paiement'=>$paiementCondMode[$propal->mode_reglement_code],
+				'propal_cond_paiement'=>$paiementCondMode[$propal->cond_reglement_code],
 				'block_propals_lines'=>$propalLineDatas
 			));
 		}
