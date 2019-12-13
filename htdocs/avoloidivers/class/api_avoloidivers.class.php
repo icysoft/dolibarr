@@ -21,10 +21,12 @@ use Luracast\Restler\RestException;
 use Luracast\Restler\Format\UploadFormat;
 
 
-require_once DOL_DOCUMENT_ROOT.'/main.inc.php';
-require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
-require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
-require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/main.inc.php';
+require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/projet/class/api_projects.class.php';
+require_once DOL_DOCUMENT_ROOT . '/societe/class/api_thirdparties.class.php';
 
 /**
  * API class for receive files
@@ -71,7 +73,8 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchtiers
 	 */
-	public function searchtiers($searched = '', $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1") {
+	public function searchtiers($searched = '', $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1")
+	{
 		global $conf, $langs, $user;
 		$this->clientFilter = $clientFilter;
 		$this->prospectFilter = $prospectFilter;
@@ -93,7 +96,7 @@ class AvoloiDivers extends DolibarrApi
 
 			if (!$searched) {
 				if ($s->array_options["options_primary_contact"] !== "")
-				$tmpContact = $this->getContact($s->array_options["options_primary_contact"]);
+					$tmpContact = $this->getContact($s->array_options["options_primary_contact"]);
 				$society = array();
 				$society["is_individual"] = $is_individual;
 				$society["is_contact"] = false;
@@ -105,7 +108,7 @@ class AvoloiDivers extends DolibarrApi
 				$society["society_name"] = $s->name;
 				$society['contact_object'] = $tmpContact;
 				$society['society_object'] = $this->getSociety($s->id);
-	
+
 				$scArr[] = $society;
 				$tmpContact = null;
 			} else {
@@ -123,7 +126,7 @@ class AvoloiDivers extends DolibarrApi
 					$society["society_name"] = $s->name;
 					$society['contact_object'] = $tmpContact;
 					$society['society_object'] = $this->getSociety($s->id);
-		
+
 					$scArr[] = $society;
 					$tmpContact = null;
 				}
@@ -146,7 +149,7 @@ class AvoloiDivers extends DolibarrApi
 				$contact["society_name"] = $c->socname;
 				$contact['contact_object'] = $c;
 				$contact['society_object'] = $tmpSoc;
-				
+
 				$foundDuplicateIndividual = false;
 				foreach ($scArr as $sc) {
 					if ($contact["society_id"] == $sc["society_id"]) {
@@ -182,7 +185,8 @@ class AvoloiDivers extends DolibarrApi
 		// 		$rtdArr[] = $t;
 		// 	}
 		// }
-
+		$result = array();
+		$result['total'] = count($rtdArr);
 		// Pagination
 		if ($page !== -1 && $limit !== -1) {
 			$tmppage = (int) $page;
@@ -194,8 +198,155 @@ class AvoloiDivers extends DolibarrApi
 				$rtdArr[] = $t;
 			}
 		}
+		$result['tiers'] = $rtdArr;
 
-		return $rtdArr;
+		return $result;
+	}
+
+
+	/**
+	 * Search an affairs by it's name
+	 * 
+	 * @param   string   $searched
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /searchaffairs
+	 */
+	public function searchaffairs($limit = '-1', $page = '0', $searchFilter = '', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC')
+	{
+		global $conf, $langs, $user, $db;
+
+		//decodage des paramètres
+		$searchFilter = urldecode($searchFilter);
+		$dateStartFilter = urldecode($dateStartFilter);
+		$dateEndFilter = urldecode($dateEndFilter);
+		$statusStringFilter = urldecode($statusStringFilter);
+
+		$dateStartSql = '';
+		$dateEndSql = '';
+		$sqlAffairsFiltersArray = [];
+		$sqlFiltersArray = [];
+		$statusFilter = []; 
+		if($statusStringFilter) {
+			$statusFilter = preg_split('/[,]+/', $statusStringFilter);
+		}
+		
+        if ($dateStartFilter !== '') {
+			$dateStartSql = '(t.datec >= \'' . $dateStartFilter . '\')';
+			array_push($sqlAffairsFiltersArray, $dateStartSql);
+        }
+		if ($dateEndFilter !== '') {
+			$dateEndSql = '(t.datec <= \'' . $dateEndFilter . '\')';
+			array_push($sqlAffairsFiltersArray, $dateEndSql);
+		}
+		if ($searchFilter !== '') {
+			$searchSql = '(t.title like \'%' . $searchFilter . '%\')';
+			$tiersSql = '(s.nom like \'%' . $searchFilter . '%\')';
+			$multitiersSql = '(JSON_EXTRACT(px.multitiers, \'$[*].detail.name\') like \'%' . $searchFilter . '%\')';
+			array_push($sqlAffairsFiltersArray, $searchSql);
+			array_push($sqlFiltersArray, $tiersSql);
+			array_push($sqlFiltersArray, $multitiersSql);
+		}
+
+        if (count($statusFilter) > 0) {
+			if (!array_search('-1', $statusFilter)) {
+				$statusSql = '';
+				for ($i = 0; $i < count($statusFilter); $i++) {
+					if ($statusSql !== '') {
+						$statusSql .= ' OR ';
+					  }
+					  $statusSql .=  '(t.fk_statut:=:\'' . $statusFilter[$i] . '\')';
+				}
+				if ($statusSql !== '') {
+					array_push($sqlAffairsFiltersArray, $statusSql);
+				}
+			}
+		}
+
+		$affairsSqlFilters = join(' AND ', $sqlAffairsFiltersArray);
+		array_push($sqlFiltersArray, $affairsSqlFilters);
+		$sqlFilters = join(' OR ', $sqlFiltersArray);
+
+		$obj_ret = array();
+		$sql = "SELECT t.*";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "projet as t";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
+		$sql .= " WHERE t.entity IN (1)";
+
+		if ($sqlFilters && $sqlFilters !== '') {
+			$regexstring='\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
+            $sql.=" AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlFilters).")";
+		}
+		
+		$sql.= $db->order($sortfield, $sortorder);
+		
+		
+		$result = $db->query($sql);
+		// $affairs = $this->db->fetch_object($result);
+
+		if ($result)
+        {
+			$num = $db->num_rows($result);
+			$i=0;
+            while ($i < $num)
+            {
+				$obj = $db->fetch_object($result);
+				$project_static = new Project($db);
+                if($project_static->fetch($obj->rowid)) {
+					$obj_ret[] = $this->_cleanObjectDatas($project_static);
+				}
+				$i++;
+            }
+        }
+        else {
+            throw new RestException(503, 'Error when retrieve project list : '.$db->lasterror());
+        }
+		
+		$affairList = $obj_ret;
+		$total = count($affairList);
+		$result = array();
+		$result['total'] = $total;
+		for ($i = 0; $i < $total; $i++) {
+			if ($affairList[$i]->socid != null && $affairList[$i]->socid !== '') {
+				$thirdParties = new Thirdparties();
+				$thirdParty = $thirdParties->get($affairList[$i]->socid);
+				$affairList[$i]->tiers = array();
+				$affairList[$i]->tiers['id'] = $thirdParty->id;
+				$affairList[$i]->tiers['firstname'] = $thirdParty->firstname;
+				$affairList[$i]->tiers['lastname'] = $thirdParty->lastname;
+				$affairList[$i]->tiers['name'] = $thirdParty->name;
+			}
+
+			if ($affairList[$i] && $affairList[$i]->array_options && $affairList[$i]->array_options->options_multitiers) {
+				$affairList[$i]->array_options->options_multitiers = json_encode($affairList[$i]->array_options->options_multitiers);
+				for ($j = 0; $j <= count($affairList[$i]->array_options->options_multitiers); $j++) {
+					$affairList[$i]->array_options->options_multitiers[$j]->detail = $thirdParties->get($affairList[$i]->array_options->options_multitiers[$j]->idTiers);
+				}
+			}
+		}
+
+		if ($page !== '-1' && $limit !== '-1') {
+			$tmppage = (int) $page;
+			$tmplimit = (int) $limit;
+			$tmp = array_slice($affairList, $tmppage * $tmplimit, $tmplimit);
+
+			$rtdArr = [];
+			foreach ($tmp as $t) {
+				$rtdArr[] = $t;
+			}
+			$result['affairs'] = $rtdArr;
+		} else {
+			$result['affairs'] = $affairList;
+		}
+		return $result;
 	}
 
 	/**
@@ -213,30 +364,30 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchpropalsbyname
 	 */
-	public function searchpropalsbyname($searched) {
+	public function searchpropalsbyname($searched)
+	{
 		global $conf, $langs, $user;
 
 		$obj_ret = array();
 
 		// TODO Récupérer IDs des propals dans llx_propal_extrafields sur title
 		$sql = "SELECT fk_object";
-		$sql.= " FROM ".MAIN_DB_PREFIX."propal_extrafields as p";
-		$sql.= " WHERE p.titre LIKE '%".$searched."%'";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "propal_extrafields as p";
+		$sql .= " WHERE p.titre LIKE '%" . $searched . "%'";
 
-		$resql=$this->db->query($sql);
+		$resql = $this->db->query($sql);
 
 		// TODO Récupérer les propals avec les IDs récupérés précédement
 		if ($resql) {
 			$num = $this->db->num_rows($resql);
 			$min = min($num, ($limit <= 0 ? $num : $limit));
-			while ($i < $min)
-			{
-					$obj = $this->db->fetch_object($resql);
-					$propals = new Propal($this->db);
-					if($propals->fetch($obj->fk_object)) {
-							$obj_ret[] = $this->_cleanObjectDatas($propals);
-					}
-					$i++;
+			while ($i < $min) {
+				$obj = $this->db->fetch_object($resql);
+				$propals = new Propal($this->db);
+				if ($propals->fetch($obj->fk_object)) {
+					$obj_ret[] = $this->_cleanObjectDatas($propals);
+				}
+				$i++;
 			}
 		}
 
@@ -244,7 +395,8 @@ class AvoloiDivers extends DolibarrApi
 		return $obj_ret;
 	}
 
-	private function isIndividual($socid) {
+	private function isIndividual($socid)
+	{
 		$society = new Societe($this->db);
 		$society->fetch($socid);
 		$society = $this->_cleanObjectDatas($society);
@@ -252,114 +404,118 @@ class AvoloiDivers extends DolibarrApi
 		return $society->array_options["options_is_society"] === '1' ? false : true;
 	}
 
-	public function getSociety($id) {
+	public function getSociety($id)
+	{
 		$society = new Societe($this->db);
 		$society->fetch($id);
 		return $this->_cleanObjectDatas($society);
 	}
 
-	private function getContact($id) {
+	private function getContact($id)
+	{
 		$contact = new Contact($this->db);
 		$contact->fetch($id);
 		return $this->_cleanObjectDatas($contact);
 	}
 
-	private function typeTiersFilter($soc, $clientFilter, $prospectFilter, $tiersFilter) {
+	private function typeTiersFilter($soc, $clientFilter, $prospectFilter, $tiersFilter)
+	{
 		$society = new Societe($this->db);
 		$society->fetch($soc["society_id"]);
 		$society = $this->_cleanObjectDatas($society);
 
 		if (($clientFilter === -1 && $prospectFilter === -1 && $tiersFilter === -1)
-				|| ($clientFilter !== -1 && $society->client === "1")
-				|| ($prospectFilter !== -1 && $society->client === "2")
-				|| ($tiersFilter !== -1 && $society->client === "0")) {
+			|| ($clientFilter !== -1 && $society->client === "1")
+			|| ($prospectFilter !== -1 && $society->client === "2")
+			|| ($tiersFilter !== -1 && $society->client === "0")
+		) {
 			return true;
 		} else {
 			return false;;
 		}
 	}
 
-	private function getContacts($value) {
+	private function getContacts($value)
+	{
 		global $conf, $langs, $user;
 
 		$obj_ret = array();
 
 		$sql = "SELECT *";
-		$sql.= " FROM ".MAIN_DB_PREFIX."socpeople as c";
-		$sql.= " WHERE (c.lastname LIKE '%".$value."%')";
-		$sql.= " OR (c.firstname LIKE '%".$value."%')";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "socpeople as c";
+		$sql .= " WHERE (c.lastname LIKE '%" . $value . "%')";
+		$sql .= " OR (c.firstname LIKE '%" . $value . "%')";
 
-		$resql=$this->db->query($sql);
+		$resql = $this->db->query($sql);
 
 		if ($resql) {
 			$num = $this->db->num_rows($resql);
 			$min = min($num, ($limit <= 0 ? $num : $limit));
-			while ($i < $min)
-			{
-					$obj = $this->db->fetch_object($resql);
-					$contacts = new Contact($this->db);
-					if($obj->fk_soc && $contacts->fetch($obj->rowid)) {
-							$obj_ret[] = $this->_cleanObjectDatas($contacts);
-					}
-					$i++;
+			while ($i < $min) {
+				$obj = $this->db->fetch_object($resql);
+				$contacts = new Contact($this->db);
+				if ($obj->fk_soc && $contacts->fetch($obj->rowid)) {
+					$obj_ret[] = $this->_cleanObjectDatas($contacts);
+				}
+				$i++;
 			}
 		}
 
 		return $obj_ret;
 	}
 
-	public function getContactsOfSociety($socid) {
+	public function getContactsOfSociety($socid)
+	{
 		global $conf, $langs, $user;
 
 		$obj_ret = array();
 
 		$sql = "SELECT *";
-		$sql.= " FROM ".MAIN_DB_PREFIX."socpeople as c";
-		$sql.= " WHERE (c.fk_soc = $socid)";
-		$sql.= " ORDER BY c.lastname ASC";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "socpeople as c";
+		$sql .= " WHERE (c.fk_soc = $socid)";
+		$sql .= " ORDER BY c.lastname ASC";
 
-		$resql=$this->db->query($sql);
+		$resql = $this->db->query($sql);
 
 		if ($resql) {
 			$num = $this->db->num_rows($resql);
 			$min = min($num, ($limit <= 0 ? $num : $limit));
-			while ($i < $min)
-			{
-					$obj = $this->db->fetch_object($resql);
-					$contacts = new Contact($this->db);
-					if($obj->fk_soc && $contacts->fetch($obj->rowid)) {
-							$obj_ret[] = $this->_cleanObjectDatas($contacts);
-					}
-					$i++;
+			while ($i < $min) {
+				$obj = $this->db->fetch_object($resql);
+				$contacts = new Contact($this->db);
+				if ($obj->fk_soc && $contacts->fetch($obj->rowid)) {
+					$obj_ret[] = $this->_cleanObjectDatas($contacts);
+				}
+				$i++;
 			}
 		}
 
 		return $obj_ret;
 	}
 
-	private function getSocieties($value) {
+	private function getSocieties($value)
+	{
 		global $conf, $langs, $user;
 
 		$obj_ret = array();
 
 		$sql = "SELECT *";
-		$sql.= " FROM ".MAIN_DB_PREFIX."societe as s";
-		$sql.= " WHERE (s.nom LIKE '%".$value."%')";
-		$sql.= " ORDER BY s.nom ASC";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "societe as s";
+		$sql .= " WHERE (s.nom LIKE '%" . $value . "%')";
+		$sql .= " ORDER BY s.nom ASC";
 
-		$resql=$this->db->query($sql);
+		$resql = $this->db->query($sql);
 
 		if ($resql) {
 			$num = $this->db->num_rows($resql);
 			$min = min($num, ($limit <= 0 ? $num : $limit));
-			while ($i < $min)
-			{
-					$obj = $this->db->fetch_object($resql);
-					$societies = new Societe($this->db);
-					if($societies->fetch($obj->rowid)) {
-							$obj_ret[] = $this->_cleanObjectDatas($societies);
-					}
-					$i++;
+			while ($i < $min) {
+				$obj = $this->db->fetch_object($resql);
+				$societies = new Societe($this->db);
+				if ($societies->fetch($obj->rowid)) {
+					$obj_ret[] = $this->_cleanObjectDatas($societies);
+				}
+				$i++;
 			}
 		}
 
