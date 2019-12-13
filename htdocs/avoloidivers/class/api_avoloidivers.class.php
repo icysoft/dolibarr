@@ -203,9 +203,70 @@ class AvoloiDivers extends DolibarrApi
 		return $result;
 	}
 
+	/**
+	 * Get an affairs by it's id
+	 * 
+	 * @param   string   $id
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /affair
+	 */
+	public function affair($id)
+	{
+		global $conf, $langs, $user, $db;
+
+		$obj_ret = array();
+		$sql = " SELECT t.*";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "projet as t";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
+		$sql .= " WHERE t.entity IN (1) AND t.rowid = " . $id;
+
+		$result = $db->query($sql);
+		// $affair = $this->db->fetch_object($result);
+
+		if ($result) {
+			$obj = $db->fetch_object($result);
+			$project_static = new Project($db);
+			if ($project_static->fetch($obj->rowid)) {
+				$obj_ret = $this->_cleanObjectDatas($project_static);
+			}
+		} else {
+			throw new RestException(503, 'Error when retrieve project list : ' . $db->lasterror());
+		}
+
+		$affairList = $obj_ret;
+		// $result = array();
+		// $result['total'] = $total;
+			if ($affairList->socid != null && $affairList->socid !== '') {
+				$thirdParties = new Thirdparties();
+				$thirdParty = $thirdParties->get($affairList->socid);
+				$affairList->tiers = array();
+				$affairList->tiers['id'] = $thirdParty->id;
+				$affairList->tiers['firstname'] = $thirdParty->firstname;
+				$affairList->tiers['lastname'] = $thirdParty->lastname;
+				$affairList->tiers['name'] = $thirdParty->name;
+			}
+
+			if ($affairList && $affairList->array_options && $affairList->array_options->options_multitiers) {
+				$affairList->array_options->options_multitiers = json_encode($affairList->array_options->options_multitiers);
+				for ($j = 0; $j <= count($affairList->array_options->options_multitiers); $j++) {
+					$affairList->array_options->options_multitiers[$j]->detail = $thirdParties->get($affairList->array_options->options_multitiers[$j]->idTiers);
+				}
+			}
+		return $affairList;
+	}
+
 
 	/**
-	 * Search an affairs by it's name
+	 * Search an affairs by various filters
 	 * 
 	 * @param   string   $searched
 	 * @return  array                   List of documents
@@ -233,15 +294,15 @@ class AvoloiDivers extends DolibarrApi
 		$dateEndSql = '';
 		$sqlAffairsFiltersArray = [];
 		$sqlFiltersArray = [];
-		$statusFilter = []; 
-		if($statusStringFilter) {
+		$statusFilter = [];
+		if ($statusStringFilter) {
 			$statusFilter = preg_split('/[,]+/', $statusStringFilter);
 		}
-		
-        if ($dateStartFilter !== '') {
+
+		if ($dateStartFilter !== '') {
 			$dateStartSql = '(t.datec >= \'' . $dateStartFilter . '\')';
 			array_push($sqlAffairsFiltersArray, $dateStartSql);
-        }
+		}
 		if ($dateEndFilter !== '') {
 			$dateEndSql = '(t.datec <= \'' . $dateEndFilter . '\')';
 			array_push($sqlAffairsFiltersArray, $dateEndSql);
@@ -255,14 +316,14 @@ class AvoloiDivers extends DolibarrApi
 			array_push($sqlFiltersArray, $multitiersSql);
 		}
 
-        if (count($statusFilter) > 0) {
+		if (count($statusFilter) > 0) {
 			if (!array_search('-1', $statusFilter)) {
 				$statusSql = '';
 				for ($i = 0; $i < count($statusFilter); $i++) {
 					if ($statusSql !== '') {
 						$statusSql .= ' OR ';
-					  }
-					  $statusSql .=  '(t.fk_statut:=:\'' . $statusFilter[$i] . '\')';
+					}
+					$statusSql .=  '(t.fk_statut:=:\'' . $statusFilter[$i] . '\')';
 				}
 				if ($statusSql !== '') {
 					array_push($sqlAffairsFiltersArray, $statusSql);
@@ -282,34 +343,31 @@ class AvoloiDivers extends DolibarrApi
 		$sql .= " WHERE t.entity IN (1)";
 
 		if ($sqlFilters && $sqlFilters !== '') {
-			$regexstring='\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
-            $sql.=" AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlFilters).")";
+			$regexstring = '\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
+			$sql .= " AND (" . preg_replace_callback('/' . $regexstring . '/', 'DolibarrApi::_forge_criteria_callback', $sqlFilters) . ")";
 		}
-		
-		$sql.= $db->order($sortfield, $sortorder);
-		
-		
+
+		$sql .= $db->order($sortfield, $sortorder);
+
+
 		$result = $db->query($sql);
 		// $affairs = $this->db->fetch_object($result);
 
-		if ($result)
-        {
+		if ($result) {
 			$num = $db->num_rows($result);
-			$i=0;
-            while ($i < $num)
-            {
+			$i = 0;
+			while ($i < $num) {
 				$obj = $db->fetch_object($result);
 				$project_static = new Project($db);
-                if($project_static->fetch($obj->rowid)) {
+				if ($project_static->fetch($obj->rowid)) {
 					$obj_ret[] = $this->_cleanObjectDatas($project_static);
 				}
 				$i++;
-            }
-        }
-        else {
-            throw new RestException(503, 'Error when retrieve project list : '.$db->lasterror());
-        }
-		
+			}
+		} else {
+			throw new RestException(503, 'Error when retrieve project list : ' . $db->lasterror());
+		}
+
 		$affairList = $obj_ret;
 		$total = count($affairList);
 		$result = array();
