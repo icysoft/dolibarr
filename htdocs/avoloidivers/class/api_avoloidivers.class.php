@@ -27,6 +27,7 @@ require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/api_projects.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/api_thirdparties.class.php';
+require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
 
 /**
  * API class for receive files
@@ -245,22 +246,22 @@ class AvoloiDivers extends DolibarrApi
 		$affairList = $obj_ret;
 		// $result = array();
 		// $result['total'] = $total;
-			if ($affairList->socid != null && $affairList->socid !== '') {
-				$thirdParties = new Thirdparties();
-				$thirdParty = $thirdParties->get($affairList->socid);
-				$affairList->tiers = array();
-				$affairList->tiers['id'] = $thirdParty->id;
-				$affairList->tiers['firstname'] = $thirdParty->firstname;
-				$affairList->tiers['lastname'] = $thirdParty->lastname;
-				$affairList->tiers['name'] = $thirdParty->name;
-			}
+		if ($affairList->socid != null && $affairList->socid !== '') {
+			$thirdParties = new Thirdparties();
+			$thirdParty = $thirdParties->get($affairList->socid);
+			$affairList->tiers = array();
+			$affairList->tiers['id'] = $thirdParty->id;
+			$affairList->tiers['firstname'] = $thirdParty->firstname;
+			$affairList->tiers['lastname'] = $thirdParty->lastname;
+			$affairList->tiers['name'] = $thirdParty->name;
+		}
 
-			if ($affairList && $affairList->array_options && $affairList->array_options->options_multitiers) {
-				$affairList->array_options->options_multitiers = json_encode($affairList->array_options->options_multitiers);
-				for ($j = 0; $j <= count($affairList->array_options->options_multitiers); $j++) {
-					$affairList->array_options->options_multitiers[$j]->detail = $thirdParties->get($affairList->array_options->options_multitiers[$j]->idTiers);
-				}
+		if ($affairList && $affairList->array_options && $affairList->array_options->options_multitiers) {
+			$affairList->array_options->options_multitiers = json_encode($affairList->array_options->options_multitiers);
+			for ($j = 0; $j <= count($affairList->array_options->options_multitiers); $j++) {
+				$affairList->array_options->options_multitiers[$j]->detail = $thirdParties->get($affairList->array_options->options_multitiers[$j]->idTiers);
 			}
+		}
 		return $affairList;
 	}
 
@@ -403,6 +404,168 @@ class AvoloiDivers extends DolibarrApi
 			$result['affairs'] = $rtdArr;
 		} else {
 			$result['affairs'] = $affairList;
+		}
+		return $result;
+	}
+
+	/**
+	 * Search invoices by various filters
+	 * 
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /searchinvoices
+	 */
+	public function searchinvoices($limit = '-1', $page = '0', $searchFilter = '', $searchType = '0', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $affairId='', $socId='')
+	{
+		global $conf, $langs, $user, $db;
+
+		//decodage des paramètres
+		$searchFilter = urldecode($searchFilter);
+		$dateStartFilter = urldecode($dateStartFilter);
+		$dateEndFilter = urldecode($dateEndFilter);
+		$statusStringFilter = urldecode($statusStringFilter);
+		$affairIdFilter = urldecode($affairId);
+		$socIdFilter = urldecode($socId);
+
+		$dateStartSql = '';
+		$dateEndSql = '';
+		$sqlInvoicesFiltersArray = [];
+		$sqlFiltersArray = [];
+		$statusFilter = [];
+
+		if ($affairIdFilter && $affairIdFilter !== '') {
+			$affairIdSql = '(t.fk_projet = \'' . $affairIdFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $affairIdSql);
+		}
+
+		if ($socIdFilter && $socIdFilter !== '') {
+			$socIdSql = '(t.fk_soc = \'' . $socIdFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $socIdSql);
+		}
+
+		// Obliger de mettre un flag PREG_SPLIT_NO_EMPTY ici. Lorsque la string ne contenait que '0', preg_split renvoyait tableau vide.
+		// Côté front, j'ai mis des virgule à la fin de chaque chiffres comme ça, on à '0,' au lieu de ne récupérer que '0'
+		// Le flag permet que le tableau renvoyer n'es pas de valeur vide et donc, au lieu d'obtenir [0,], j'ai juste [0]
+		if ($statusStringFilter) {
+			$statusFilter = preg_split('/[,]+/', (string) $statusStringFilter, -1, PREG_SPLIT_NO_EMPTY);
+		}
+
+		if ($dateStartFilter !== '') {
+			$dateStartSql = '(t.datec >= \'' . $dateStartFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $dateStartSql);
+		}
+		if ($dateEndFilter !== '') {
+			$dateEndSql = '(t.datec <= \'' . $dateEndFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $dateEndSql);
+		}
+		if ($searchFilter !== '') {
+			switch ((int) $searchType) {
+				case 0:
+					$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
+					$tiersSql = '(tex.client like \'%' . $searchFilter . '%\')';
+					$temp = array();
+					array_push($temp, $affairSql);
+					array_push($temp, $tiersSql);
+					$searchSql = join(' OR ', $temp);
+					array_push($sqlInvoicesFiltersArray, '('.$searchSql.')');
+					break;
+				case 1:
+					$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
+					array_push($sqlInvoicesFiltersArray, $affairSql);
+					break;
+				case 2:
+					$tiersSql = '(tex.client like \'%' . $searchFilter . '%\')';
+					array_push($sqlInvoicesFiltersArray, $tiersSql);
+					break;
+			}
+		}
+
+		if (count($statusFilter) > 0) {
+			// Lorsque array_search ne trouve pas quelque chose, il renvoie un variable qui est soit un boolean,
+			// soit qui s'évalue comme un boolean (0), si '-1' se trouve à la 1ère position ($statusFilter[0])
+			// alors quand il trouve -1 il renverra 0, sauf que 0 serai interpréter comme false par le if.
+			if (array_search('-1', $statusFilter) === false) {
+				$statusSql = '';
+				for ($i = 0; $i < count($statusFilter); $i++) {
+					if ($statusFilter[$i] !== '') {
+						if ($statusSql !== '') {
+							$statusSql .= ' OR ';
+						}
+						$statusSql .=  '(t.fk_statut:=:\'' . $statusFilter[$i] . '\')';
+					}
+				}
+				if ($statusSql !== '') {
+					array_push($sqlInvoicesFiltersArray, $statusSql);
+				}
+			}
+		}
+
+		$invoicesSqlFilters = join(' AND ', $sqlInvoicesFiltersArray);
+		array_push($sqlFiltersArray, $invoicesSqlFilters);
+		$sqlFilters = join(' OR ', $sqlFiltersArray);
+
+		$obj_ret = array();
+		$sql = "SELECT t.*";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "facture as t";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "facture_extrafields as tex on tex.fk_object = t.rowid";
+		$sql .= " WHERE t.entity IN (1)";
+
+		if ($sqlFilters && $sqlFilters !== '') {
+			$regexstring = '\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
+			$sql .= " AND (" . preg_replace_callback('/' . $regexstring . '/', 'DolibarrApi::_forge_criteria_callback', $sqlFilters) . ")";
+		}
+
+		$sql .= $db->order($sortfield, $sortorder);
+
+		$result = $db->query($sql);
+		if ($result) {
+			$i = 0;
+			$num = $db->num_rows($result);
+			while ($i < $num) {
+				$obj = $db->fetch_object($result);
+				$invoice_static = new Facture($db);
+				if ($invoice_static->fetch($obj->rowid)) {
+					// Get payment details
+					$invoice_static->totalpaid = $invoice_static->getSommePaiement();
+					$invoice_static->totalcreditnotes = $invoice_static->getSumCreditNotesUsed();
+					$invoice_static->totaldeposits = $invoice_static->getSumDepositsUsed();
+					$invoice_static->remaintopay = price2num($invoice_static->total_ttc - $invoice_static->totalpaid - $invoice_static->totalcreditnotes - $invoice_static->totaldeposits, 'MT');
+
+					// Add external contacts ids
+					$invoice_static->contacts_ids = $invoice_static->liste_contact(-1, 'external', 1);
+
+					$obj_ret[] = $this->_cleanObjectDatas($invoice_static);
+				}
+				$i++;
+			}
+		} else {
+			throw new RestException(503, 'Error when retrieve invoice list : ' . $db->lasterror());
+		}
+
+		$invoiceList = $obj_ret;
+
+		$total = count($invoiceList);
+		$result = array();
+		$result['total'] = $total;
+		if ($page !== '-1' && $limit !== '-1') {
+			$tmppage = (int) $page;
+			$tmplimit = (int) $limit;
+			$tmp = array_slice($invoiceList, $tmppage * $tmplimit, $tmplimit);
+
+			$rtdArr = [];
+			foreach ($tmp as $t) {
+				$rtdArr[] = $t;
+			}
+			$result['invoices'] = $rtdArr;
+		} else {
+			$result['invoices'] = $invoiceList;
 		}
 		return $result;
 	}
