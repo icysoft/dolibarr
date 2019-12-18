@@ -422,7 +422,7 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchinvoices
 	 */
-	public function searchinvoices($limit = '-1', $page = '0', $searchFilter = '', $searchType = '0', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $affairId='', $socId='')
+	public function searchinvoices($limit = '-1', $page = '0', $searchFilter = '', $searchType = '0', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $affairId = '', $socId = '')
 	{
 		global $conf, $langs, $user, $db;
 
@@ -474,7 +474,7 @@ class AvoloiDivers extends DolibarrApi
 					array_push($temp, $affairSql);
 					array_push($temp, $tiersSql);
 					$searchSql = join(' OR ', $temp);
-					array_push($sqlInvoicesFiltersArray, '('.$searchSql.')');
+					array_push($sqlInvoicesFiltersArray, '(' . $searchSql . ')');
 					break;
 				case 1:
 					$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
@@ -567,6 +567,154 @@ class AvoloiDivers extends DolibarrApi
 		} else {
 			$result['invoices'] = $invoiceList;
 		}
+		return $result;
+	}
+
+	/**
+	 * Search propals by various filters
+	 * 
+	 * @return  array List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /searchpropals
+	 */
+	public function searchpropals($limit = '-1', $page = '0', $searchFilter = '', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $affairId = '', $socId = '')
+	{
+		global $conf, $langs, $user, $db;
+
+		//decodage des paramètres
+		$searchFilter = urldecode($searchFilter);
+		$dateStartFilter = urldecode($dateStartFilter);
+		$dateEndFilter = urldecode($dateEndFilter);
+		$statusStringFilter = urldecode($statusStringFilter);
+		$affairIdFilter = urldecode($affairId);
+		$socIdFilter = urldecode($socId);
+
+		$dateStartSql = '';
+		$dateEndSql = '';
+		$sqlInvoicesFiltersArray = [];
+		$sqlFiltersArray = [];
+		$statusFilter = [];
+
+		if ($affairIdFilter && $affairIdFilter !== '') {
+			$affairIdSql = '(t.fk_projet = \'' . $affairIdFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $affairIdSql);
+		}
+
+		if ($socIdFilter && $socIdFilter !== '') {
+			$socIdSql = '(t.fk_soc = \'' . $socIdFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $socIdSql);
+		}
+
+		// Obliger de mettre un flag PREG_SPLIT_NO_EMPTY ici. Lorsque la string ne contenait que '0', preg_split renvoyait tableau vide.
+		// Côté front, j'ai mis des virgule à la fin de chaque chiffres comme ça, on à '0,' au lieu de ne récupérer que '0'
+		// Le flag permet que le tableau renvoyer n'es pas de valeur vide et donc, au lieu d'obtenir [0,], j'ai juste [0]
+		if ($statusStringFilter) {
+			$statusFilter = preg_split('/[,]+/', (string) $statusStringFilter, -1, PREG_SPLIT_NO_EMPTY);
+		}
+
+		if ($dateStartFilter !== '') {
+			$dateStartSql = '(t.datec >= \'' . $dateStartFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $dateStartSql);
+		}
+		if ($dateEndFilter !== '') {
+			$dateEndSql = '(t.datec <= \'' . $dateEndFilter . '\')';
+			array_push($sqlInvoicesFiltersArray, $dateEndSql);
+		}
+		if ($searchFilter !== '') {
+			$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
+			$tiersSql = '(tex.client like \'%' . $searchFilter . '%\')';
+			// $namePropalSql = '(t.title like \'%' . $searchFilter . '%\')';
+			$searchSql = array();
+			array_push($searchSql, $affairSql);
+			array_push($searchSql, $tiersSql);
+			// array_push($searchSql, $namePropalSql);
+			$searchSql = join(' OR ', $searchSql);
+			array_push($sqlInvoicesFiltersArray, '(' . $searchSql . ')');
+		}
+
+		if (count($statusFilter) > 0) {
+			// Lorsque array_search ne trouve pas quelque chose, il renvoie un variable qui est soit un boolean,
+			// soit qui s'évalue comme un boolean (0), si '-1' se trouve à la 1ère position ($statusFilter[0])
+			// alors quand il trouve -1 il renverra 0, sauf que 0 serai interpréter comme false par le if.
+			if (array_search('-1', $statusFilter) === false) {
+				$statusSql = '';
+				for ($i = 0; $i < count($statusFilter); $i++) {
+					if ($statusFilter[$i] !== '') {
+						if ($statusSql !== '') {
+							$statusSql .= ' OR ';
+						}
+						$statusSql .=  '(t.fk_statut:=:\'' . $statusFilter[$i] . '\')';
+					}
+				}
+				if ($statusSql !== '') {
+					array_push($sqlInvoicesFiltersArray, $statusSql);
+				}
+			}
+		}
+
+		$invoicesSqlFilters = join(' AND ', $sqlInvoicesFiltersArray);
+		array_push($sqlFiltersArray, $invoicesSqlFilters);
+		$sqlFilters = join(' OR ', $sqlFiltersArray);
+
+		$obj_ret = array();
+		$sql = "SELECT t.*";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "propal as t";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "propal_extrafields as tex on tex.fk_object = t.rowid";
+		$sql .= " WHERE t.entity IN (1)";
+
+		if ($sqlFilters && $sqlFilters !== '') {
+			$regexstring = '\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
+			$sql .= " AND (" . preg_replace_callback('/' . $regexstring . '/', 'DolibarrApi::_forge_criteria_callback', $sqlFilters) . ")";
+		}
+
+		$sql .= $db->order($sortfield, $sortorder);
+
+		$result = $db->query($sql);
+		if ($result) {
+			$i = 0;
+			$num = $db->num_rows($result);
+			while ($i < $num) {
+				$obj = $db->fetch_object($result);
+				$proposal_static = new Propal($db);
+				if ($proposal_static->fetch($obj->rowid)) {
+					// Add external contacts ids
+					$proposal_static->contacts_ids = $proposal_static->liste_contact(-1, 'external', 1);
+					$obj_ret[] = $this->_cleanObjectDatas($proposal_static);
+				}
+				$i++;
+			}
+		} else {
+			throw new RestException(503, 'Error when retrieve invoice list : ' . $db->lasterror());
+		}
+
+		$invoiceList = $obj_ret;
+
+		$total = count($invoiceList);
+		$result = array();
+		$result['total'] = $total;
+		// echo $page;
+		// echo $limit;
+		if ($page !== '-1' && $limit !== '-1') {
+			$tmppage = (int) $page;
+			$tmplimit = (int) $limit;
+			$tmp = array_slice($invoiceList, $tmppage * $tmplimit, $tmplimit);
+
+			$rtdArr = [];
+			foreach ($tmp as $t) {
+				$rtdArr[] = $t;
+			}
+			$result['proposals'] = $rtdArr;
+		} else {
+			$result['proposals'] = $invoiceList;
+		}
+		// print_r($result);
 		return $result;
 	}
 
