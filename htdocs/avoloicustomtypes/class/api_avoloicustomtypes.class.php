@@ -52,7 +52,7 @@ class AvoloiCustomTypes extends DolibarrApi
 
 	/**
 	 * Update color of a contact type
-	 * 
+	 *
 	 * @param 	string    $id  					Type ID
 	 * @param 	string    $color_code  	Type string
 	 * @return  string									Updated type ID
@@ -66,11 +66,11 @@ class AvoloiCustomTypes extends DolibarrApi
 	 *
 	 * @url PUT /contacttypecolor
 	 */
-	public function contacttypecolor($id, $color_code = "#737373") {
+	public function contacttypecolor($id, $color_code = "737373") {
 		global $conf, $langs, $user;
 
 		// print "COLOR : ".$color_code."<br>";
-		
+
 		$sql = "UPDATE `avo_custom_contact_type`";
 		$sql.= " SET `color`='$color_code',";
 		$sql.= " `fk_pays`='1'";
@@ -83,7 +83,7 @@ class AvoloiCustomTypes extends DolibarrApi
 
 	/**
 	 * Get list of contact types
-	 * 
+	 *
 	 * @return  string								Updated type ID
 	 *
 	 * @throws 500
@@ -97,7 +97,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	 */
 	public function getcontacttypes() {
 		global $conf, $langs, $user;
-		
+
 		$sql = "SELECT * FROM `avo_custom_contact_type`";
 
 		$resql=$this->db->query($sql);
@@ -125,7 +125,7 @@ class AvoloiCustomTypes extends DolibarrApi
 
 	/**
 	 * Get list of tiers types
-	 * 
+	 *
 	 * @param string    $id  					Type ID
 	 * @return  string								Updated type ID
 	 *
@@ -140,7 +140,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	 */
 	public function gettierstypes() {
 		global $conf, $langs, $user;
-		
+
 		$sql = "SELECT * FROM `avo_custom_tiers_type`";
 
 		$resql=$this->db->query($sql);
@@ -167,7 +167,7 @@ class AvoloiCustomTypes extends DolibarrApi
 
 	/**
 	 * Create a tiers type
-	 * 
+	 *
 	 * @param 	string    		$tiersType			Tiers type
 	 * @return  string											Updated type ID
 	 *
@@ -204,7 +204,7 @@ class AvoloiCustomTypes extends DolibarrApi
 
 	/**
 	 * Get a tiers type
-	 * 
+	 *
 	 * @param 	string    		$id						Tiers type ID
 	 * @return  string											Updated type ID
 	 *
@@ -219,7 +219,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	 */
 	public function tierstype($id) {
 		global $conf, $langs, $user;
-		
+
 		$sql = "SELECT * FROM avo_custom_tiers_type WHERE rowid=$id";
 		$resql = $this->db->query($sql);
 
@@ -232,5 +232,180 @@ class AvoloiCustomTypes extends DolibarrApi
 		} else {
 			throw new RestException(405, "Problème lors de la récupération du type de tiers");
 		}
+	}
+
+	/////////////// PARTIE TYPE DE RENDEZ-VOUS ///////////////
+
+	/**
+	 * Create an event type
+	 *
+	 * @param 	string    $eventType		Event type
+	 * @param	string	  $color_code		Color of the event type
+	 * @return  string	  Created type ID
+	 *
+	 * @throws 500
+	 * @throws 200
+	 *
+	 * @url POST /createeventtype
+	 */
+	public function createeventtype($eventType, $color_code = "FFC266") {
+		global $conf, $langs, $user;
+
+		$libelle = $eventType;
+
+		// Création du code
+		$code = $this->generateRandomCode();
+
+		// Incrémentation de l'id
+		$sqlId = "SELECT MAX(id) as id FROM `llx_c_actioncomm`";
+		$resqId = $this->db->query($sqlId);
+		$idTmp = $this->db->fetch_object($resqId);
+		$id = $idTmp->id + 1;
+
+		// Incrémentation de la position
+		$sqlPos = "SELECT MAX(position) as position FROM `llx_c_actioncomm`";
+		$resqlPos = $this->db->query($sqlPos);
+		$posTmp = $this->db->fetch_object($resql);
+		$position = $posTmp->position + 1;
+
+		$sql = "INSERT INTO `llx_c_actioncomm` (`id`, `code`, `type`, `libelle`, `active`, `color`, `position`)";
+		$sql.= " VALUES (";
+		$sql.= "'". $id ."', ";
+		$sql.= "'". $code ."', ";
+		$sql.= "'user', ";
+		$sql.= "'". $libelle ."', ";
+		$sql.= "1, ";
+		$sql.= "'". $color_code ."', ";
+		$sql.= "'". $position ."');";
+
+		$resql = $this->db->query($sql);
+
+		if ($resql) {
+			$sqlId = "SELECT MAX(id) as id FROM `llx_c_actioncomm`";
+			$rtdId = $this->db->query($sqlId);
+			$rtd = $this->db->fetch_object($rtdId);
+
+			return $rtd->id;
+		} else {
+			throw new RestException(500, "Problème lors de la création du type de rendez-vous");
+		}
+	}
+
+	/**
+	 * Update an event type
+	 *
+	 * @param	string	  $id				Event ID
+	 * @param 	string    $eventType		Event type
+	 * @param	string	  $color_code		Color of the event type
+	 * @return  string	  Created type ID
+	 *
+	 * @throws 500
+	 * @throws 200
+	 *
+	 * @url PUT /updateeventtype
+	 */
+	public function updateeventtype($id, $eventType, $color_code = "FFC266") {
+		global $conf, $langs, $user;
+
+		$libelle = $eventType;
+
+		$sql = "UPDATE `llx_c_actioncomm` SET ";
+		$sql.= "`color`='$color_code', ";
+		$sql.= "`libelle`='$libelle' ";
+		$sql.= "WHERE id = $id";
+
+		$resql = $this->db->query($sql);
+
+		// Vérification de la bonne modification de la ligne
+		$sqlTmp = "SELECT * FROM `llx_c_actioncomm` WHERE id = $id";
+		$resqTmp = $this->db->query($sqlTmp);
+		$objTmp = $this->db->fetch_object($resqTmp);
+
+		if ($objTmp->libelle !== $libelle) {
+			throw new RestException(500, "Problème lors de la modification du type de rendez-vous");
+		}
+
+		if ($objTmp->color !== $color_code) {
+			throw new RestException(500, "Problème lors de la modification du type de rendez-vous");
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Get event types
+	 *
+	 * @return  string			Event types
+	 *
+	 * @throws 200
+	 *
+	 * @url GET /eventtype
+	 */
+	public function geteventtypes() {
+		global $conf, $langs, $user;
+
+		$sql = "SELECT id, code, libelle, color ";
+		$sql.= "FROM `llx_c_actioncomm` WHERE active = 1 ";
+		$sql.= "EXCEPT (SELECT id, code, libelle, color FROM `llx_c_actioncomm` WHERE code = 'AC_OTH_AUTO' OR code = 'AC_OTH')";
+
+		$resql = $this->db->query($sql);
+
+		return $resql;
+	}
+
+	/**
+	 * Delete an event type
+	 *
+	 * @param		string		$id						Event ID
+	 * @return  string									Created type ID
+	 *
+	 * @throws 500
+	 * @throws 200
+	 *
+	 * @url DELETE /deleteeventtype
+	 */
+	public function deleteeventtype($id) {
+		global $conf, $langs, $user;
+
+		$sql = "DELETE FROM `llx_c_actioncomm` WHERE `id` = $id;";
+		$resql = $this->db->query($sql);
+
+		// Vérification de la bonne suppression de la ligne
+		$sqlTmp = "SELECT * FROM `llx_c_actioncomm` WHERE id = $id";
+		$resqTmp = $this->db->query($sqlTmp);
+		$objTmp = $this->db->fetch_object($resqTmp);
+
+		// Si le type de rendez-vous avec id = $id existe, la suppression ne s'est pas faite
+		// On renvoit donc une erreur
+		if ($objTmp) {
+			throw new RestException(500, "Problème lors de la suppression du type de rendez-vous");
+		}
+
+		return "Type de rendez-vous supprimé";
+	}
+
+	private function generateRandomCode() {
+		// Caractères pouvant aparaîtres dans le code généré
+		$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+		$code = '';
+
+		// Un caractère de $charaters est sélectionné au hasard
+		$max = strlen($characters) - 1;
+		for ($i = 0; $i < 11; $i++) {
+				 $code .= $characters[mt_rand(0, $max)];
+		}
+
+		// Vérification de l'existence de ce code dans la table
+		$sql = "SELECT * FROM `llx_c_actioncomm` WHERE code = '$code';";
+		$resql = $this->db->query($sql);
+		$objTmp = $this->db->fetch_object($resql);
+
+		// Si le code existe dans la table, on rappel la fonction de génération pour proposer un nouveau code aléatoirfe
+		if ($objTmp) {
+			$code = $this->generateRandomCode();
+		}
+
+		return $code;
 	}
 }
