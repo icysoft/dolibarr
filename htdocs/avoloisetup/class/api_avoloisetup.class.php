@@ -332,6 +332,7 @@ class AvoloiSetup extends DolibarrApi
         if ($setup_infos->tiers_nomenclature || $setup_infos->tiers_nomenclature == '') dolibarr_set_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', $setup_infos->tiers_nomenclature);
         if ($setup_infos->client_time_limit) dolibarr_set_const($this->db, 'CLIENT_TIME_LIMIT', $setup_infos->client_time_limit);
         if ($setup_infos->provider_time_limit) dolibarr_set_const($this->db, 'PROVIDER_TIME_LIMIT', $setup_infos->provider_time_limit);
+        if ($setup_infos->taux_tva_default || $setup_infos->taux_tva_default == '0') dolibarr_set_const($this->db, 'TAUX_TVA_DEFAULT', $setup_infos->taux_tva_default);
 
         return $this->getAccountingSetup();
     }
@@ -355,6 +356,7 @@ class AvoloiSetup extends DolibarrApi
         $tiers_nomenclature = dolibarr_get_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', 1);
         $client_time_limit = dolibarr_get_const($this->db, 'CLIENT_TIME_LIMIT', 1);
         $provider_time_limit = dolibarr_get_const($this->db, 'PROVIDER_TIME_LIMIT', 1);
+        $taux_tva_default = dolibarr_get_const($this->db, 'TAUX_TVA_DEFAULT', 1);
 
         $list = array();
 
@@ -363,9 +365,115 @@ class AvoloiSetup extends DolibarrApi
         $list['tiers_nomenclature']=$tiers_nomenclature;
         $list['client_time_limit']=$client_time_limit;
         $list['provider_time_limit']=$provider_time_limit;
+        $list['taux_tva_default']=$taux_tva_default;
 
         return $list;
     }
+
+    /**
+	 * Return the list of tva of an array of country
+	 * 
+	 * @param   string   $country_code
+	 * @return  array                   List of tva
+	 *
+	 * @throws 200
+	 *
+	 * @url GET /tauxtva
+	 */
+	public function getTauxTva($country_id)
+	{
+		global $langs;
+		$const_code = 999;
+
+		$sql  = "SELECT DISTINCT t.rowid, t.code, t.taux, t.localtax1, t.localtax1_type, t.localtax2, t.localtax2_type, t.recuperableonly, t.note";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "c_tva as t";
+		$sql .= " LEFT JOIN ". MAIN_DB_PREFIX . "c_country as c";
+		$sql .= " ON t.fk_pays = c.rowid";
+		$sql .= " WHERE t.active > 0";
+		$sql .= " AND t.fk_pays IN (" . $country_id . ',' . $const_code . ")";
+		$sql .= " ORDER BY t.code ASC, t.taux ASC, t.recuperableonly ASC";
+
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			$num = $this->db->num_rows($resql);
+			if ($num) {
+				for ($i = 0; $i < $num; $i++) {
+					$obj = $this->db->fetch_object($resql);
+					$this->cache_vatrates[$i]['rowid']	= $obj->rowid;
+					$this->cache_vatrates[$i]['code']	= $obj->code;
+					$this->cache_vatrates[$i]['txtva']	= $obj->taux;
+					$this->cache_vatrates[$i]['nprtva']	= $obj->recuperableonly;
+					$this->cache_vatrates[$i]['localtax1']	    = $obj->localtax1;
+					$this->cache_vatrates[$i]['localtax1_type']	= $obj->localtax1_type;
+					$this->cache_vatrates[$i]['localtax2']	    = $obj->localtax2;
+					$this->cache_vatrates[$i]['localtax2_type']	= $obj->localtax1_type;
+                    $this->cache_vatrates[$i]['note'] = $obj->note;
+					$this->cache_vatrates[$i]['label']	= $obj->taux . '%' . ($obj->code ? ' (' . $obj->code . ')' : '');   // Label must contains only 0-9 , . % or *
+					$this->cache_vatrates[$i]['labelallrates'] = $obj->taux . '/' . ($obj->localtax1 ? $obj->localtax1 : '0') . '/' . ($obj->localtax2 ? $obj->localtax2 : '0') . ($obj->code ? ' (' . $obj->code . ')' : '');	// Must never be used as key, only label
+					$positiverates = '';
+					if ($obj->taux) $positiverates .= ($positiverates ? '/' : '') . $obj->taux;
+					if ($obj->localtax1) $positiverates .= ($positiverates ? '/' : '') . $obj->localtax1;
+					if ($obj->localtax2) $positiverates .= ($positiverates ? '/' : '') . $obj->localtax2;
+					if (empty($positiverates)) $positiverates = '0';
+					$this->cache_vatrates[$i]['labelpositiverates'] = $positiverates . ($obj->code ? ' (' . $obj->code . ')' : '');	// Must never be used as key, only label
+				}
+
+				return $this->cache_vatrates;
+			} else {
+				$this->error = '<font class="error">' . $langs->trans("ErrorNoVATRateDefinedForSellerCountry", $country_id) . '</font>';
+				return -1;
+			}
+		} else {
+			$this->error = '<font class="error">' . $this->db->error() . '</font>';
+			return -2;
+		}
+	}
+
+	/**
+	 * create a new tva
+	 * 
+	 * @param   string   $libelle
+     * @param   string   $taux
+     * 
+	 * @return  array    List of tva
+	 *
+	 * @throws 200
+     * @throws 400
+     * @throws 500
+	 *
+	 * @url POST /createtva
+	 */
+	public function addTauxTva($libelle, $taux)
+	{
+		global $langs;
+		$const_code = 999;
+		// echo 'test';
+
+		if (!$taux || $taux === '') {
+			throw new RestException(400, 'Le taux est manquant');
+		}
+
+		if (!$libelle || $libelle === '') {
+			throw new RestException(400, 'Le libelle est manquant');
+		}
+
+		if ($taux >= 0) {
+			$sql  = "INSERT INTO `" . MAIN_DB_PREFIX . "c_tva` (`fk_pays`, `code`, `taux`, `localtax1`, `localtax1_type`, `localtax2`, `localtax2_type`, `recuperableonly`, `note`, `active`, `accountancy_code_sell`, `accountancy_code_buy`)";
+			$sql .= "VALUES (" . $const_code . ", '', " . $taux . ", '0', '0', '0', '0', 0, '" . $libelle . "', 1, NULL, NULL)";
+			// echo $sql;
+			$resql = $this->db->query($sql);
+			if ($resql) {
+				$this->id = $this->db->last_insert_id(MAIN_DB_PREFIX . "c_tva");
+				return $this->id;
+			} else {
+				$error = $this->db->lasterror();
+				$this->db->rollback();
+				throw new RestException(500, $error);
+			}
+		} else {
+			throw new RestException(400, 'Le taux ne peut pas être infèrieur à 0');
+		}
+	}
 
 
     /**
