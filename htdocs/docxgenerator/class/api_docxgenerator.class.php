@@ -781,6 +781,44 @@ class Docxgenerator extends DolibarrApi
 		return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'encoding'=>'base64' );
 	}
 
+	/**
+	 * Export Affaire to docx by id
+	 *
+	 * Note that, this API is similar to using the wrapper link "documents.php" to download a file (used for
+	 * internal HTML links of documents into application), but with no need to have a session cookie (the token is used instead).
+	 *
+	 * '/ecm/doctemplates/template_affaire.docx'
+	 * @param	int 	$affaire_id    	id of the affaire that has to be converted to docx
+	 *
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /exportAffaire/{affaire_id}
+	 */
+	public function exportAffaire($affaire_id)
+	{
+		$template_path = '/api/template_affaire.docx';
+		require_once DOL_DOCUMENT_ROOT . '/docxgenerator/class/docx_generator.modules.php';
+		$docxgenerator = new docx_generator($this->db);
+
+		$outputlangs = new Translate('', $conf);
+		$outputlangs->setDefaultLang('fr_FR');
+
+		$file = $docxgenerator->createDocxAffaire($affaire_id, $template_path, $outputlangs)['documentPath'];
+
+		$filename = basename($file);
+
+		$file_content=file_get_contents($file);
+
+		$filesize = filesize($file);
+
+		unlink($file);
+
+		return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>$filesize, 'content'=>base64_encode($file_content), 'encoding'=>'base64' );
+	}
+
 	protected function hardsanitizePath($str) {
 		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
 		'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
