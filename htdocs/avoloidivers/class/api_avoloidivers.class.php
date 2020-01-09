@@ -468,7 +468,7 @@ class AvoloiDivers extends DolibarrApi
 		if ($searchFilter !== '') {
 			switch ((int) $searchType) {
 				case 0:
-					$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
+					$affairSql = '(pj.title like \'%' . $searchFilter . '%\')';
 					$tiersSql = '(tex.client like \'%' . $searchFilter . '%\')';
 					$temp = array();
 					array_push($temp, $affairSql);
@@ -477,7 +477,7 @@ class AvoloiDivers extends DolibarrApi
 					array_push($sqlInvoicesFiltersArray, '(' . $searchSql . ')');
 					break;
 				case 1:
-					$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
+					$affairSql = '(pj.title like \'%' . $searchFilter . '%\')';
 					array_push($sqlInvoicesFiltersArray, $affairSql);
 					break;
 				case 2:
@@ -515,6 +515,7 @@ class AvoloiDivers extends DolibarrApi
 		$sql = "SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "facture as t";
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "facture_extrafields as tex on tex.fk_object = t.rowid";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet as pj on t.fk_projet = pj.rowid";
 		$sql .= " WHERE t.entity IN (1)";
 
 		if ($sqlFilters && $sqlFilters !== '') {
@@ -628,7 +629,7 @@ class AvoloiDivers extends DolibarrApi
 			array_push($sqlInvoicesFiltersArray, $dateEndSql);
 		}
 		if ($searchFilter !== '') {
-			$affairSql = '(tex.titre like \'%' . $searchFilter . '%\')';
+			$affairSql = '(pj.title like \'%' . $searchFilter . '%\')';
 			$tiersSql = '(tex.client like \'%' . $searchFilter . '%\')';
 			// $namePropalSql = '(t.title like \'%' . $searchFilter . '%\')';
 			$searchSql = array();
@@ -667,6 +668,7 @@ class AvoloiDivers extends DolibarrApi
 		$sql = "SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "propal as t";
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "propal_extrafields as tex on tex.fk_object = t.rowid";
+		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet as pj on t.fk_projet = pj.rowid";
 		$sql .= " WHERE t.entity IN (1)";
 
 		if ($sqlFilters && $sqlFilters !== '') {
