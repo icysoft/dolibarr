@@ -227,7 +227,7 @@ class AvoloiDivers extends DolibarrApi
 		$sql = " SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "projet as t";
 		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
 		$sql .= " WHERE t.entity IN (1) AND t.rowid = " . $id;
 
 		$result = $db->query($sql);
