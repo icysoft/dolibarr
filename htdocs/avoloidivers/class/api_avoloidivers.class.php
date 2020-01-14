@@ -226,7 +226,7 @@ class AvoloiDivers extends DolibarrApi
 		$obj_ret = array();
 		$sql = " SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "projet as t";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
 		$sql .= " WHERE t.entity IN (1) AND t.rowid = " . $id;
 
@@ -339,8 +339,8 @@ class AvoloiDivers extends DolibarrApi
 		$obj_ret = array();
 		$sql = "SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "projet as t";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "societe as s on t.fk_soc = s.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "projet_extrafields as px on t.rowid = px.fk_object";
 		$sql .= " WHERE t.entity IN (1)";
 
 		if ($sqlFilters && $sqlFilters !== '') {
@@ -514,8 +514,8 @@ class AvoloiDivers extends DolibarrApi
 		$obj_ret = array();
 		$sql = "SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "facture as t";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "facture_extrafields as tex on tex.fk_object = t.rowid";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet as pj on t.fk_projet = pj.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "facture_extrafields as tex on tex.fk_object = t.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "projet as pj on t.fk_projet = pj.rowid";
 		$sql .= " WHERE t.entity IN (1)";
 
 		if ($sqlFilters && $sqlFilters !== '') {
@@ -667,8 +667,8 @@ class AvoloiDivers extends DolibarrApi
 		$obj_ret = array();
 		$sql = "SELECT t.*";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "propal as t";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "propal_extrafields as tex on tex.fk_object = t.rowid";
-		$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "projet as pj on t.fk_projet = pj.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "propal_extrafields as tex on tex.fk_object = t.rowid";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "projet as pj on t.fk_projet = pj.rowid";
 		$sql .= " WHERE t.entity IN (1)";
 
 		if ($sqlFilters && $sqlFilters !== '') {
