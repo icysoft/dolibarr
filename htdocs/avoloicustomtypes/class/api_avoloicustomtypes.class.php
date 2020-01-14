@@ -345,8 +345,8 @@ class AvoloiCustomTypes extends DolibarrApi
 		global $conf, $langs, $user;
 
 		$sql = "SELECT id, code, libelle, color ";
-		$sql.= "FROM `llx_c_actioncomm` WHERE active = 1 ";
-		$sql.= "EXCEPT (SELECT id, code, libelle, color FROM `llx_c_actioncomm` WHERE code = 'AC_OTH_AUTO' OR code = 'AC_OTH')";
+		$sql.= "FROM `llx_c_actioncomm` ";
+		$sql.= "WHERE active = 1 AND code != 'AC_OTH_AUTO' AND code != 'AC_OTH';";
 
 		$resql = $this->db->query($sql);
 
