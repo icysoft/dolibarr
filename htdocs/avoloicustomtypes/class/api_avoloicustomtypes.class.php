@@ -69,7 +69,13 @@ class AvoloiCustomTypes extends DolibarrApi
 	public function contacttypecolor($id, $color_code = "737373") {
 		global $conf, $langs, $user;
 
-		// print "COLOR : ".$color_code."<br>";
+		if ($color_code === "") {
+			$color_code = "737373";
+		}
+
+		if (!ctype_xdigit($color_code)) {
+			throw new RestException(400, "$color_code is not a hexadecimal digit");
+		}
 
 		$sql = "UPDATE `avo_custom_contact_type`";
 		$sql.= " SET `color`='$color_code',";
