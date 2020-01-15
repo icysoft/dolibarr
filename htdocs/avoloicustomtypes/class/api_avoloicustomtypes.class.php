@@ -99,7 +99,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	 * @throws 404
 	 * @throws 200
 	 *
-	 * @url GET /contacttypes
+	 * @url GET /getallcontacttype
 	 */
 	public function getcontacttypes() {
 		global $conf, $langs, $user;
