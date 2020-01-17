@@ -40,6 +40,10 @@ $res=0;
 if (! $res && file_exists("../main.inc.php")) $res=include '../main.inc.php';
 if (! $res) die("Include of main fails");
 
+// Include customs loader before Restler's Autoloader to avoid overlaping
+require_once DOL_DOCUMENT_ROOT . '/includes/Psr/autoloader.php';
+require_once DOL_DOCUMENT_ROOT . '/includes/phpoffice/autoloader.php';
+
 require_once DOL_DOCUMENT_ROOT.'/includes/restler/framework/Luracast/Restler/AutoLoader.php';
 
 call_user_func(function () {

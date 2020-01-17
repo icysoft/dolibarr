@@ -268,8 +268,8 @@ class AutoLoader
         if (in_array($className, array('Google_Client')))
         {
             return false;
-        }*/
-        $loaders = array_unique(static::$rogueLoaders);
+		}*/
+        $loaders = array_unique(static::$rogueLoaders, SORT_REGULAR);
         if (isset($loader)) {
             if (false === array_search($loader, $loaders))
                 static::$rogueLoaders[] = $loader;

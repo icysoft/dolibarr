@@ -3,7 +3,6 @@
 /**
  */
 include_once DOL_DOCUMENT_ROOT . '/main.inc.php';
-include_once DOL_DOCUMENT_ROOT . '/includes/phpoffice/PhpSpreadsheet/src/Bootstrap.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
