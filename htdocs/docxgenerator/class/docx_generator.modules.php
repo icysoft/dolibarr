@@ -30,7 +30,6 @@ require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/doc.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/includes/phpoffice/phpword/bootstrap.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
@@ -683,14 +682,14 @@ class docx_generator extends ModeleThirdPartyDoc
 
 		global $user, $langs, $conf, $mysoc, $hookmanager, $action;
 
-		
+
 		if (! is_object($output_langs)) $output_langs=$langs;
 		$sav_charset_output=$output_langs->charset_output;
 		$output_langs->charset_output='UTF-8';
-		
+
 		// Load translation files required by the page
 		@$output_langs->loadLangs(array("main", "dict", "companies", "projects"));
-		
+
 		// Add odtgeneration hook
 		if (! is_object($hookmanager))
 		{
@@ -732,14 +731,14 @@ class docx_generator extends ModeleThirdPartyDoc
 		if ($affaire->array_options) {
 			if ($affaire->array_options['options_multitiers']) {
 				$affaire->array_options['options_multitiers'] = json_decode($affaire->array_options['options_multitiers']);
-	
+
 				foreach($affaire->array_options['options_multitiers'] as $tiersFromArray) {
 					$tiers = $this->getSociety($tiersFromArray->idTiers);
-	
+
 					if ($tiers->array_options && $tiers->array_options['options_primary_contact']) {
 						$tiers->primaryContact = $this->getContact($tiers->array_options['options_primary_contact']);
 					}
-	
+
 					array_push($affaire->multitiers, $tiers);
 				}
 			}
@@ -747,8 +746,8 @@ class docx_generator extends ModeleThirdPartyDoc
 			if ($affaire->array_options['options_changelog']) {
 				$affaire->notes = json_decode($affaire->array_options['options_changelog']);
 			}
-		} 
-		
+		}
+
 		$affaire->tasks = $this->getTasks($affaire_id);
 		$affaire->invoices = $this->getInvoices($affaire_id);
 		$affaire->documents = $this->getDocuments($affaire_id, $affaire->socid);
@@ -765,7 +764,7 @@ class docx_generator extends ModeleThirdPartyDoc
 
 		$parameters=array('odfHandler'=>&$templateProcessor,'file'=>$file,'object'=>$affaire,'outputlangs'=>$output_langs,'substitutionarray'=>&$tmp_array);
 		$reshook=$hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
-		
+
 		$this->setValues($templateProcessor, $tmp_array);
 
 		// Call the beforeODTSave hook
@@ -778,13 +777,13 @@ class docx_generator extends ModeleThirdPartyDoc
 			$properties->setCreator($user->getFullName($outputlangs));
 			$properties->setTitle($affaire->builddoc_filename);
 			$properties->setSubject($affaire->builddoc_filename);
-	
+
 			if (! empty($conf->global->ODT_ADD_DOLIBARR_ID))
 			{
 				$templateProcessor->userdefined['dol_id'] = $affaire->id;
 				$templateProcessor->userdefined['dol_element'] = $affaire->element;
 			}
-	
+
 			$path = '/exportedAffaires';
 
 			if (!dol_is_dir($this->sanitizePath(DOL_DOCUMENT_ROOT.$path))) {
@@ -794,13 +793,13 @@ class docx_generator extends ModeleThirdPartyDoc
 			$filename = $affaire->title.'_at_'.time().'.docx';
 
 			$newtmpfile = $templateProcessor->saveAs($this->sanitizePath(DOL_DOCUMENT_ROOT.$path.'/'.$filename));
-	
+
 		} catch (Exception $e){
 			$this->error=$e->getMessage();
 			dol_syslog($e->getMessage(), LOG_INFO);
 			return -1;
 		}
-		
+
 
 		$parameters = array('odfHandler'=>&$templateProcessor, 'file'=>$file, 'object'=>$affaire, 'outputlangs'=>$output_langs, 'substitutionarray'=>&$tmp_array);
 		$reshook = $hookmanager->executeHooks('afterODTCreation', $parameters, $this, $action);    // Note that $action and $object may have been modified by some hooks
@@ -808,7 +807,7 @@ class docx_generator extends ModeleThirdPartyDoc
 		$templateProcessor = null;	// Destroy object
 		$phpWord = null;	// Destroy object
 		return array('code'=> 1, 'documentPath'=>$this->sanitizePath(DOL_DOCUMENT_ROOT . $path . '/' . $filename));
-  
+
 		$this->error='UnknownError';
 		return -1;
 	}
@@ -963,7 +962,7 @@ class docx_generator extends ModeleThirdPartyDoc
 			'tiers_principal_email'=>$affaire->tiers->email,
 			'tiers_principal_adresse'=>$affaire->tiers->address,
 			'tiers_principal_code_postal'=>$affaire->tiers->zip,
-			'tiers_principal_ville'=>$affaire->tiers->town			
+			'tiers_principal_ville'=>$affaire->tiers->town
 		);
 
 		$tiersContactDatas = array(
@@ -999,13 +998,14 @@ class docx_generator extends ModeleThirdPartyDoc
 			));
 		}
 
-		$notesDatas = array();
-		foreach($affaire->notes as $index=>$note) {
-			array_push($notesDatas, array(
-				'note_nom_utilisateur'=>$note->username,
-				'note_contenu'=>$note->content,
-				'note_date'=>dol_print_date($note->date, 'dayhour', 'tzuser', $outputLang),
-			));
+		if ($affaire->array_options['options_changelog']) {
+			foreach($affaire->notes as $index=>$note) {
+				array_push($notesDatas, array(
+					'note_nom_utilisateur'=>$note->username,
+					'note_contenu'=>$note->content,
+					'note_date'=>dol_print_date($note->date, 'dayhour', 'tzuser', $outputLang),
+				));
+			}
 		}
 
 		$tasksDatas = array();
@@ -1017,7 +1017,7 @@ class docx_generator extends ModeleThirdPartyDoc
 				'task_type_act'=>$task->array_options['options_type_rdv']
 			));
 		}
-		
+
 		$documentsDatas = array();
 		foreach($affaire->documents as $index=>$document) {
 			array_push($documentsDatas, array(
@@ -1048,7 +1048,7 @@ class docx_generator extends ModeleThirdPartyDoc
 				'invoice_mode_paiement'=>$paiementCondMode[$invoice->mode_reglement_code],
 				'invoice_cond_paiement'=>$paiementCondMode[$invoice->cond_reglement_code],
 				'block_invoice_lines'=>$factLineDatas
-			));			
+			));
 		}
 
 		$propalDatas = array();
@@ -1087,8 +1087,8 @@ class docx_generator extends ModeleThirdPartyDoc
 		);
 
 		return array_merge(
-			$baseDatas, 
-			$tiersDatas, 
+			$baseDatas,
+			$tiersDatas,
 			$tiersContactDatas,
 			$listDatas
 		);
