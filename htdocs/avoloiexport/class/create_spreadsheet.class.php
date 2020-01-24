@@ -54,7 +54,7 @@ class CreateSpreadsheet
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $arrayData = [
-            ['Numéro de facture', 'Date de facture', 'Montant TTC', 'Montant HT', 'Taux TVA', 'Montant TVA', 'Nom du tiers (référence)', 'Libellé de la facture']
+            ['Numéro de facture', 'Date de facture', 'Sens (C/D)', 'Montant TTC', 'Montant HT', 'Taux TVA', 'Montant TVA', 'Nom du tiers (référence)', 'Libellé de la facture']
         ];
         if ($objets_ret) {
             foreach ($objets_ret as $facture) {
@@ -63,6 +63,7 @@ class CreateSpreadsheet
                         $temptab = [];
                         array_push($temptab, $facture->ref);
                         array_push($temptab, $this->formatDateTimestamp($facture->date_validation));
+                        array_push($temptab, $line->total_ttc > 0 ? "Crédit": "Débit");
                         array_push($temptab, floor($line->total_ttc * 100) / 100);
                         array_push($temptab, floor($line->total_ht * 100) / 100);
                         array_push($temptab, floor($line->tva_tx * 100) / 100);
@@ -83,13 +84,14 @@ class CreateSpreadsheet
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $arrayData = [
-            ['Numéro de facture', "Date d'encaissement", 'Montant TTC', 'Nom du client (référence)', 'Mode de règlement', "Libellé de la facture"]
+            ['Numéro de facture', "Date d'encaissement", 'Sens (C/D)', 'Montant TTC', 'Nom du client (référence)', 'Mode de règlement', "Libellé de la facture"]
         ];
         if ($objets_ret) {
             foreach ($objets_ret as $encaissement) {
                 $temptab = [];
                 array_push($temptab, $encaissement->ref);
                 array_push($temptab, $this->formatDateTimestamp($encaissement->datem));
+                array_push($temptab, $encaissement->total_ttc > 0 ? "Crédit": "Débit");
                 array_push($temptab, floor($encaissement->total_ttc * 100) / 100);
                 array_push($temptab, $encaissement->array_options['options_client']);
                 array_push($temptab, $encaissement->mode_reglement_code);
