@@ -25,6 +25,9 @@ class AutoLoader
                          'Luracast\\Restler\\Format' => null,
                          'Luracast\\Restler\\Data' => null,
                          'Luracast\\Restler\\Filter' => null,
+					 ),
+					 $excludes = array(
+						'PhpOffice'
                      );
 
     /**
@@ -400,6 +403,17 @@ class AutoLoader
         return false;
     }
 
+	/**
+	 * Check if the class is in an exclusion list for avoid conflicts (like Text)
+	 */
+	public static function isExclude($className) {
+		foreach (static::$excludes as $package){
+			if (1 === preg_match('/^'.preg_quote($package, '/').'/', $className)) {
+				return true;
+			}
+		}
+		return false;
+	}
     /**
      * Auto loader callback through __invoke object as function.
      *
@@ -411,6 +425,15 @@ class AutoLoader
     {
         if (empty($className))
             return false;
+
+		if (static::isExclude($className)) {
+			// force usage of lastResort loader first (ping thereCanBeOnlyOne !!!)
+			if (false !== $includeReference = $this->loadLastResort($className))
+            	return $includeReference;
+
+			static::seen($className, true);
+			return null;
+		}
 
         if (false !== $includeReference = $this->discover($className))
             return $includeReference;

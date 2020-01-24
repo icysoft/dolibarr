@@ -68,160 +68,160 @@ class ComposerStaticInit3ec786c13fb2f33185e6dcd1d50a5cc7
     );
 
     public static $prefixLengthsPsr4 = array (
-        's' => 
+        's' =>
         array (
             'setasign\\Fpdi\\' => 14,
         ),
-        'p' => 
+        'p' =>
         array (
             'phpDocumentor\\Reflection\\' => 25,
         ),
-        'Z' => 
+        'Z' =>
         array (
             'Zend\\Escaper\\' => 13,
         ),
-        'W' => 
+        'W' =>
         array (
             'Webmozart\\Assert\\' => 17,
         ),
-        'S' => 
+        'S' =>
         array (
             'Symfony\\Component\\Yaml\\' => 23,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\SimpleCache\\' => 16,
             'PhpOffice\\PhpWord\\' => 18,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
             'PhpOffice\\Common\\' => 17,
         ),
-        'M' => 
+        'M' =>
         array (
             'Mike42\\' => 7,
             'Matrix\\' => 7,
         ),
-        'D' => 
+        'D' =>
         array (
             'Doctrine\\Instantiator\\' => 22,
         ),
-        'C' => 
+        'C' =>
         array (
             'Complex\\' => 8,
         ),
-        'A' => 
+        'A' =>
         array (
             'Atgp\\FacturX\\' => 13,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'setasign\\Fpdi\\' => 
+        'setasign\\Fpdi\\' =>
         array (
             0 => __DIR__ . '/..' . '/setasign/fpdi/src',
         ),
-        'phpDocumentor\\Reflection\\' => 
+        'phpDocumentor\\Reflection\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpdocumentor/reflection-common/src',
             1 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
             2 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
         ),
-        'Zend\\Escaper\\' => 
+        'Zend\\Escaper\\' =>
         array (
             0 => __DIR__ . '/..' . '/zendframework/zend-escaper/src',
         ),
-        'Webmozart\\Assert\\' => 
+        'Webmozart\\Assert\\' =>
         array (
             0 => __DIR__ . '/..' . '/webmozart/assert/src',
         ),
-        'Symfony\\Component\\Yaml\\' => 
+        'Symfony\\Component\\Yaml\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/yaml',
         ),
-        'Psr\\SimpleCache\\' => 
+        'Psr\\SimpleCache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
-        'PhpOffice\\PhpWord\\' => 
+        'PhpOffice\\PhpWord\\' =>
         array (
-            0 => __DIR__ . '/..' . '/phpoffice/phpword/src/PhpWord',
+            0 => __DIR__ . '/..' . '/phpoffice/PhpWord',
         ),
-        'PhpOffice\\PhpSpreadsheet\\' => 
+        'PhpOffice\\PhpSpreadsheet\\' =>
         array (
-            0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
+            0 => __DIR__ . '/..' . '/phpoffice/PhpSpreadsheet',
         ),
-        'PhpOffice\\Common\\' => 
+        'PhpOffice\\Common\\' =>
         array (
-            0 => __DIR__ . '/..' . '/phpoffice/common/src/Common',
+            0 => __DIR__ . '/..' . '/phpoffice/Common',
         ),
-        'Mike42\\' => 
+        'Mike42\\' =>
         array (
             0 => __DIR__ . '/..' . '/mike42/escpos-php/src/Mike42',
         ),
-        'Matrix\\' => 
+        'Matrix\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
-        'Doctrine\\Instantiator\\' => 
+        'Doctrine\\Instantiator\\' =>
         array (
             0 => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator',
         ),
-        'Complex\\' => 
+        'Complex\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'Atgp\\FacturX\\' => 
+        'Atgp\\FacturX\\' =>
         array (
             0 => __DIR__ . '/..' . '/atgp/factur-x/src',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'S' => 
+        'S' =>
         array (
-            'Smalot\\PdfParser\\' => 
+            'Smalot\\PdfParser\\' =>
             array (
                 0 => __DIR__ . '/..' . '/smalot/pdfparser/src',
             ),
         ),
-        'P' => 
+        'P' =>
         array (
-            'Prophecy\\' => 
+            'Prophecy\\' =>
             array (
                 0 => __DIR__ . '/..' . '/phpspec/prophecy/src',
             ),
-            'PHPExcel' => 
+            'PHPExcel' =>
             array (
                 0 => __DIR__ . '/..' . '/phpoffice/phpexcel/Classes',
             ),
         ),
-        'L' => 
+        'L' =>
         array (
-            'Luracast\\Restler' => 
+            'Luracast\\Restler' =>
             array (
                 0 => __DIR__ . '/..' . '/restler/framework',
             ),
         ),
-        'J' => 
+        'J' =>
         array (
-            'JakubOnderka\\PhpConsoleHighlighter' => 
+            'JakubOnderka\\PhpConsoleHighlighter' =>
             array (
                 0 => __DIR__ . '/..' . '/jakub-onderka/php-console-highlighter/src',
             ),
-            'JakubOnderka\\PhpConsoleColor' => 
+            'JakubOnderka\\PhpConsoleColor' =>
             array (
                 0 => __DIR__ . '/..' . '/jakub-onderka/php-console-color/src',
             ),
         ),
-        'D' => 
+        'D' =>
         array (
-            'Detection' => 
+            'Detection' =>
             array (
                 0 => __DIR__ . '/..' . '/mobiledetect/mobiledetectlib/namespaced',
             ),
         ),
-        'C' => 
+        'C' =>
         array (
-            'ChromePhp' => 
+            'ChromePhp' =>
             array (
                 0 => __DIR__ . '/..' . '/ccampbell/chromephp',
             ),
