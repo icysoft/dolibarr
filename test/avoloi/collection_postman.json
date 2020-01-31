@@ -1,0 +1,1051 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Avoloi étude d'impact",
+		"_postman_id": "44c2a485-a431-ba4e-fdc1-77a17b4092f2",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Tiers",
+			"description": "",
+			"item": [
+				{
+					"name": "Get liste",
+					"request": {
+						"url": {
+							"raw": "{{local_145}}avoloidivers/searchtiers?searched=&page=0&limit=10&clientFilter=-1&prospectFilter=-1&tiersFilter=-1",
+							"host": [
+								"{{local_145}}avoloidivers"
+							],
+							"path": [
+								"searchtiers"
+							],
+							"query": [
+								{
+									"key": "searched",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "clientFilter",
+									"value": "-1",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "prospectFilter",
+									"value": "-1",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "tiersFilter",
+									"value": "-1",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Read / Get by ID",
+					"request": {
+						"url": "{{local_145}}thirdparties/1",
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"url": "{{local_145}}thirdparties",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"test étude d'impact\",\n\t\"array_options\":{\n\t\t\"options_type_tiers\":\"\",\n\t\t\"options_is_society\":\"1\"\n\t},\n\t\"capital\":\"\",\n\t\"name_alias\":\"TEI\",\n\t\"client\":\"1\",\n\t\"default_lang\":\"fr\",\n\t\"code_client\":-1\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create contact",
+					"request": {
+						"url": "{{local_145}}contacts",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"address\":\"\",\n\t\"email\":\"\",\n\t\"firstname\":\"prénom TEI\",\n\t\"lastname\":\"nom TEI\",\n\t\"phone_perso\":\"\",\n\t\"phone_mobile\":\"\",\n\t\"socid\":29,\n\t\"town\":\"\",\n\t\"zip\":\"\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"url": "{{local_145}}thirdparties/1",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entity\": \"1\",\n  \"name\": \"Bush Georges\",\n  \"name_alias\": \"\",\n  \"particulier\": null,\n  \"address\": \"Maison Blanche\",\n  \"zip\": null,\n  \"town\": \"Washington DC\",\n  \"status\": \"1\",\n  \"state_id\": \"0\",\n  \"state_code\": null,\n  \"state\": null,\n  \"region_code\": null,\n  \"region\": null,\n  \"departement_code\": null,\n  \"departement\": null,\n  \"pays\": null,\n  \"phone\": null,\n  \"fax\": null,\n  \"email\": null,\n  \"skype\": null,\n  \"twitter\": null,\n  \"facebook\": null,\n  \"linkedin\": null,\n  \"url\": null,\n  \"barcode\": null,\n  \"idprof1\": \"\",\n  \"idprof2\": \"\",\n  \"idprof3\": \"\",\n  \"idprof4\": \"\",\n  \"idprof5\": \"\",\n  \"idprof6\": \"\",\n  \"prefix_comm\": null,\n  \"tva_assuj\": \"1\",\n  \"tva_intra\": \"\",\n  \"localtax1_assuj\": null,\n  \"localtax1_value\": \"0.000\",\n  \"localtax2_assuj\": null,\n  \"localtax2_value\": \"0.000\",\n  \"managers\": null,\n  \"capital\": \"\",\n  \"typent_id\": \"0\",\n  \"typent_code\": \"TE_UNKNOWN\",\n  \"effectif\": \"\",\n  \"effectif_id\": null,\n  \"forme_juridique_code\": null,\n  \"forme_juridique\": \"\",\n  \"remise_percent\": \"\",\n  \"remise_supplier_percent\": \"0\",\n  \"mode_reglement_supplier_id\": null,\n  \"cond_reglement_supplier_id\": null,\n  \"fk_prospectlevel\": \"\",\n  \"name_bis\": null,\n  \"date_modification\": 1578669172,\n  \"user_modification\": \"1\",\n  \"date_creation\": 1578672772,\n  \"user_creation\": \"1\",\n  \"specimen\": null,\n  \"client\": \"1\",\n  \"prospect\": 0,\n  \"fournisseur\": \"0\",\n  \"code_client\": \"CLI0001\",\n  \"code_fournisseur\": null,\n  \"code_compta\": null,\n  \"code_compta_client\": null,\n  \"code_compta_fournisseur\": null,\n  \"note\": null,\n  \"note_private\": null,\n  \"note_public\": null,\n  \"stcomm_id\": \"0\",\n  \"statut_commercial\": \"Never contacted\",\n  \"price_level\": null,\n  \"outstanding_limit\": null,\n  \"order_min_amount\": null,\n  \"supplier_order_min_amount\": null,\n  \"commercial_id\": null,\n  \"parent\": null,\n  \"default_lang\": \"fr\",\n  \"ref\": \"1\",\n  \"ref_ext\": null,\n  \"import_key\": null,\n  \"webservices_url\": null,\n  \"webservices_key\": null,\n  \"logo\": null,\n  \"logo_small\": null,\n  \"logo_mini\": null,\n  \"array_options\": {\n    \"options_type_tiers\": \"19\",\n    \"options_lead_id\": null,\n    \"options_is_society\": \"0\",\n    \"options_primary_contact\": \"1\"\n  },\n  \"fk_incoterms\": \"0\",\n  \"location_incoterms\": null,\n  \"libelle_incoterms\": null,\n  \"fk_multicurrency\": \"0\",\n  \"multicurrency_code\": \"\",\n  \"id\": \"1\",\n  \"linkedObjectsIds\": null,\n  \"canvas\": null,\n  \"fk_project\": null,\n  \"contact\": null,\n  \"contact_id\": null,\n  \"user\": null,\n  \"origin\": null,\n  \"origin_id\": null,\n  \"statut\": null,\n  \"country\": \"\",\n  \"country_id\": \"0\",\n  \"country_code\": \"\",\n  \"barcode_type\": null,\n  \"barcode_type_code\": null,\n  \"barcode_type_label\": null,\n  \"barcode_type_coder\": null,\n  \"mode_reglement_id\": null,\n  \"cond_reglement_id\": null,\n  \"cond_reglement\": null,\n  \"fk_delivery_address\": null,\n  \"shipping_method_id\": null,\n  \"modelpdf\": null,\n  \"last_main_doc\": null,\n  \"fk_account\": \"0\",\n  \"lastname\": null,\n  \"firstname\": null,\n  \"civility_id\": null,\n  \"date_validation\": null,\n  \"absolute_discount\": \"0\",\n  \"absolute_creditnote\": \"0\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"url": "{{local_145}}thirdparties/9",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Affaires",
+			"description": "",
+			"item": [
+				{
+					"name": "Get liste",
+					"request": {
+						"url": {
+							"raw": "{{local_145}}avoloidivers/searchaffairs?limit=10&page=0&searchFilter=&statusStringFilter=&dateStartFilter=&dateEndFilter=&sortfield=t.datec&sortorder=DESC",
+							"host": [
+								"{{local_145}}avoloidivers"
+							],
+							"path": [
+								"searchaffairs"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "searchFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "statusStringFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "dateStartFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "dateEndFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortfield",
+									"value": "t.datec",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortorder",
+									"value": "DESC",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Read / Get by ID",
+					"request": {
+						"url": {
+							"raw": "{{local_145}}avoloidivers/affair?id=41",
+							"host": [
+								"{{local_145}}avoloidivers"
+							],
+							"path": [
+								"affair"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "41",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"url": "{{local_145}}projects",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\":\"test pour étude d'impact\",\n\t\"description\":\"\",\n\t\"socid\":\"1\",\n\t\"date_end\":0,\n\t\"date_start\":1580425200,\n\t\"statut\":\"11\",\n\t\"ref\":\"testkkdnjsfg\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"url": "{{local_145}}projects/45",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"\",\n  \"titre\": \"test pour étude d'impact\",\n  \"title\": \"test pour étude d'impact\",\n  \"date_start\": 1580425200,\n  \"date_end\": \"\",\n  \"date_close\": \"\",\n  \"socid\": \"1\",\n  \"thirdparty_name\": null,\n  \"user_author_id\": \"1\",\n  \"user_close_id\": null,\n  \"public\": \"0\",\n  \"budget_amount\": null,\n  \"bill_time\": 0,\n  \"statut\": \"11\",\n  \"opp_status\": null,\n  \"opp_percent\": null,\n  \"weekWorkLoad\": null,\n  \"weekWorkLoadPerTask\": null,\n  \"datec\": 1580466234,\n  \"date_c\": 1580466234,\n  \"datem\": 1580462634,\n  \"date_m\": 1580462634,\n  \"lines\": null,\n  \"id\": \"45\",\n  \"import_key\": null,\n  \"array_options\": [],\n  \"linkedObjectsIds\": null,\n  \"canvas\": null,\n  \"fk_project\": null,\n  \"contact\": null,\n  \"contact_id\": null,\n  \"thirdparty\": null,\n  \"user\": null,\n  \"origin\": null,\n  \"origin_id\": null,\n  \"ref\": \"testkkdnjsfg22\",\n  \"ref_ext\": null,\n  \"country\": null,\n  \"country_id\": null,\n  \"country_code\": null,\n  \"state\": null,\n  \"state_id\": null,\n  \"state_code\": null,\n  \"region\": null,\n  \"region_code\": null,\n  \"barcode_type\": null,\n  \"barcode_type_code\": null,\n  \"barcode_type_label\": null,\n  \"barcode_type_coder\": null,\n  \"mode_reglement_id\": null,\n  \"cond_reglement_id\": null,\n  \"cond_reglement\": null,\n  \"fk_delivery_address\": null,\n  \"shipping_method_id\": null,\n  \"modelpdf\": null,\n  \"last_main_doc\": null,\n  \"fk_account\": null,\n  \"note_public\": null,\n  \"note_private\": null,\n  \"note\": null,\n  \"total_ht\": null,\n  \"total_tva\": null,\n  \"total_localtax1\": null,\n  \"total_localtax2\": null,\n  \"total_ttc\": null,\n  \"fk_incoterms\": null,\n  \"libelle_incoterms\": null,\n  \"location_incoterms\": null,\n  \"name\": null,\n  \"lastname\": null,\n  \"firstname\": null,\n  \"civility_id\": null,\n  \"date_creation\": null,\n  \"date_validation\": null,\n  \"date_modification\": null,\n  \"user_modification_id\": null,\n  \"opp_amount\": null,\n  \"tiers\": {\n    \"id\": \"1\",\n    \"firstname\": null,\n    \"lastname\": null,\n    \"name\": \"Bush Georges\"\n  }\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"url": "{{local_145}}projects/37",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Factures",
+			"description": "",
+			"item": [
+				{
+					"name": "Get liste",
+					"request": {
+						"url": {
+							"raw": "{{local_145}}avoloidivers/searchinvoices?limit=10&page=0&searchFilter=&searchType=0&statusStringFilter=-1,&dateStartFilter=&dateEndFilter=&sortfield=t.datec&sortorder=DESC&affairId=&socId=",
+							"host": [
+								"{{local_145}}avoloidivers"
+							],
+							"path": [
+								"searchinvoices"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "searchFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "searchType",
+									"value": "0",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "statusStringFilter",
+									"value": "-1,",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "dateStartFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "dateEndFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortfield",
+									"value": "t.datec",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortorder",
+									"value": "DESC",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "affairId",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "socId",
+									"value": "",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Read / Get by ID",
+					"request": {
+						"url": "{{local_145}}invoices/3",
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"url": "{{local_145}}invoices",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"cond_reglement_id\":\"1\",\n\t\"date\":\"1580425200\",\n\t\"fk_project\":\"45\",\n\t\"id\":\"\",\n\t\"mode_reglement_id\":\"2\",\n\t\"socid\":\"1\",\n\t\"statut\":\"0\",\n\t\"type\":\"0\",\n\t\"array_options\":{\n\t\t\"options_client\":\"Bush Georges\",\n\t\t\"options_titre\":\"Facture TEI\"\n\t},\n\t\"linkedObjectsIds\":{\n\t\t\"propal\":{},\n\t\t\"fk_account\":\"8\"\n\t}\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"url": "{{local_145}}invoices/6",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cond_reglement_id\": \"1\",\n  \"date\": \"1580425200\",\n  \"fk_project\": \"45\",\n  \"id\": \"6\",\n  \"mode_reglement_id\": \"6\",\n  \"socid\": \"1\",\n  \"array_options\": {\n    \"options_client\": \"Bush Georges\",\n    \"options_titre\": \"Facture TEI\"\n  },\n  \"linkedObjectsIds\": {\n    \"propal\": {}\n  },\n  \"fk_account\": \"8\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"url": "{{local_145}}invoices/4",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Conventions d'honoraire",
+			"description": "",
+			"item": [
+				{
+					"name": "Get liste",
+					"request": {
+						"url": {
+							"raw": "{{local_145}}avoloidivers/searchpropals?limit=10&page=0&searchFilter=&statusStringFilter=&dateStartFilter=&dateEndFilter=&sortfield=t.datec&sortorder=DESC&affairId=&socId=",
+							"host": [
+								"{{local_145}}avoloidivers"
+							],
+							"path": [
+								"searchpropals"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "searchFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "statusStringFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "dateStartFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "dateEndFilter",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortfield",
+									"value": "t.datec",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortorder",
+									"value": "DESC",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "affairId",
+									"value": "",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "socId",
+									"value": "",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Read / Get by ID",
+					"request": {
+						"url": "{{local_145}}proposals/1",
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"url": "{{local_145}}proposals",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"cond_reglement_id\":\"1\",\n\t\"date\":\"1580425200\",\n\t\"duree_validite\":0,\n\t\"mode_reglement_id\":\"6\",\n\t\"socid\":\"1\",\n\t\"fk_project\":\"41\",\n\t\"array_options\":{\n\t\t\"options_titre\":\"test devis\",\n\t\t\"options_client\":\"Bush Georges\"\n\t}\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"url": "{{local_145}}proposals/1",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cond_reglement_id\": \"2\",\n  \"fin_validite\": \"1580465084\",\n  \"mode_reglement_id\": \"6\",\n  \"socid\": \"1\",\n  \"date\": \"1580425200\",\n  \"ref_client\": \"\",\n  \"fk_project\": \"41\",\n  \"array_options\": {\n    \"options_titre\": \"test devis\",\n    \"options_client\": \"Bush Georges\",\n    \"options_multitiers\": \"\"\n  }\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"url": "{{local_145}}proposals/1",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Rendez-vous",
+			"description": "",
+			"item": [
+				{
+					"name": "Get liste",
+					"request": {
+						"url": {
+							"raw": "{{local_145}}agendaevents?sortfield=t.datep&sortorder=ASC&limit=0&sqlfilters=(t.datep:%3E:%2720200127%27)%20%20%26%26%20(t.datep:%3C:%2720200202%27)",
+							"host": [
+								"{{local_145}}agendaevents"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "0",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortfield",
+									"value": "t.datep",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sortorder",
+									"value": "ASC",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "sqlfilters",
+									"value": "(t.datep:%3E:%2720200127%27)%20%20%26%26%20(t.datep:%3C:%2720200202%27)",
+									"equals": true
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Read / Get by ID",
+					"request": {
+						"url": "{{local_145}}agendaevents/51",
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"url": "{{local_145}}agendaevents",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userownerid\":421,\n\t\"type_id\":\"54\",\n\t\"datep\":1580294400,\n\t\"datef\":1580295600,\n\t\"note\":\"\",\n\t\"userdoneid\":\"\",\n\t\"contactid\":\"\",\n\t\"socid\":\"1\",\n\t\"label\":\"\",\n\t\"fk_project\":\"45\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"url": "{{local_145}}agendaevents/85",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chrono / Tasks",
+			"description": "",
+			"item": [
+				{
+					"name": "Get liste",
+					"request": {
+						"url": "{{local_145}}projects/41/tasks",
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Read / Get by ID",
+					"request": {
+						"url": "{{local_145}}tasks/52",
+						"method": "GET",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"url": "{{local_145}}tasks",
+						"method": "POST",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date_c\":1580466857,\n\t\"fk_project\":\"45\",\n\t\"fk_task_parent\":\"45\",\n\t\"date_start\":\"2020-01-31\",\n\t\"planned_workload\":\"1671\",\n\t\"label\":\"titre task TEI\",\n\t\"array_options\":{\n\t\t\"options_description\":\"\"\n\t},\n\t\"ref\":\"\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"url": "{{local_145}}tasks/54",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fk_task_parent\": \"45\",\n  \"label\": \"titre task TEI\",\n  \"description\": \"\",\n  \"duration_effective\": null,\n  \"planned_workload\": \"1620\",\n  \"date_c\": null,\n  \"date_start\": \"1580425200\",\n  \"date_end\": \"\",\n  \"progress\": null,\n  \"fk_statut\": \"0\",\n  \"priority\": null,\n  \"fk_user_creat\": null,\n  \"fk_user_valid\": null,\n  \"rang\": \"0\",\n  \"timespent_min_date\": null,\n  \"timespent_max_date\": null,\n  \"timespent_total_duration\": null,\n  \"timespent_total_amount\": null,\n  \"timespent_nblinesnull\": null,\n  \"timespent_nblines\": null,\n  \"id\": \"54\",\n  \"import_key\": null,\n  \"array_options\": {\n    \"options_type_rdv\": \"52\",\n    \"options_is_charged\": null,\n    \"options_description\": null\n  },\n  \"linkedObjectsIds\": null,\n  \"canvas\": null,\n  \"fk_project\": \"45\",\n  \"contact\": null,\n  \"contact_id\": null,\n  \"thirdparty\": null,\n  \"user\": null,\n  \"origin\": null,\n  \"origin_id\": null,\n  \"ref\": null,\n  \"ref_ext\": null,\n  \"statut\": null,\n  \"state\": null,\n  \"state_id\": null,\n  \"state_code\": null,\n  \"region\": null,\n  \"region_code\": null,\n  \"modelpdf\": null,\n  \"last_main_doc\": null,\n  \"note_public\": null,\n  \"note_private\": null,\n  \"lines\": null,\n  \"date_creation\": null,\n  \"date_validation\": null,\n  \"date_modification\": null,\n  \"projectref\": \"testkkdnjsfg22\",\n  \"projectlabel\": \"test pour étude d'impact\",\n  \"projectstatus\": \"11\",\n  \"bill_time\": \"0\",\n  \"fk_parent\": \"45\",\n  \"duration\": \"0\",\n  \"tobill\": null,\n  \"billed\": null,\n  \"public\": \"0\",\n  \"socid\": \"1\",\n  \"thirdparty_id\": \"1\",\n  \"thirdparty_name\": \"Bush Georges\",\n  \"thirdparty_email\": null,\n  \"fk_opp_status\": null,\n  \"opp_amount\": null,\n  \"opp_percent\": null,\n  \"budget_amount\": null,\n  \"options_type_rdv\": null,\n  \"options_is_charged\": null,\n  \"options_description\": null\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"url": "{{local_145}}tasks/53",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "DOLAPIKEY",
+								"value": "{{dol_api_key}}",
+								"description": ""
+							}
+						],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
