@@ -28,6 +28,7 @@ require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/api_projects.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/api_thirdparties.class.php';
 require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
 /**
  * API class for receive files
@@ -263,6 +264,72 @@ class AvoloiDivers extends DolibarrApi
 			}
 		}
 		return $affairList;
+	}
+
+	/**
+	 * Get documents of an affair
+	 * 
+	 * @param   string		$id
+	 * @param		string		$modulepart
+	 * @return  array                   List of documents
+	 *
+	 * @throws 500
+	 * @throws 501
+	 * @throws 400
+	 * @throws 401
+	 * @throws 404
+	 * @throws 200
+	 *
+	 * @url GET /documents
+	 */
+	public function getObjectDocuments($id, $modulepart)
+	{
+		global $conf, $langs, $user, $db;
+		$sortfield = "name";
+		$sortorder = "asc";
+
+		if ($modulepart == 'societe') {
+			require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+
+			if (!DolibarrApiAccess::$user->rights->societe->lire) {
+				throw new RestException(401);
+			}
+
+			$object = new Societe($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Thirdparty not found');
+			}
+
+			$upload_dir = $conf->societe->multidir_output[$object->entity] . "/" . $object->id;
+		} else if ($modulepart == 'project') {
+			require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+	
+			$object = new Project($this->db);
+			$result=$object->fetch($id, $ref);
+			if ( ! $result ) {
+				throw new RestException(404, 'Le projet ne contient aucun document');
+			}
+	
+			$upload_dir = $conf->projet->dir_output.'/' .$object->id;
+		}
+		elseif (strpos($modulepart, 'doctemplates/') !== false)
+		{
+			$upload_dir = '/var/www/documents/'.$modulepart;
+		}
+		else
+		{
+			throw new RestException(500, 'Modulepart '.$modulepart.' not implemented yet.');
+		}
+
+		require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
+
+		$filearray=dol_dir_list($upload_dir, "files", 0, '', '(\.meta|_preview.*\.png)$', $sortfield, (strtolower($sortorder)=='desc'?SORT_DESC:SORT_ASC), 1);
+		if (empty($filearray)) {
+			throw new RestException(404, 'Search for docuements of the affair with Id '.$object->id.(! empty($object->Ref)?' or Ref '.$object->ref:'').' does not return any document.');
+		}
+
+		return $filearray;
 	}
 
 
@@ -892,4 +959,150 @@ class AvoloiDivers extends DolibarrApi
 
 		return $obj_ret;
 	}
+
+	/**
+	 * Get the list of formes juridiques.
+	 *
+	 * @param string    $sortfield  Sort field
+	 * @param string    $sortorder  Sort order
+	 * @param int       $limit      Number of items per page
+	 * @param int       $page       Page number (starting from zero)
+	 * @param int       $country    Country to get the formes juridiques
+	 * @param string    $code_list  Liste des codes des formes juridiques à récupérer
+	 * @param int       $active     Payment term is active or not {@min 0} {@max 1}
+	 * @param string    $sqlfilters Other criteria to filter answers separated by a comma. Syntax example "(t.code:like:'A%') and (t.active:>=:0)"
+	 * @return List of towns
+	 *
+	 * @url     GET /formesjuridiques
+	 *
+	 * @throws RestException
+	 */
+	public function getListOfFormesJuridiques($sortfield = "", $sortorder = 'ASC', $limit = 100, $page = 0, $country = 1, $code_list = "", $active = 1, $sqlfilters = '')
+	{
+			$list = array();
+
+			$fjArray = explode(',', $code_list);
+
+			$sql = "SELECT rowid, fk_pays, code, libelle";
+			$sql.= " FROM ".MAIN_DB_PREFIX."c_forme_juridique as t";
+			$sql.= " WHERE t.active = ".$active;
+			$sql.= " AND t.fk_pays = $country";
+
+			if (count($fjArray) > 0 && $fjArray[0] != "") {
+					foreach ($fjArray as $key => $fj) {
+							if ($key == 0) {
+									$sql.= " AND (";
+							} else {
+									$sql.= " OR ";
+							}
+							
+							$sql.= "t.code = $fj";
+
+							if($key == count($fjArray) - 1) {
+									$sql.= ")";
+							}
+					}
+			} 
+
+			// Add sql filters
+			if ($sqlfilters)
+			{
+					if (! DolibarrApi::_checkFilters($sqlfilters))
+					{
+							throw new RestException(503, 'Error when validating parameter sqlfilters '.$sqlfilters);
+					}
+				$regexstring='\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
+					$sql.=" AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlfilters).")";
+			}
+
+			$sql.= $this->db->order($sortfield, $sortorder);
+
+			if ($limit) {
+					if ($page < 0) {
+							$page = 0;
+					}
+					$offset = $limit * $page;
+
+					$sql .= $this->db->plimit($limit, $offset);
+			}
+
+			$result = $this->db->query($sql);
+
+			if ($result) {
+					$num = $this->db->num_rows($result);
+					$min = min($num, ($limit <= 0 ? $num : $limit));
+					for ($i = 0; $i < $min; $i++) {
+							$list[] = $this->db->fetch_object($result);
+					}
+			} else {
+					throw new RestException(503, 'Error when retrieving list of towns : '.$this->db->lasterror());
+			}
+
+			return $list;
+	}
+
+
+    /**
+     * Get tasks of a project.
+     * See also API /tasks
+     *
+     * @param int   $id                     Id of project
+     * @param int   $includetimespent       0=Return only list of tasks. 1=Include a summary of time spent, 2=Include details of time spent lines (2 is no implemented yet)
+     * @return int
+     *
+     * @url	GET {id}/tasks
+     */
+    public function getLines($id, $includetimespent = 0)
+    {
+			global $conf, $langs, $user;
+
+        if (! DolibarrApiAccess::$user->rights->projet->lire) {
+            throw new RestException(401);
+				}
+
+				$project = new Project($this->db);
+
+        $result = $project->fetch($id);
+        if ( ! $result ) {
+            throw new RestException(404, 'Project not found');
+				}
+
+        if ( ! DolibarrApi::_checkAccessToResource('project', $id)) {
+            throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
+        }
+        $project->lines = $this->getLinesArray($id);
+        $result = array();
+        foreach ($project->lines as $line)      // $line is a task
+        {
+            if ($includetimespent == 1)
+            {
+                $timespent = $line->getSummaryOfTimeSpent(0);
+            }
+            if ($includetimespent == 1)
+            {
+                // TODO
+                // Add class for timespent records and loop and fill $line->lines with records of timespent
+            }
+            array_push($result, $this->_cleanObjectDatas($line));
+        }
+        return $result;
+		}
+
+		/**
+		 * 	Create an array of tasks of current project
+		 *
+     * 	@param int   $id                     Id of project
+		 * 	@return int		           >0 if OK, <0 if KO
+		 */
+		public function getLinesArray($id)
+		{
+			require_once DOL_DOCUMENT_ROOT.'/projet/class/task.class.php';
+			require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+			$taskstatic = new Task($this->db);
+			$extrafields = new ExtraFields($this->db);
+			$extrafields->fetch_name_optionals_label('projet_task');
+			return $taskstatic->getTasksArray(0, 0, $id, 0, 0, '', '-1', '', 0, 0, $extrafields);
+		}
+
+
 }
