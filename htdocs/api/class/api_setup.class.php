@@ -1226,5 +1226,4 @@ class Setup extends DolibarrApi
 
     	return array('resultcode'=>$resultcode, 'resultcomment'=>$resultcomment, 'expectedchecksum'=> $outexpectedchecksum, 'currentchecksum'=> $outcurrentchecksum, 'out'=>$out);
     }
-
 }

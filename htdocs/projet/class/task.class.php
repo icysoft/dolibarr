@@ -446,6 +446,7 @@ class Task extends CommonObject
 	 */
 	public function delete($user, $notrigger = 0)
 	{
+
 		global $conf, $langs;
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
@@ -942,10 +943,9 @@ class Task extends CommonObject
                     {
                         foreach ($extrafields->attributes['projet_task']['label'] as $key => $val)
                         {
-                            if ($extrafields->attributes['projet_task']['type'][$key] != 'separate') {
-															$tasks[$i]->array_options['options_'.$key] = $obj->{'options_'.$key};
-                              $tasks[$i]->{'options_'.$key} = $obj->{'options_'.$key};
-                        		}
+                            if ($extrafields->attributes['projet_task']['type'][$key] != 'separate')
+															$tasks[$i]->{'options_'.$key} = $obj->{'options_'.$key};
+                              // $tasks[$i]->array_options['options_'.$key] = $obj->{'options_'.$key};
                         }
                     }
 				}

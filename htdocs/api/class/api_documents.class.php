@@ -102,8 +102,6 @@ class Documents extends DolibarrApi
 		}
 
 		$file_content=file_get_contents($original_file_osencoded);
-
-		//print "ORIGINAL FILE : $original_file<br>";
 		return array('filename'=>$filename, 'content-type' => dol_mimetype($filename), 'filesize'=>filesize($original_file), 'content'=>base64_encode($file_content), 'encoding'=>'base64' );
 	}
 
@@ -178,7 +176,6 @@ class Documents extends DolibarrApi
 			}
 
 			$templateused = $doctemplate?$doctemplate:$this->invoice->modelpdf;
-
 			$result = $this->invoice->generateDocument($templateused, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			if( $result <= 0 ) {
 				throw new RestException(500, 'Error generating document');
@@ -417,6 +414,7 @@ class Documents extends DolibarrApi
 
 		return $filearray;
 	}
+
 
 	/**
 	 * Return a document.

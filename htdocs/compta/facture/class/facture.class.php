@@ -4146,10 +4146,8 @@ class Facture extends CommonInvoice
 
 		$langs->load("bills");
 
-		// print "dol_strlen(\$modele) : ".dol_strlen($modele)."<br>";
-
 		if (! dol_strlen($modele))
-		{			
+		{
 			$modele = 'crabe';
 			$thisTypeConfName = 'FACTURE_ADDON_PDF_'.$this->type;
 
