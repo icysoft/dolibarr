@@ -205,6 +205,34 @@ class AvoloiDivers extends DolibarrApi
 	}
 
 	/**
+	 * Get tiers by ID
+	 * Used to get the minimum information about a tiers
+	 * @param string $id Tiers ID
+	 * 
+	 * @throws RestException If user is not found
+	 * @url GET /tiers/{id}
+	 */
+	public function gettiersbyid($id) {
+		global $user;
+
+		$sql = "SELECT s.rowid as id, s.nom as name, se.primary_contact ";
+		$sql.= "FROM ".MAIN_DB_PREFIX."societe as s ";
+		$sql.= "LEFT JOIN ".MAIN_DB_PREFIX."societe_extrafields as se ";
+		$sql.= "ON s.rowid = se.fk_object ";
+		$sql.= "WHERE s.rowid = $id";
+		$result = $this->db->query($sql);
+
+		if ($result->num_rows > 0) {
+			$tiers = $this->db->fetch_object($result);
+			$tiers->array_options = [ "options_primary_contact" => $tiers->primary_contact];
+			unset($tiers->primary_contact);
+			return $tiers;
+		} else {
+			throw new RestException(404, 'User not found');
+		}
+	}
+
+	/**
 	 * Get an affairs by it's id
 	 * 
 	 * @param   string   $id
@@ -222,6 +250,10 @@ class AvoloiDivers extends DolibarrApi
 	public function affair($id)
 	{
 		global $conf, $langs, $user, $db;
+
+		if(! DolibarrApiAccess::$user->rights->projet->lire) {
+			throw new RestException(401);
+		}
 
 		$obj_ret = array();
 		$sql = " SELECT t.*";
@@ -284,6 +316,10 @@ class AvoloiDivers extends DolibarrApi
 	public function searchaffairs($limit = '-1', $page = '0', $searchFilter = '', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC')
 	{
 		global $conf, $langs, $user, $db;
+
+		if(! DolibarrApiAccess::$user->rights->projet->lire) {
+			throw new RestException(401);
+		}
 
 		//decodage des paramètres
 		$searchFilter = urldecode($searchFilter);
@@ -425,6 +461,10 @@ class AvoloiDivers extends DolibarrApi
 	public function searchinvoices($limit = '-1', $page = '0', $searchFilter = '', $searchType = '0', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $affairId = '', $socId = '')
 	{
 		global $conf, $langs, $user, $db;
+
+		if(! DolibarrApiAccess::$user->rights->facture->lire) {
+			throw new RestException(401);
+		}
 
 		//decodage des paramètres
 		$searchFilter = urldecode($searchFilter);
@@ -588,6 +628,10 @@ class AvoloiDivers extends DolibarrApi
 	public function searchpropals($limit = '-1', $page = '0', $searchFilter = '', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $affairId = '', $socId = '')
 	{
 		global $conf, $langs, $user, $db;
+
+		if(! DolibarrApiAccess::$user->rights->propale->lire) {
+			throw new RestException(401);
+		}
 
 		//decodage des paramètres
 		$searchFilter = urldecode($searchFilter);

@@ -1,0 +1,2603 @@
+{
+	"info": {
+		"_postman_id": "fb3d8185-1235-4423-be4a-62b526b9e455",
+		"name": "Avoloi étude d'impact tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Tiers - Create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e34ab5a2-9172-4f68-9808-a882c1d54769",
+						"exec": [
+							"pm.test(\"Create tiers\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"tiersId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.variables.set(\"tiersId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"tiersId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"tiersId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "067e426a-63ae-4634-8642-680d6ac84c64",
+						"exec": [
+							"/*Modifier ici le type de groupe sur lequel effectuer les tests",
+							"*",
+							"* Les différents groupes sont :",
+							"* - dol_api_key_admin",
+							"* - dol_api_key_secretary",
+							"* - dol_api_key_collaborator",
+							"* - dol_api_key_lawyer",
+							"*",
+							"* Il faut bien évidemment que ces différents groupes soient présent dans Dolibarr ainsi que dans les variables Postman",
+							"*/",
+							"pm.variables.set(\"dol_api_key_test\", pm.environment.get(\"dol_api_key_secretary\"));",
+							"",
+							"pm.variables.set(\"affairRef\", \"\\\"voicimaref\\\"\");",
+							"var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"    pm.variables.set(\"userownerid\", 1);",
+							"} else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"    pm.variables.set(\"userownerid\", 467);",
+							"} else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"    pm.variables.set(\"userownerid\", 452);",
+							"} else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"    pm.variables.set(\"userownerid\", 123);",
+							"} else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"    delayedCall([createTiers, createContact, createAffair, createInvoice,",
+							"    createPropal, createAgendaEvent, createTask]);",
+							"    pm.variables.set(\"userownerid\", 538);",
+							"}",
+							"",
+							"function delayedCall(fcts) {",
+							"    for (let i = 0; i < fcts.length; i++) {",
+							"        setTimeout(() => {",
+							"            fcts[i]();",
+							"        }, 500 * i);",
+							"    }",
+							"}",
+							"",
+							"function createTiers() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'thirdparties',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"name\":\"test étude d'impact\",",
+							"                \"array_options\":{",
+							"                    \"options_type_tiers\":\"\",",
+							"                    \"options_is_society\":\"1\"",
+							"                },",
+							"                \"capital\":\"\",",
+							"                \"name_alias\":\"TEI\",",
+							"                \"client\":\"1\",",
+							"                \"default_lang\":\"fr\",",
+							"                \"code_client\":-1",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"tiersId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createContact() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'contacts',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"address\":\"\",",
+							"                \"email\":\"\",",
+							"                \"firstname\":\"prénom TEI\",",
+							"                \"lastname\":\"nom TEI\",",
+							"                \"phone_perso\":\"\",",
+							"                \"phone_mobile\":\"\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"town\":\"\",",
+							"                \"zip\":\"\"",
+							"                ",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"contactId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createAffair() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'projects',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"title\":\"test pour étude d'impact\",",
+							"                \"description\":\"\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"date_end\":0,",
+							"                \"date_start\":1580425200,",
+							"                \"statut\":\"11\",",
+							"                \"ref\":pm.variables.get(\"affairRef\").replace(/\"/gi, \"\")",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"affairId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createInvoice() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'invoices',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"cond_reglement_id\":\"1\",",
+							"                \"date\":\"1580425200\",",
+							"                \"fk_project\":pm.variables.get(\"affairId\"),",
+							"                \"mode_reglement_id\":\"2\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"statut\":\"0\",",
+							"                \"type\":\"0\",",
+							"                \"array_options\":{",
+							"                    \"options_client\":\"Bush Georges\",",
+							"                    \"options_titre\":\"Facture TEI\"",
+							"                },",
+							"                \"linkedObjectsIds\":{",
+							"                    \"propal\":{},",
+							"                    \"fk_account\":\"8\"",
+							"                }",
+							"                ",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"invoiceId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createPropal() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'proposals',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"cond_reglement_id\":\"1\",",
+							"                \"date\":\"1580425200\",",
+							"                \"duree_validite\":0,",
+							"                \"mode_reglement_id\":\"6\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"fk_project\":pm.variables.get(\"affairId\"),",
+							"                \"array_options\":{",
+							"                    \"options_titre\":\"test devis\",",
+							"                    \"options_client\":\"Bush Georges\"",
+							"                }",
+							"                ",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"propalId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createAgendaEvent() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'agendaevents',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"userownerid\":1,",
+							"                \"type_id\":\"54\",",
+							"                \"datep\":1580294400,",
+							"                \"datef\":1580295600,",
+							"                \"note\":\"\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"label\":\"\",",
+							"                \"fk_project\":pm.variables.get(\"affairId\")",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"eventId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createTask() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'tasks',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"date_c\":1580466857,",
+							"                \"fk_project\":pm.variables.get(\"affairId\"),",
+							"                \"fk_task_parent\":pm.variables.get(\"affairId\"),",
+							"                \"date_start\":\"2020-01-31\",",
+							"                \"planned_workload\":\"1671\",",
+							"                \"label\":\"titre task TEI\",",
+							"                \"array_options\":{",
+							"                    \"options_description\":\"\"",
+							"                },",
+							"                \"ref\":\"\"",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"taskId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"test étude d'impact\",\n\t\"array_options\":{\n\t\t\"options_type_tiers\":\"\",\n\t\t\"options_is_society\":\"1\"\n\t},\n\t\"capital\":\"\",\n\t\"name_alias\":\"TEI\",\n\t\"client\":\"1\",\n\t\"default_lang\":\"fr\",\n\t\"code_client\":-1\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}thirdparties",
+					"host": [
+						"{{local_145}}thirdparties"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Create contact",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c349fa05-e2e4-4bcd-b84a-ba7c3b008e8b",
+						"exec": [
+							"pm.test(\"Create contact\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"contactId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.variables.set(\"contactId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"contactId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"contactId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"address\":\"\",\n\t\"email\":\"\",\n\t\"firstname\":\"prénom TEI\",\n\t\"lastname\":\"nom TEI\",\n\t\"phone_perso\":\"\",\n\t\"phone_mobile\":\"\",\n\t\"socid\":{{tiersId}},\n\t\"town\":\"\",\n\t\"zip\":\"\"\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}contacts",
+					"host": [
+						"{{local_145}}contacts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Get liste",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "a3fddf43-6007-4410-941a-821b2e0fb727",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "eeb3c333-bf07-44e3-9ce4-e4b29a5ced6f",
+						"exec": [
+							"pm.test(\"Get all tiers\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}avoloidivers/searchtiers?searched=&page=0&limit=10&clientFilter=-1&prospectFilter=-1&tiersFilter=-1",
+					"host": [
+						"{{local_145}}avoloidivers"
+					],
+					"path": [
+						"searchtiers"
+					],
+					"query": [
+						{
+							"key": "searched",
+							"value": ""
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "clientFilter",
+							"value": "-1"
+						},
+						{
+							"key": "prospectFilter",
+							"value": "-1"
+						},
+						{
+							"key": "tiersFilter",
+							"value": "-1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Get list contacts",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "caae3855-3992-46cb-8717-654b538d709c",
+						"exec": [
+							"pm.test(\"Get all contacts\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "8526f631-2fe7-4eac-af07-418814c041a9",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}contacts?sortfield=t.rowid&sortorder=ASC&sqlfilters=(t.fk_soc:=:%2745%27)",
+					"host": [
+						"{{local_145}}contacts"
+					],
+					"query": [
+						{
+							"key": "sortfield",
+							"value": "t.rowid"
+						},
+						{
+							"key": "sortorder",
+							"value": "ASC"
+						},
+						{
+							"key": "sqlfilters",
+							"value": "(t.fk_soc:=:%2745%27)"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Read / Get by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "cb1ee48a-71ea-4eb2-82da-9e084dfb17d4",
+						"exec": [
+							"pm.test(\"Get tiers by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}thirdparties/{{tiersId}}",
+					"host": [
+						"{{local_145}}thirdparties"
+					],
+					"path": [
+						"{{tiersId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Read / Get by ID contact",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "3bd2c463-6f5b-49aa-bee9-dc5d52de31d3",
+						"exec": [
+							"pm.test(\"Get contact by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}contacts/{{contactId}}",
+					"host": [
+						"{{local_145}}contacts"
+					],
+					"path": [
+						"{{contactId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f7924367-a771-4f00-bcf4-f22f26734748",
+						"exec": [
+							"pm.test(\"Update tiers\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"entity\": \"1\",\n  \"name\": \"Bush Georges\",\n  \"name_alias\": \"\",\n  \"particulier\": null,\n  \"address\": \"Maison Blanche\",\n  \"zip\": null,\n  \"town\": \"Washington DC\",\n  \"status\": \"1\",\n  \"state_id\": \"0\",\n  \"state_code\": null,\n  \"state\": null,\n  \"region_code\": null,\n  \"region\": null,\n  \"departement_code\": null,\n  \"departement\": null,\n  \"pays\": null,\n  \"phone\": null,\n  \"fax\": null,\n  \"email\": null,\n  \"skype\": null,\n  \"twitter\": null,\n  \"facebook\": null,\n  \"linkedin\": null,\n  \"url\": null,\n  \"barcode\": null,\n  \"idprof1\": \"\",\n  \"idprof2\": \"\",\n  \"idprof3\": \"\",\n  \"idprof4\": \"\",\n  \"idprof5\": \"\",\n  \"idprof6\": \"\",\n  \"prefix_comm\": null,\n  \"tva_assuj\": \"1\",\n  \"tva_intra\": \"\",\n  \"localtax1_assuj\": null,\n  \"localtax1_value\": \"0.000\",\n  \"localtax2_assuj\": null,\n  \"localtax2_value\": \"0.000\",\n  \"managers\": null,\n  \"capital\": \"\",\n  \"typent_id\": \"0\",\n  \"typent_code\": \"TE_UNKNOWN\",\n  \"effectif\": \"\",\n  \"effectif_id\": null,\n  \"forme_juridique_code\": null,\n  \"forme_juridique\": \"\",\n  \"remise_percent\": \"\",\n  \"remise_supplier_percent\": \"0\",\n  \"mode_reglement_supplier_id\": null,\n  \"cond_reglement_supplier_id\": null,\n  \"fk_prospectlevel\": \"\",\n  \"name_bis\": null,\n  \"date_modification\": 1578669172,\n  \"user_modification\": \"1\",\n  \"date_creation\": 1578672772,\n  \"user_creation\": \"1\",\n  \"specimen\": null,\n  \"client\": \"1\",\n  \"prospect\": 0,\n  \"fournisseur\": \"0\",\n  \"code_client\": \"CLI0001\",\n  \"code_fournisseur\": null,\n  \"code_compta\": null,\n  \"code_compta_client\": null,\n  \"code_compta_fournisseur\": null,\n  \"note\": null,\n  \"note_private\": null,\n  \"note_public\": null,\n  \"stcomm_id\": \"0\",\n  \"statut_commercial\": \"Never contacted\",\n  \"price_level\": null,\n  \"outstanding_limit\": null,\n  \"order_min_amount\": null,\n  \"supplier_order_min_amount\": null,\n  \"commercial_id\": null,\n  \"parent\": null,\n  \"default_lang\": \"fr\",\n  \"ref\": \"1\",\n  \"ref_ext\": null,\n  \"import_key\": null,\n  \"webservices_url\": null,\n  \"webservices_key\": null,\n  \"logo\": null,\n  \"logo_small\": null,\n  \"logo_mini\": null,\n  \"array_options\": {\n    \"options_type_tiers\": \"19\",\n    \"options_lead_id\": null,\n    \"options_is_society\": \"0\",\n    \"options_primary_contact\": {{contactId}}\n  },\n  \"fk_incoterms\": \"0\",\n  \"location_incoterms\": null,\n  \"libelle_incoterms\": null,\n  \"fk_multicurrency\": \"0\",\n  \"multicurrency_code\": \"\",\n  \"id\": \"1\",\n  \"linkedObjectsIds\": null,\n  \"canvas\": null,\n  \"fk_project\": null,\n  \"contact\": null,\n  \"contact_id\": null,\n  \"user\": null,\n  \"origin\": null,\n  \"origin_id\": null,\n  \"statut\": null,\n  \"country\": \"\",\n  \"country_id\": \"0\",\n  \"country_code\": \"\",\n  \"barcode_type\": null,\n  \"barcode_type_code\": null,\n  \"barcode_type_label\": null,\n  \"barcode_type_coder\": null,\n  \"mode_reglement_id\": null,\n  \"cond_reglement_id\": null,\n  \"cond_reglement\": null,\n  \"fk_delivery_address\": null,\n  \"shipping_method_id\": null,\n  \"modelpdf\": null,\n  \"last_main_doc\": null,\n  \"fk_account\": \"0\",\n  \"lastname\": null,\n  \"firstname\": null,\n  \"civility_id\": null,\n  \"date_validation\": null,\n  \"absolute_discount\": \"0\",\n  \"absolute_creditnote\": \"0\"\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}thirdparties/{{tiersId}}",
+					"host": [
+						"{{local_145}}thirdparties"
+					],
+					"path": [
+						"{{tiersId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Update contact",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "3c92be43-791f-409f-bea1-6673f56ab933",
+						"exec": [
+							"pm.test(\"Update contact\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"test étude d'impact rename\"\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}contacts/{{contactId}}",
+					"host": [
+						"{{local_145}}contacts"
+					],
+					"path": [
+						"{{contactId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Affaires - Create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "503512f2-c1d5-4d3d-bc59-35721d0a6212",
+						"exec": [
+							"pm.test(\"Create affair\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"affairId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"affairId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"affairId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "35142d57-78ef-4b04-a64b-7fa4c6b1a5c6",
+						"exec": [
+							"if (pm.variables.get(\"dol_api_key_test\") === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"    delayedCall([createAffair, createInvoice, createPropal, createTask]);",
+							"}",
+							"",
+							"function delayedCall(fcts) {",
+							"    for (let i = 0; i < fcts.length; i++) {",
+							"        setTimeout(() => {",
+							"            fcts[i]();",
+							"        }, 500 * i);",
+							"    }",
+							"}",
+							"",
+							"function createAffair() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'projects',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"title\":\"test pour étude d'impact\",",
+							"                \"description\":\"\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"date_end\":0,",
+							"                \"date_start\":1580425200,",
+							"                \"statut\":\"11\",",
+							"                \"ref\":pm.variables.get(\"affairRef\").replace(/\"/gi, \"\")",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"affairId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createInvoice() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'invoices',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"cond_reglement_id\":\"1\",",
+							"                \"date\":\"1580425200\",",
+							"                \"fk_project\":pm.variables.get(\"affairId\"),",
+							"                \"mode_reglement_id\":\"2\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"statut\":\"0\",",
+							"                \"type\":\"0\",",
+							"                \"array_options\":{",
+							"                    \"options_client\":\"Bush Georges\",",
+							"                    \"options_titre\":\"Facture TEI\"",
+							"                },",
+							"                \"linkedObjectsIds\":{",
+							"                    \"propal\":{},",
+							"                    \"fk_account\":\"8\"",
+							"                }",
+							"                ",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"invoiceId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createPropal() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'proposals',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"cond_reglement_id\":\"1\",",
+							"                \"date\":\"1580425200\",",
+							"                \"duree_validite\":0,",
+							"                \"mode_reglement_id\":\"6\",",
+							"                \"socid\":pm.variables.get(\"tiersId\"),",
+							"                \"fk_project\":pm.variables.get(\"affairId\"),",
+							"                \"array_options\":{",
+							"                    \"options_titre\":\"test devis\",",
+							"                    \"options_client\":\"Bush Georges\"",
+							"                }",
+							"                ",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"propalId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							"",
+							"function createTask() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'tasks',",
+							"        method: 'POST',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\"),",
+							"            'Content-Type': \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: \"raw\",",
+							"            raw: JSON.stringify({",
+							"                \"date_c\":1580466857,",
+							"                \"fk_project\":pm.variables.get(\"affairId\"),",
+							"                \"fk_task_parent\":pm.variables.get(\"affairId\"),",
+							"                \"date_start\":\"2020-01-31\",",
+							"                \"planned_workload\":\"1671\",",
+							"                \"label\":\"titre task TEI\",",
+							"                \"array_options\":{",
+							"                    \"options_description\":\"\"",
+							"                },",
+							"                \"ref\":\"\"",
+							"            })",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        if (res) {",
+							"            pm.variables.set(\"taskId\", res.json());",
+							"        }",
+							"    });",
+							"}",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\":\"test pour étude d'impact\",\n\t\"description\":\"\",\n\t\"socid\":{{tiersId}},\n\t\"date_end\":0,\n\t\"date_start\":1580425200,\n\t\"statut\":\"11\",\n\t\"ref\":{{affairRef}}\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}projects",
+					"host": [
+						"{{local_145}}projects"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Affaires - Get liste",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a4bc69f3-e710-4317-8da5-a980dac3a928",
+						"exec": [
+							"pm.test(\"Get all affairs\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}avoloidivers/searchaffairs?limit=10&page=0&searchFilter=&statusStringFilter=&dateStartFilter=&dateEndFilter=&sortfield=t.datec&sortorder=DESC",
+					"host": [
+						"{{local_145}}avoloidivers"
+					],
+					"path": [
+						"searchaffairs"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "searchFilter",
+							"value": ""
+						},
+						{
+							"key": "statusStringFilter",
+							"value": ""
+						},
+						{
+							"key": "dateStartFilter",
+							"value": ""
+						},
+						{
+							"key": "dateEndFilter",
+							"value": ""
+						},
+						{
+							"key": "sortfield",
+							"value": "t.datec"
+						},
+						{
+							"key": "sortorder",
+							"value": "DESC"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Affaires - Read / Get by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1611ceb2-0ba2-41a1-8375-0b2633aabec2",
+						"exec": [
+							"pm.test(\"Get affair by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}avoloidivers/affair?id={{affairId}}",
+					"host": [
+						"{{local_145}}avoloidivers"
+					],
+					"path": [
+						"affair"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "{{affairId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Affaires - Update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "19c85330-252c-4662-bef9-b58099fc66f6",
+						"exec": [
+							"pm.test(\"Update affair\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"description\": \"\",\n  \"titre\": \"test pour étude d'impact\",\n  \"title\": \"test pour étude d'impact\",\n  \"date_start\": 1580425200,\n  \"date_end\": \"\",\n  \"date_close\": \"\",\n  \"socid\": {{tiersId}},\n  \"thirdparty_name\": null,\n  \"user_author_id\": \"1\",\n  \"user_close_id\": null,\n  \"public\": \"0\",\n  \"budget_amount\": null,\n  \"bill_time\": 0,\n  \"statut\": \"11\",\n  \"opp_status\": null,\n  \"opp_percent\": null,\n  \"weekWorkLoad\": null,\n  \"weekWorkLoadPerTask\": null,\n  \"datec\": 1580466234,\n  \"date_c\": 1580466234,\n  \"datem\": 1580462634,\n  \"date_m\": 1580462634,\n  \"lines\": null,\n  \"id\": \"45\",\n  \"import_key\": null,\n  \"array_options\": [],\n  \"linkedObjectsIds\": null,\n  \"canvas\": null,\n  \"fk_project\": null,\n  \"contact\": null,\n  \"contact_id\": null,\n  \"thirdparty\": null,\n  \"user\": null,\n  \"origin\": null,\n  \"origin_id\": null,\n  \"ref\": {{affairRef}},\n  \"ref_ext\": null,\n  \"country\": null,\n  \"country_id\": null,\n  \"country_code\": null,\n  \"state\": null,\n  \"state_id\": null,\n  \"state_code\": null,\n  \"region\": null,\n  \"region_code\": null,\n  \"barcode_type\": null,\n  \"barcode_type_code\": null,\n  \"barcode_type_label\": null,\n  \"barcode_type_coder\": null,\n  \"mode_reglement_id\": null,\n  \"cond_reglement_id\": null,\n  \"cond_reglement\": null,\n  \"fk_delivery_address\": null,\n  \"shipping_method_id\": null,\n  \"modelpdf\": null,\n  \"last_main_doc\": null,\n  \"fk_account\": null,\n  \"note_public\": null,\n  \"note_private\": null,\n  \"note\": null,\n  \"total_ht\": null,\n  \"total_tva\": null,\n  \"total_localtax1\": null,\n  \"total_localtax2\": null,\n  \"total_ttc\": null,\n  \"fk_incoterms\": null,\n  \"libelle_incoterms\": null,\n  \"location_incoterms\": null,\n  \"name\": null,\n  \"lastname\": null,\n  \"firstname\": null,\n  \"civility_id\": null,\n  \"date_creation\": null,\n  \"date_validation\": null,\n  \"date_modification\": null,\n  \"user_modification_id\": null,\n  \"opp_amount\": null,\n  \"tiers\": {\n    \"id\": {{tiersId}},\n    \"firstname\": null,\n    \"lastname\": null,\n    \"name\": \"Bush Georges\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}projects/{{affairId}}",
+					"host": [
+						"{{local_145}}projects"
+					],
+					"path": [
+						"{{affairId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Factures - Create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "d2fa523a-8475-4b68-a61f-b5fa868c8b3e",
+						"exec": [
+							"pm.test(\"Create invoice\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"invoiceId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"invoiceId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"invoiceId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"cond_reglement_id\":\"1\",\n\t\"date\":\"1580425200\",\n\t\"fk_project\":{{affairId}},\n\t\"mode_reglement_id\":\"2\",\n\t\"socid\":{{tiersId}},\n\t\"statut\":\"0\",\n\t\"type\":\"0\",\n\t\"array_options\":{\n\t\t\"options_client\":\"Bush Georges\",\n\t\t\"options_titre\":\"Facture TEI\"\n\t},\n\t\"linkedObjectsIds\":{\n\t\t\"propal\":{},\n\t\t\"fk_account\":\"8\"\n\t}\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}invoices",
+					"host": [
+						"{{local_145}}invoices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Facturtes - Get liste",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a663750d-47b9-44fe-99de-de47ebfb84a7",
+						"exec": [
+							"pm.test(\"Get all invoices\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}avoloidivers/searchinvoices?limit=10&page=0&searchFilter=&searchType=0&statusStringFilter=-1,&dateStartFilter=&dateEndFilter=&sortfield=t.datec&sortorder=DESC&affairId=&socId=",
+					"host": [
+						"{{local_145}}avoloidivers"
+					],
+					"path": [
+						"searchinvoices"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "searchFilter",
+							"value": ""
+						},
+						{
+							"key": "searchType",
+							"value": "0"
+						},
+						{
+							"key": "statusStringFilter",
+							"value": "-1,"
+						},
+						{
+							"key": "dateStartFilter",
+							"value": ""
+						},
+						{
+							"key": "dateEndFilter",
+							"value": ""
+						},
+						{
+							"key": "sortfield",
+							"value": "t.datec"
+						},
+						{
+							"key": "sortorder",
+							"value": "DESC"
+						},
+						{
+							"key": "affairId",
+							"value": ""
+						},
+						{
+							"key": "socId",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Factures - Read / Get by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "04ee5839-550c-4b6a-85c7-79798ff35171",
+						"exec": [
+							"pm.test(\"Get invoice by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}invoices/{{invoiceId}}",
+					"host": [
+						"{{local_145}}invoices"
+					],
+					"path": [
+						"{{invoiceId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Factures - Update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9a865212-3856-4ef6-8a8d-b9d1dff58245",
+						"exec": [
+							"pm.test(\"Update invoice\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cond_reglement_id\": \"1\",\n  \"date\": \"1580425200\",\n  \"fk_project\": {{affairId}},\n  \"mode_reglement_id\": \"6\",\n  \"socid\": {{tiersId}},\n  \"array_options\": {\n    \"options_client\": \"Bush Georges\",\n    \"options_titre\": \"Facture TEI\"\n  },\n  \"linkedObjectsIds\": {\n    \"propal\": {}\n  },\n  \"fk_account\": \"8\"\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}invoices/{{invoiceId}}",
+					"host": [
+						"{{local_145}}invoices"
+					],
+					"path": [
+						"{{invoiceId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proposals - Create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "dfaadeaf-9c71-4b56-87d6-3ffeab0bd08c",
+						"exec": [
+							"pm.test(\"Create proposal\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"propalId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"propalId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"propalId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"cond_reglement_id\":\"1\",\n\t\"date\":\"1580425200\",\n\t\"duree_validite\":0,\n\t\"mode_reglement_id\":\"6\",\n\t\"socid\":{{tiersId}},\n\t\"fk_project\":{{affairId}},\n\t\"array_options\":{\n\t\t\"options_titre\":\"test devis\",\n\t\t\"options_client\":\"Bush Georges\"\n\t}\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}proposals",
+					"host": [
+						"{{local_145}}proposals"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proposals - Get liste",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "874d3976-e9a3-4ad4-a3b9-e89c0f1cea02",
+						"exec": [
+							"pm.test(\"Get all proposals\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}avoloidivers/searchpropals?limit=10&page=0&searchFilter=&statusStringFilter=&dateStartFilter=&dateEndFilter=&sortfield=t.datec&sortorder=DESC&affairId=&socId=",
+					"host": [
+						"{{local_145}}avoloidivers"
+					],
+					"path": [
+						"searchpropals"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "searchFilter",
+							"value": ""
+						},
+						{
+							"key": "statusStringFilter",
+							"value": ""
+						},
+						{
+							"key": "dateStartFilter",
+							"value": ""
+						},
+						{
+							"key": "dateEndFilter",
+							"value": ""
+						},
+						{
+							"key": "sortfield",
+							"value": "t.datec"
+						},
+						{
+							"key": "sortorder",
+							"value": "DESC"
+						},
+						{
+							"key": "affairId",
+							"value": ""
+						},
+						{
+							"key": "socId",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proposals - Read / Get by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "53806c6c-6b32-4b1e-bbda-9e4ba54d18f1",
+						"exec": [
+							"pm.test(\"Get proposal by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}proposals/{{propalId}}",
+					"host": [
+						"{{local_145}}proposals"
+					],
+					"path": [
+						"{{propalId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proposals - Update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "68c5b252-85ae-496d-a8ba-39a8205e5294",
+						"exec": [
+							"pm.test(\"Update proposal\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cond_reglement_id\": \"2\",\n  \"fin_validite\": \"1580465084\",\n  \"mode_reglement_id\": \"6\",\n  \"socid\": {{tiersId}},\n  \"date\": \"1580425200\",\n  \"ref_client\": \"\",\n  \"fk_project\": {{affairId}},\n  \"array_options\": {\n    \"options_titre\": \"test devis\",\n    \"options_client\": \"Bush Georges\",\n    \"options_multitiers\": \"\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}proposals/{{propalId}}",
+					"host": [
+						"{{local_145}}proposals"
+					],
+					"path": [
+						"{{propalId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Agenda - Create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f6947a6e-f915-4939-9671-9e33dcc2f09d",
+						"exec": [
+							"pm.test(\"Create agenda event\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"eventId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.variables.set(\"eventId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"eventId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"eventId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"userownerid\":{{userownerid}},\n\t\"type_id\":\"54\",\n\t\"datep\":1580294400,\n\t\"datef\":1580295600,\n\t\"note\":\"\",\n\t\"socid\":{{tiersId}},\n\t\"label\":\"\",\n\t\"fk_project\":{{affairId}}\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}agendaevents",
+					"host": [
+						"{{local_145}}agendaevents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Agenda - Get liste",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "732fb01c-b356-4e1a-a6e4-9bdf92cf2e53",
+						"exec": [
+							"pm.test(\"Get all agenda events\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}agendaevents?limit=0&sortfield=t.datep&sortorder=ASC&sqlfilters=(t.datep:%3E:%2720200127%27)%20%20%26%26%20(t.datep:%3C:%2720200202%27)",
+					"host": [
+						"{{local_145}}agendaevents"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "0"
+						},
+						{
+							"key": "sortfield",
+							"value": "t.datep"
+						},
+						{
+							"key": "sortorder",
+							"value": "ASC"
+						},
+						{
+							"key": "sqlfilters",
+							"value": "(t.datep:%3E:%2720200127%27)%20%20%26%26%20(t.datep:%3C:%2720200202%27)"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Agenda - Read / Get by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "6860fa89-ccc1-4994-9a32-d990e525af03",
+						"exec": [
+							"pm.test(\"Get agenda event by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}agendaevents/{{eventId}}",
+					"host": [
+						"{{local_145}}agendaevents"
+					],
+					"path": [
+						"{{eventId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tasks - Create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "919fca51-2f34-4f18-938f-ae6688b0604b",
+						"exec": [
+							"pm.test(\"Create task\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.variables.set(\"taskId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.variables.set(\"taskId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.variables.set(\"taskId\", pm.response.text());",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"date_c\":1580466857,\n\t\"fk_project\":{{affairId}},\n\t\"fk_task_parent\":{{affairId}},\n\t\"date_start\":\"2020-01-31\",\n\t\"planned_workload\":\"1671\",\n\t\"label\":\"titre task TEI\",\n\t\"array_options\":{\n\t\t\"options_description\":\"\"\n\t},\n\t\"ref\":\"\"\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}tasks",
+					"host": [
+						"{{local_145}}tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tasks - Get liste",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1b1c18d4-95f4-4dce-9363-d35b687eb3f5",
+						"exec": [
+							"pm.test(\"Get all tasks\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}projects/{{affairId}}/tasks",
+					"host": [
+						"{{local_145}}projects"
+					],
+					"path": [
+						"{{affairId}}",
+						"tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tasks - Read / Get by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a903dedc-49f1-4ec2-982f-abb05980cc77",
+						"exec": [
+							"pm.test(\"Get task by ID\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}tasks/{{taskId}}",
+					"host": [
+						"{{local_145}}tasks"
+					],
+					"path": [
+						"{{taskId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tasks - Update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "b3d997fc-549d-41f2-b40b-2ffbfaeb3780",
+						"exec": [
+							"pm.test(\"Update task\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					},
+					{
+						"key": "",
+						"value": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"fk_task_parent\": {{affairId}},\n  \"label\": \"titre task TEI\",\n  \"description\": \"\",\n  \"duration_effective\": null,\n  \"planned_workload\": \"1620\",\n  \"date_c\": null,\n  \"date_start\": \"1580425200\",\n  \"array_options\": {\n    \"options_type_rdv\": \"type arr opt\",\n    \"options_is_charged\": 0,\n    \"options_description\": \"desc arr opt\"\n  },\n  \"options_type_rdv\": \"root arr opt\",\n  \"options_is_charged\": \"root arr opt\",\n  \"options_description\": \"root arr opt\"\n}"
+				},
+				"url": {
+					"raw": "{{local_145}}tasks/{{taskId}}",
+					"host": [
+						"{{local_145}}tasks"
+					],
+					"path": [
+						"{{taskId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Delete contact",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "544a4572-73d1-481f-93d4-963349155bbb",
+						"exec": [
+							"pm.test(\"Delete contact\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}contacts/{{contactId}}",
+					"host": [
+						"{{local_145}}contacts"
+					],
+					"path": [
+						"{{contactId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proposals - Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "4ce24d9b-5336-4f03-a6a1-dc7193d8847b",
+						"exec": [
+							"pm.test(\"Delete proposal\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}proposals/{{propalId}}",
+					"host": [
+						"{{local_145}}proposals"
+					],
+					"path": [
+						"{{propalId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tasks - Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "da969b79-8a27-484c-a6d1-58056a6b3c07",
+						"exec": [
+							"pm.test(\"Delete task\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}tasks/{{taskId}}",
+					"host": [
+						"{{local_145}}tasks"
+					],
+					"path": [
+						"{{taskId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Factures - Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ea005494-40e0-4d86-ba74-5217f5c2472d",
+						"exec": [
+							"pm.test(\"Delete invoice\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}invoices/{{invoiceId}}",
+					"host": [
+						"{{local_145}}invoices"
+					],
+					"path": [
+						"{{invoiceId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Agenda - Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "41dfb4e8-5039-4ac6-8737-78e772188934",
+						"exec": [
+							"pm.test(\"Delete agenda event\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}agendaevents/{{eventId}}",
+					"host": [
+						"{{local_145}}agendaevents"
+					],
+					"path": [
+						"{{eventId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Affaires - Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "36747f00-5b6d-431d-981a-aa77f29e352f",
+						"exec": [
+							"pm.test(\"Delete affair\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        pm.response.to.have.status(401);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}projects/{{affairId}}",
+					"host": [
+						"{{local_145}}projects"
+					],
+					"path": [
+						"{{affairId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tiers - Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "031e7412-a40f-442b-af5e-274a630ef714",
+						"exec": [
+							"pm.test(\"Delete tiers\", function() {",
+							"    var dolApiKey = pm.variables.get(\"dol_api_key_test\");",
+							"",
+							"    if (dolApiKey === pm.environment.get(\"dol_api_key_admin\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_secretary\")) {",
+							"        delayedCall([deletePropal, deleteTask, deleteInvoice, deleteAffair]);",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_collaborator\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_lawyer\")) {",
+							"        pm.response.to.have.status(200);",
+							"    } else if (dolApiKey === pm.environment.get(\"dol_api_key_no_rights\")) {",
+							"        delayedCall([deleteContact, deletePropal, deleteTask, deleteInvoice,",
+							"        deleteAgendaEvent, deleteAffair, deleteTiers]);",
+							"        pm.response.to.have.status(401);",
+							"    }",
+							"});",
+							"",
+							"function delayedCall(fcts) {",
+							"    for (let i = 0; i < fcts.length; i++) {",
+							"        setTimeout(() => {",
+							"            fcts[i]();",
+							"        }, 500 * i);",
+							"    }",
+							"}",
+							"",
+							"function deleteTiers() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'thirdparties/' + pm.variables.get(\"tiersId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp tiers deleted\");",
+							"    });",
+							"}",
+							"",
+							"function deleteContact() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'contacts/' + pm.variables.get(\"contactId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp contact deleted\");",
+							"    });",
+							"}",
+							"",
+							"function deleteAffair() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'projects/' + pm.variables.get(\"affairId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp affair deleted\");",
+							"    });",
+							"}",
+							"",
+							"function deleteInvoice() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'invoices/' + pm.variables.get(\"invoiceId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp invoice deleted\");",
+							"    });",
+							"}",
+							"",
+							"function deletePropal() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'proposals/' + pm.variables.get(\"propalId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp proposal deleted\");",
+							"    });",
+							"}",
+							"",
+							"function deleteAgendaEvent() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'agendaevents/' + pm.variables.get(\"eventId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp agenda event deleted\");",
+							"    });",
+							"}",
+							"",
+							"function deleteTask() {",
+							"    const echoPostRequest = {",
+							"        url: pm.environment.get(\"local_145\") + 'tasks/' + pm.variables.get(\"taskId\"),",
+							"        method: 'DELETE',",
+							"        header: {",
+							"            'DOLAPIKEY': pm.environment.get(\"dol_api_key_admin\")",
+							"        }",
+							"    };",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"        console.log(\"Temp task deleted\");",
+							"    });",
+							"}",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "DOLAPIKEY",
+						"value": "{{dol_api_key_test}}"
+					}
+				],
+				"url": {
+					"raw": "{{local_145}}thirdparties/{{tiersId}}",
+					"host": [
+						"{{local_145}}thirdparties"
+					],
+					"path": [
+						"{{tiersId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"id": "44e999ee-e87f-4709-bc1a-608c7604412c",
+			"key": "collection_variable_test",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
