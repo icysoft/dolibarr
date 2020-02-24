@@ -279,13 +279,7 @@ class AvoloiDivers extends DolibarrApi
 		// $result = array();
 		// $result['total'] = $total;
 		if ($affairList->socid != null && $affairList->socid !== '') {
-			$thirdParties = new Thirdparties();
-			$thirdParty = $thirdParties->get($affairList->socid);
-			$affairList->tiers = array();
-			$affairList->tiers['id'] = $thirdParty->id;
-			$affairList->tiers['firstname'] = $thirdParty->firstname;
-			$affairList->tiers['lastname'] = $thirdParty->lastname;
-			$affairList->tiers['name'] = $thirdParty->name;
+			$affairList->tiers = $this->getTiers($affairList->socid);
 		}
 
 		if ($affairList && $affairList->array_options && $affairList->array_options->options_multitiers) {
@@ -411,13 +405,7 @@ class AvoloiDivers extends DolibarrApi
 		$result['total'] = $total;
 		for ($i = 0; $i < $total; $i++) {
 			if ($affairList[$i]->socid != null && $affairList[$i]->socid !== '') {
-				$thirdParties = new Thirdparties();
-				$thirdParty = $thirdParties->get($affairList[$i]->socid);
-				$affairList[$i]->tiers = array();
-				$affairList[$i]->tiers['id'] = $thirdParty->id;
-				$affairList[$i]->tiers['firstname'] = $thirdParty->firstname;
-				$affairList[$i]->tiers['lastname'] = $thirdParty->lastname;
-				$affairList[$i]->tiers['name'] = $thirdParty->name;
+				$affairList[$i]->tiers = $this->getTiers($affairList[$i]->socid);
 			}
 
 			if ($affairList[$i] && $affairList[$i]->array_options && $affairList[$i]->array_options->options_multitiers) {
@@ -935,5 +923,25 @@ class AvoloiDivers extends DolibarrApi
 		}
 
 		return $obj_ret;
+	}
+
+	private function getTiers($tiersid) {
+    $sql = "SELECT s.rowid, s.nom, sp.lastname, sp.firstname, se.primary_contact ";
+		$sql.= "FROM ".MAIN_DB_PREFIX."societe as s ";
+		$sql.= "LEFT JOIN ".MAIN_DB_PREFIX."socpeople as sp ";
+		$sql.= "ON (s.rowid = sp.fk_soc) ";
+		$sql.= "LEFT JOIN ".MAIN_DB_PREFIX."societe_extrafields as se ";
+		$sql.= "ON (sp.rowid = se.primary_contact) ";
+		$sql.= "WHERE s.rowid = $tiersid";
+
+		$result = $this->db->query($sql);
+		$obj = $this->db->fetch_object($result);
+
+		$rtd = array();
+		$rtd["id"] = $obj->rowid;
+		$rtd["nom"] = $obj->nom;
+		$rtd["lastname"] = $obj->lastname;
+		$rtd["firstname"] = $obj->firstname;
+		return $rtd;
 	}
 }
