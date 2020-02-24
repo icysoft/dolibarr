@@ -29,8 +29,9 @@ class AvoloiMultiUser extends DolibarrApi
    * @url GET /test/{id}
    */
   public function test($id) {
-    $mu = new AvoloiMultiUserClass($this->db);
-    return $mu->getUserRights($id);
+    // $mu = new AvoloiMultiUserClass($this->db);
+    // return $mu->getUserRights($id);
+    return $this->setGroup($id);
   }
 
   /**
@@ -62,6 +63,12 @@ class AvoloiMultiUser extends DolibarrApi
     // We check if the user trying to create another user is an admin
     $this->checkAdminRights($user, "Admin rights are needed to create a user");
 
+    // Instanciation de la class AvoloiMultiUserClass
+    $mu = new AvoloiMultiUserClass($this->db);
+
+    // Génération d'une clef d'API pour le nouvel utilisateur
+    $request_data["api_key"] = $mu->generateKey();
+
     foreach ($request_data as $field => $value) {
       $this->useraccount->$field = $value;
 
@@ -72,15 +79,30 @@ class AvoloiMultiUser extends DolibarrApi
 			}
     }
 
+    // Créer un user auprès de la Megabase
+    $megabaseuserid = $mu->createUserMegabase($request_data);
+
+    if (!$megabaseuserid || $megabaseuserid === "") {
+      throw new RestException(500, 'Error creating user in Megabase');
+    }
+
+    // Le password sera utilisé uniquement côté Megabase et pas côté Dolibarr (la DOLAPIKEY sera utilisée à la place).
+    // On le supprime donc afin de ne pas l'enregistrer dans Dolibarr.
+    $request_data["password"] = null;
+
     if ($this->useraccount->create(DolibarrApiAccess::$user) < 0) {
       throw new RestException(500, 'Error creating', array_merge(array($this->useraccount->error), $this->useraccount->errors));
     }
+
+    // Nous voulons créer un utilisateur avec le même ID qu'en Megabase
+    // Dolibarr ne nous permettant pas de choisir explicitement un ID à la création de l'utilisateur
+    // nous modifions l'ID après sa création ET AVANT TOUTES AUTRES MANIPULATIONS !
+    $this->updateUserId($megabaseuserid);
 
     // On set le statut de l'utilisateur
     $this->useraccount->setstatus($request_data["statut"]);
 
     // On set les droits individuel
-    $mu = new AvoloiMultiUserClass($this->db);
     $mu->setUserRights($this->useraccount->id, $request_data["user_rights"]);
 
     // On set le groupe
@@ -181,19 +203,21 @@ class AvoloiMultiUser extends DolibarrApi
     // We check if the user trying to create another user is an admin
     $this->checkAdminRights($user, "Admin rights are needed to get a user");
 
-		$result = $this->useraccount->fetch($id);
+    $tmp = new User($this->db);
+
+		$result = $tmp->fetch($id);
 		if ($result <= 0) {
 			throw new RestException(404, 'User not found');
     }
 
     // On ajoute le groupe auquel appartient l'utilisateur
-    $this->useraccount->group = $this->findUserGroups($id);
+    $tmp->group = $this->findUserGroups($id);
 
     // On ajoute les droits de l'utilisateur
     $mu = new AvoloiMultiUserClass($this->db);
-    $this->useraccount->user_rights = $mu->getUserRights($id);
+    $tmp->user_rights = $mu->getUserRights($id);
 
-    return $this->_cleanObjectDatas($this->useraccount);
+    return $this->_cleanObjectDatas($tmp);
   }
   
   /**
@@ -334,7 +358,6 @@ class AvoloiMultiUser extends DolibarrApi
     $this->checkAdminRights($user, "Admin rights are needed to remove admin rights to a user");
 
     $result = $this->updateAdmin($id, 0);
-    return $result;
 
     if (!$result) {
       $usertmp = $this->getuserbyid($id);
@@ -657,14 +680,45 @@ class AvoloiMultiUser extends DolibarrApi
 	    return $object;
 	}
 
-  public function setGroup($group) {
+  private function setGroup($group) {
     global $user;
+
+    // On cherche à n'avoir qu'un groupe par utilisateur
+    // On supprime donc le group auquel appartient déjà l'utilisateur
+    $sql = "DELETE FROM `llx_usergroup_user` WHERE `fk_user`=".$this->useraccount->id;
+    $result = $this->db->query($sql);
 
     $entity = (DolibarrApiAccess::$user->entity > 0 ? DolibarrApiAccess::$user->entity : $conf->entity);
     $result = $this->useraccount->SetInGroup($group, 1);
 		if (! ($result > 0))
 		{
 			throw new RestException(500, $this->useraccount->error);
-		}
+    }
+    
+    // Si le groupe est "GROUP_ADMIN", alors on set les droits admin pour le user, sinon on les retire.
+    $sql = "SELECT nom FROM ".MAIN_DB_PREFIX."usergroup ";
+    $sql.= "WHERE rowid = $group";
+    $result = $this->db->query($sql);
+
+    $isadmin = false;
+    foreach ($result as $r) {
+      if ($r["nom"] === "GROUP_ADMIN") {
+        $isadmin = true;
+      }
+    }
+
+    if ($isadmin) {
+      $this->setadmin($this->useraccount->id);
+    } else {
+      $this->removeadmin($this->useraccount->id);
+    }
+  }
+
+  private function updateUserId($newid) {
+    $sql = "UPDATE ".MAIN_DB_PREFIX."user ";
+    $sql.= "SET rowid = $newid ";
+    $sql.= "WHERE rowid = ".$this->useraccount->id;
+    $this->useraccount->id = $newid;
+    return $this->db->query($sql);
   }
 }

@@ -133,6 +133,44 @@ class AvoloiMultiUserClass
     return $rtd;
   }
 
+  public function createUserMegabase($user) {
+    // TODO Créer un user auprès de la Megabase
+    $email = $user["email"];
+    $lastname = $user["lastname"];
+    $firstname = $user["firstname"];
+    $phone = $user["user_mobile"];
+    $password = $user["password"];
+    $dolapikey = $user["api_key"];
+    $lawyerId = $user["lawyerId"];
+
+    return "123";
+  }
+
+  public function generateKey() {
+		// Caractères pouvant aparaîtres dans la clef générée
+		$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+		$key = '';
+
+		// Un caractère de $charaters est sélectionné au hasard
+		$max = strlen($characters) - 1;
+		for ($i = 0; $i < 32; $i++) {
+				 $key .= $characters[mt_rand(0, $max)];
+		}
+
+		// Vérification de l'existence de cette clef dans la table
+		$sql = "SELECT * FROM `llx_user` WHERE api_key = '$key';";
+		$resql = $this->db->query($sql);
+		$objTmp = $this->db->fetch_object($resql);
+
+		// Si la clef existe dans la table, on rappel la fonction de génération pour proposer une nouvelle clef
+		if ($objTmp) {
+			$key = $this->generateKey();
+		}
+
+		return $key;
+  }
+
   private function getUserTiersRight($id) {
     // Si l'utilisateur à les droits module:societe / perms:group / type:g
     // alors il a les droits de groupe "g".
@@ -774,7 +812,6 @@ class AvoloiMultiUserClass
     $sql.= join(" OR ", $clausearr);
 
     return $this->db->query($sql);
-
   }
 
 }
