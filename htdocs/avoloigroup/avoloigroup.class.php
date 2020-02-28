@@ -1,4 +1,5 @@
 <?php
+require_once DOL_DOCUMENT_ROOT.'/avoloimultiuser/avoloimultiuser.class.php';
 class AvoloiGroupClass
 {
   /**
@@ -54,4 +55,17 @@ class AvoloiGroupClass
 
     return $this->db->num_rows($result) ? true : false;
   }
+
+  public function getGroupRights($id) {
+    require_once DOL_DOCUMENT_ROOT.'/avoloi-manage-rights/avoloi-manage-rights.php';
+    $amr = new AvoloiManageRights($this->db);
+    return $amr->getRights($id, 'group');
+  }
+
+  public function setGroupRights($id, $rights) {
+    require_once DOL_DOCUMENT_ROOT.'/avoloi-manage-rights/avoloi-manage-rights.php';
+    $amr = new AvoloiManageRights($this->db);
+    return $amr->setRights($id, $rights, 'group');
+  }
+
 }

@@ -81,6 +81,10 @@ class AvoloiDivers extends DolibarrApi
 		$this->prospectFilter = $prospectFilter;
 		$this->tiersFilter = $tiersFilter;
 
+		if(! DolibarrApiAccess::$user->rights->societe->lire) {
+			throw new RestException(401);
+		}
+
 		// Find contacts
 		if ($searched) {
 			$contacts = $this->getContacts($searched);

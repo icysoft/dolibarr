@@ -639,6 +639,8 @@ class AvoloiManageRights
     if ($right === "a") {
       $params[] = ["module" => "agenda", "perms" => "total", "type" => "a"];
       $params[] = ["module" => "agenda", "perms" => "allactions", "subperms" => "read", "type" => "r"];
+      $params[] = ["module" => "agenda", "perms" => "allactions", "subperms" => "create", "type" => "w"];
+      $params[] = ["module" => "agenda", "perms" => "allactions", "subperms" => "delete", "type" => "w"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "read", "type" => "r"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "create", "type" => "w"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "delete", "type" => "w"];
@@ -650,6 +652,8 @@ class AvoloiManageRights
       // Setter droit module:agenda / perms:myactions / subperms:create / type:w
       // Setter droit module:agenda / perms:myactions / subperms:delete / type:w
       $params[] = ["module" => "agenda", "perms" => "allactions", "subperms" => "read", "type" => "r"];
+      $params[] = ["module" => "agenda", "perms" => "allactions", "subperms" => "create", "type" => "w"];
+      $params[] = ["module" => "agenda", "perms" => "allactions", "subperms" => "delete", "type" => "w"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "read", "type" => "r"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "create", "type" => "w"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "delete", "type" => "w"];
