@@ -183,9 +183,11 @@ class AvoloiMultiUserClass
     $params = array();
     $params["id"] = $id;
     $params["module"] = "societe";
+    $params["a_perms"] = "total";
     $params["g_perms"] = "group";
     $params["w_perms"] = "creer";
     $params["r_perms"] = "lire";
+    $params["a_type"] = "a";
     $params["g_type"] = "g";
     $params["w_type"] = "w";
     $params["r_type"] = "r";
@@ -211,9 +213,11 @@ class AvoloiMultiUserClass
     $params = array();
     $params["id"] = $id;
     $params["module"] = "projet";
+    $params["a_perms"] = "total";
     $params["g_perms"] = "group";
     $params["w_perms"] = "creer";
     $params["r_perms"] = "lire";
+    $params["a_type"] = "a";
     $params["g_type"] = "g";
     $params["w_type"] = "w";
     $params["r_type"] = "r";
@@ -239,9 +243,11 @@ class AvoloiMultiUserClass
     $params = array();
     $params["id"] = $id;
     $params["module"] = "facture";
+    $params["a_perms"] = "total";
     $params["g_perms"] = "group";
     $params["w_perms"] = "creer";
     $params["r_perms"] = "lire";
+    $params["a_type"] = "a";
     $params["g_type"] = "g";
     $params["w_type"] = "a";
     $params["r_type"] = "a";
@@ -268,9 +274,11 @@ class AvoloiMultiUserClass
     $params = array();
     $params["id"] = $id;
     $params["module"] = "propale";
+    $params["a_perms"] = "total";
     $params["g_perms"] = "group";
     $params["w_perms"] = "creer";
     $params["r_perms"] = "lire";
+    $params["a_type"] = "a";
     $params["g_type"] = "g";
     $params["w_type"] = "w";
     $params["r_type"] = "r";
@@ -297,11 +305,13 @@ class AvoloiMultiUserClass
     $params = array();
     $params["id"] = $id;
     $params["module"] = "agenda";
+    $params["a_perms"] = "total";
     $params["g_perms"] = "group";
     $params["w_perms"] = "myactions";
     $params["r_perms"] = "myactions";
     $params["w_subperms"] = "create";
     $params["r_subperms"] = "read";
+    $params["a_type"] = "a";
     $params["g_type"] = "g";
     $params["w_type"] = "w";
     $params["r_type"] = "r";
@@ -328,9 +338,11 @@ class AvoloiMultiUserClass
     $params = array();
     $params["id"] = $id;
     $params["module"] = "task";
+    $params["a_perms"] = "total";
     $params["g_perms"] = "group";
     $params["w_perms"] = "creer";
     $params["r_perms"] = "lire";
+    $params["a_type"] = "a";
     $params["g_type"] = "g";
     $params["w_type"] = "w";
     $params["r_type"] = "r";
@@ -351,12 +363,14 @@ class AvoloiMultiUserClass
   private function concatGetRequest($params) {
     $id = $params["id"];
     $module = $params["module"];
+    $a_perms = $params["a_perms"];
     $g_perms = $params["g_perms"];
     $w_perms = $params["w_perms"];
     $r_perms = $params["r_perms"];
     $g_subperms = $params["g_subperms"];
     $w_subperms = $params["w_subperms"];
     $r_subperms = $params["r_subperms"];
+    $a_type = $params["a_type"];
     $g_type = $params["g_type"];
     $w_type = $params["w_type"];
     $r_type = $params["r_type"];
@@ -367,12 +381,14 @@ class AvoloiMultiUserClass
     if (!$module || $module === "") {
       throw new Exception('Module param is missing.');
     }
-    if ((!$g_perms || $g_perms === "")
+    if ((!$a_perms || $a_perms === "")
+      && (!$g_perms || $g_perms === "")
       && (!$w_perms || $w_perms === "")
       && (!$r_perms || $r_perms === "")
       && (!$g_subperms || $g_subperms === "")
       && (!$w_subperms || $w_subperms === "")
       && (!$r_subperms || $r_subperms === "")
+      && (!$a_type || $a_type === "")
       && (!$g_type || $g_type === "")
       && (!$w_type || $w_type === "")
       && (!$r_type || $r_type === "")) {
@@ -380,6 +396,11 @@ class AvoloiMultiUserClass
     }
 
     $sql = "SELECT CASE ";
+    $sql.= "WHEN rd.module='$module' ";
+    if ($a_perms && $a_perms !== "") $sql.= "AND rd.perms='$a_perms' ";
+    if ($a_subperms && $a_subperms !== "") $sql.= "AND subperms='$a_subperms' ";
+    if ($a_type && $a_type !== "") $sql.= "AND rd.type='$a_type' ";
+    $sql.= "THEN 'a' ";
     $sql.= "WHEN rd.module='$module' ";
     if ($g_perms && $g_perms !== "") $sql.= "AND rd.perms='$g_perms' ";
     if ($g_subperms && $g_subperms !== "") $sql.= "AND subperms='$g_subperms' ";
@@ -416,7 +437,9 @@ class AvoloiMultiUserClass
       $rtd[] = $right['user_rights'];
     }
 
-    if (in_array('g', $rtd)) {
+    if (in_array('a', $rtd)) {
+      return 'a';
+    } else if (in_array('g', $rtd)) {
       return 'g';
     } else if (in_array('w', $rtd)) {
       return 'w';
@@ -444,7 +467,9 @@ class AvoloiMultiUserClass
     }
 
     // Ici on set les droits selon le type de droit demandé
-    if ($right === "g") {
+    if ($right === "a") {
+      $params[] = ["module" => "societe", "perms" => "total", "type" => "a"];
+    } else if ($right === "g") {
       // Setter droit module:societe / perms:group / type:g
       $params[] = ["module" => "societe", "perms" => "group", "type" => "g"];
     } else if ($right === "w") {
@@ -495,7 +520,9 @@ class AvoloiMultiUserClass
     }
 
     // Ici on set les droits selon le type de droit demandé
-    if ($right === "g") {
+    if ($right === "a") {
+      $params[] = ["module" => "projet", "perms" => "total", "type" => "a"];
+    } else if ($right === "g") {
       // Setter droit module:projet / perms:group / type:g
       $params[] = ["module" => "projet", "perms" => "group", "type" => "g"];
     } else if ($right === "w") {
@@ -538,7 +565,9 @@ class AvoloiMultiUserClass
     }
 
     // Ici on set les droits selon le type de droit demandé
-    if ($right === "g") {
+    if ($right === "a") {
+      $params[] = ["module" => "facture", "perms" => "total", "type" => "a"];
+    } else if ($right === "g") {
       // Setter droit module:facture / perms:group / type:g
       $params[] = ["module" => "facture", "perms" => "group", "type" => "g"];
     } else if ($right === "w") {
@@ -593,7 +622,9 @@ class AvoloiMultiUserClass
     }
 
     // Ici on set les droits selon le type de droit demandé
-    if ($right === "g") {
+    if ($right === "a") {
+      $params[] = ["module" => "propale", "perms" => "total", "type" => "a"];
+    } else if ($right === "g") {
       // Setter droit module:propale / perms:group / type:g
       $params[] = ["module" => "propale", "perms" => "group", "type" => "g"];
     } else if ($right === "w") {
@@ -644,7 +675,9 @@ class AvoloiMultiUserClass
     }
 
     // Ici on set les droits selon le type de droit demandé
-    if ($right === "g") {
+    if ($right === "a") {
+      $params[] = ["module" => "agenda", "perms" => "total", "type" => "a"];
+    } else if ($right === "g") {
       // Setter droit module:agenda / perms:group / type:g
       $params[] = ["module" => "agenda", "perms" => "group", "type" => "g"];
     } else if ($right === "w") {
@@ -687,7 +720,9 @@ class AvoloiMultiUserClass
     }
 
     // Ici on set les droits selon le type de droit demandé
-    if ($right === "g") {
+    if ($right === "a") {
+      $params[] = ["module" => "task", "perms" => "total", "type" => "a"];
+    } else if ($right === "g") {
       // Setter droit module:task / perms:group / type:g
       $params[] = ["module" => "task", "perms" => "group", "type" => "g"];
     } else if ($right === "w") {
