@@ -377,6 +377,9 @@ class AvoloiManageRights
     // Set right on task events
     $this->setTaskRight($id, $user_rights["tasks"]["right_code"], $userorgroup);
 
+    // Set rights on GED
+    $this->setGEDRights($id, $userorgroup);
+
     return $this->getRights($id, $userorgroup);
   }
   
@@ -649,6 +652,7 @@ class AvoloiManageRights
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "read", "type" => "r"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "create", "type" => "w"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "delete", "type" => "w"];
+      $params[] = ["module" => "societe", "perms" => "client", "subperms" => "voir", "type" => "r"];
     } else if ($right === "g") {
       // Setter droit module:agenda / perms:group / type:g
       $params[] = ["module" => "agenda", "perms" => "group", "type" => "g"];
@@ -662,9 +666,11 @@ class AvoloiManageRights
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "read", "type" => "r"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "create", "type" => "w"];
       $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "delete", "type" => "w"];
+      $params[] = ["module" => "societe", "perms" => "client", "subperms" => "voir", "type" => "r"];
     } else if ($right === "r") {
       // Setter droit module:agenda / perms:myactions / subperms:read / type:r
-      $params[] = ["module" => "agenda", "perms" => "myactions", "type" => "r"];
+      $params[] = ["module" => "agenda", "perms" => "myactions", "subperms" => "read", "type" => "r"];
+      $params[] = ["module" => "societe", "perms" => "client", "subperms" => "voir", "type" => "r"];
     }
     
     if (count($params) > 0) {
@@ -712,6 +718,29 @@ class AvoloiManageRights
       // Setter droit module:task / perms:lire / type:r
       $params[] = ["module" => "task", "perms" => "lire", "type" => "r"];
     }
+    
+    if (count($params) > 0) {
+      $sql = $this->concatSetRequest($id, $params, $userorgroup);
+
+      $result = $this->db->query($sql);
+  
+      if (!$result) {
+        throw new Exception('An error occurs while setting rights');
+      }
+    }
+  }
+
+  /**
+   * Enregistrement des droits de l'utilisateur sur la GED.
+   * 
+   * De fait, les droits sont toujours activés, mais on écrase les droits ici pour être certain
+   * que les droits soient bel et bien activés.
+   */
+  private function setGEDRights($id, $userorgroup) {
+    $params = array();
+    $params[] = ["module" => "ecm", "perms" => "read", "type" => "r"];
+    $params[] = ["module" => "ecm", "perms" => "upload", "type" => "w"];
+    $params[] = ["module" => "ecm", "perms" => "setup", "type" => "w"];
     
     if (count($params) > 0) {
       $sql = $this->concatSetRequest($id, $params, $userorgroup);
@@ -795,7 +824,7 @@ class AvoloiManageRights
       $valuesarr[] = "('1', $id, ".$rightid["id"].")";
     }
 
-    $sql = "INSERT INTO ";
+    $sql = "INSERT IGNORE INTO ";
     if ($userorgroup === "user") {
       $sql.= MAIN_DB_PREFIX."user_rights ";
       $sql.= "(entity, fk_user, fk_id) VALUES ";

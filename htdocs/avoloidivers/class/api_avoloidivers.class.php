@@ -458,7 +458,7 @@ class AvoloiDivers extends DolibarrApi
 			$result['affairs'] = $affairList;
 		}
 
-		if (! DolibarrApiAccess::$user->rights->societe->lire && $minimumrightaccess) {
+		if (! DolibarrApiAccess::$user->rights->projet->lire && $minimumrightaccess) {
 			$affairstmp = array();
 			foreach ($result['affairs'] as $affair) {
 				$affairstmp[] = [
