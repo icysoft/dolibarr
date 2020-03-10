@@ -433,6 +433,8 @@ class AvoloiManageRights
       $params[] = ["module" => "societe", "perms" => "contact", "type" => "r"];
       $params[] = ["module" => "societe", "perms" => "client", "subperms" => "voir", "type" => "r"];
     }
+    $params[] = ["module" => "societe", "perms" => "client", "subperms" => "voir", "type" => "r"];
+    $params[] = ["module" => "societe", "perms" => "contact", "subperms" => "lire", "type" => "r"];
 
     if (count($params) > 0) {
       $sql = $this->concatSetRequest($id, $params, $userorgroup);
@@ -467,6 +469,7 @@ class AvoloiManageRights
       $params[] = ["module" => "projet", "perms" => "lire", "type" => "r"];
       $params[] = ["module" => "projet", "perms" => "creer", "type" => "w"];
       $params[] = ["module" => "projet", "perms" => "supprimer", "type" => "d"];
+      $params[] = ["module" => "projet", "perms" => "all", "subperms" => "lire", "type" => "r"];
     } else if ($right === "g") {
       // Setter droit module:projet / perms:group / type:g
       $params[] = ["module" => "projet", "perms" => "group", "type" => "g"];
@@ -477,9 +480,11 @@ class AvoloiManageRights
       $params[] = ["module" => "projet", "perms" => "lire", "type" => "r"];
       $params[] = ["module" => "projet", "perms" => "creer", "type" => "w"];
       $params[] = ["module" => "projet", "perms" => "supprimer", "type" => "d"];
+      $params[] = ["module" => "projet", "perms" => "all", "subperms" => "lire", "type" => "r"];
     } else if ($right === "r") {
       // Setter droit module:projet / perms:lire / type:r
       $params[] = ["module" => "projet", "perms" => "lire", "type" => "r"];
+      $params[] = ["module" => "projet", "perms" => "all", "subperms" => "lire", "type" => "r"];
     }
 
     if (count($params) > 0) {
@@ -694,7 +699,6 @@ class AvoloiManageRights
       $params[] = ["module" => "task", "perms" => "total", "type" => "a"];
       $params[] = ["module" => "task", "perms" => "lire", "type" => "r"];
       $params[] = ["module" => "task", "perms" => "creer", "type" => "w"];
-      $params[] = ["module" => "projet", "perms" => "all", "subperms" => "lire", "type" => "r"];
     } else if ($right === "g") {
       // Setter droit module:task / perms:group / type:g
       $params[] = ["module" => "task", "perms" => "group", "type" => "g"];
@@ -704,11 +708,9 @@ class AvoloiManageRights
       // Setter droit module:projet / perms:all / subperms:lire / type:r
       $params[] = ["module" => "task", "perms" => "lire", "type" => "r"];
       $params[] = ["module" => "task", "perms" => "creer", "type" => "w"];
-      $params[] = ["module" => "projet", "perms" => "all", "subperms" => "lire", "type" => "r"];
     } else if ($right === "r") {
       // Setter droit module:task / perms:lire / type:r
       $params[] = ["module" => "task", "perms" => "lire", "type" => "r"];
-      $params[] = ["module" => "projet", "perms" => "all", "subperms" => "lire", "type" => "r"];
     }
     
     if (count($params) > 0) {

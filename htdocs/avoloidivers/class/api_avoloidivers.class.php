@@ -74,14 +74,14 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchtiers
 	 */
-	public function searchtiers($searched = '', $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1")
+	public function searchtiers($searched = '', $page = "-1", $limit = "-1", $clientFilter = "-1", $prospectFilter = "-1", $tiersFilter = "-1", $minimumrightaccess = false)
 	{
 		global $conf, $langs, $user;
 		$this->clientFilter = $clientFilter;
 		$this->prospectFilter = $prospectFilter;
 		$this->tiersFilter = $tiersFilter;
 
-		if(! DolibarrApiAccess::$user->rights->societe->lire) {
+		if(! DolibarrApiAccess::$user->rights->societe->lire && !$minimumrightaccess) {
 			throw new RestException(401);
 		}
 
@@ -205,6 +205,22 @@ class AvoloiDivers extends DolibarrApi
 		}
 		$result['tiers'] = $rtdArr;
 
+		if (! DolibarrApiAccess::$user->rights->societe->lire && $minimumrightaccess) {
+			$rtd = array();
+			foreach ($result["tiers"] as $tiers) {
+				$rtd[] = [
+					"society_name" => $tiers["society_name"],
+					"primary_contact" => $tiers["primary_contact"],
+					"contact_id" => $tiers["contact_id"],
+					"society_id" => $tiers["society_id"]
+				];
+			}
+			return [
+				"total" => $result['total'],
+				"tiers" => $rtd,
+			];
+		}
+
 		return $result;
 	}
 
@@ -251,11 +267,11 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /affair
 	 */
-	public function affair($id)
+	public function affair($id, $minimumrightaccess = false)
 	{
 		global $conf, $langs, $user, $db;
 
-		if(! DolibarrApiAccess::$user->rights->projet->lire) {
+		if(! DolibarrApiAccess::$user->rights->projet->lire && !$minimumrightaccess) {
 			throw new RestException(401);
 		}
 
@@ -292,6 +308,14 @@ class AvoloiDivers extends DolibarrApi
 				$affairList->array_options->options_multitiers[$j]->detail = $thirdParties->get($affairList->array_options->options_multitiers[$j]->idTiers);
 			}
 		}
+
+		if (! DolibarrApiAccess::$user->rights->societe->lire && $minimumrightaccess) {
+			return [
+				"id" => $affairList->id,
+				"title" => $affairList->title
+			];
+		}
+
 		return $affairList;
 	}
 
@@ -311,11 +335,11 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchaffairs
 	 */
-	public function searchaffairs($limit = '-1', $page = '0', $searchFilter = '', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC')
+	public function searchaffairs($limit = '-1', $page = '0', $searchFilter = '', $statusStringFilter = '', $dateStartFilter = '', $dateEndFilter = '', $sortfield = "t.rowid", $sortorder = 'ASC', $minimumrightaccess = false)
 	{
 		global $conf, $langs, $user, $db;
 
-		if(! DolibarrApiAccess::$user->rights->projet->lire) {
+		if(! DolibarrApiAccess::$user->rights->projet->lire && !$minimumrightaccess) {
 			throw new RestException(401);
 		}
 
@@ -433,6 +457,18 @@ class AvoloiDivers extends DolibarrApi
 		} else {
 			$result['affairs'] = $affairList;
 		}
+
+		if (! DolibarrApiAccess::$user->rights->societe->lire && $minimumrightaccess) {
+			$affairstmp = array();
+			foreach ($result['affairs'] as $affair) {
+				$affairstmp[] = [
+					"id" => $affair->id,
+					"title" => $affair->title
+				];
+			}
+			$result['affairs'] = $affairstmp;
+		}
+
 		return $result;
 	}
 
@@ -587,7 +623,7 @@ class AvoloiDivers extends DolibarrApi
 		$total = count($invoiceList);
 		$result = array();
 		$result['total'] = $total;
-		if ($page !== '-1' && $limit !== '-1') {
+		if (strval($page) !== '-1' && strval($limit) !== '-1') {
 			$tmppage = (int) $page;
 			$tmplimit = (int) $limit;
 			$tmp = array_slice($invoiceList, $tmppage * $tmplimit, $tmplimit);
@@ -739,7 +775,7 @@ class AvoloiDivers extends DolibarrApi
 		$result['total'] = $total;
 		// echo $page;
 		// echo $limit;
-		if ($page !== '-1' && $limit !== '-1') {
+		if (strval($page) !== '-1' && strval($limit) !== '-1') {
 			$tmppage = (int) $page;
 			$tmplimit = (int) $limit;
 			$tmp = array_slice($invoiceList, $tmppage * $tmplimit, $tmplimit);
@@ -771,9 +807,13 @@ class AvoloiDivers extends DolibarrApi
 	 *
 	 * @url GET /searchpropalsbyname
 	 */
-	public function searchpropalsbyname($searched)
+	public function searchpropalsbyname($searched, $minimumrightaccess = false)
 	{
 		global $conf, $langs, $user;
+
+		if(! DolibarrApiAccess::$user->rights->propale->lire && !$minimumrightaccess) {
+			throw new RestException(401);
+		}
 
 		$obj_ret = array();
 
@@ -796,6 +836,21 @@ class AvoloiDivers extends DolibarrApi
 				}
 				$i++;
 			}
+		}
+		
+		if(! DolibarrApiAccess::$user->rights->propale->lire && $minimumrightaccess) {
+			$rtdtmp = array();
+			foreach ($obj_ret as $propal) {
+				$rtdtmp[] = [
+					"id" => $propal->id,
+					"array_options" => [
+						"options_titre" => $propal->array_options["options_titre"],
+						"options_client" => $propal->array_options["options_client"]
+					],
+					"total" => $propal->total
+				];
+			}
+			$obj_ret = $rtdtmp;
 		}
 
 		// TODO Retourner le résultat
