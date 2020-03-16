@@ -754,6 +754,35 @@ class AvoloiManageRights
   }
 
   /**
+   * Enregistrement des droits de banque pour les administrateur
+   */
+  public function setBankRights($id, $addRights = false) {
+    $params = array();
+
+    if ($addRights) {
+      $params[] = ["module" => "banque", "perms" => "lire", "type" => "r"];
+      $params[] = ["module" => "banque", "perms" => "modifier", "type" => "w"];
+      $params[] = ["module" => "banque", "perms" => "configurer", "type" => "a"];
+      $params[] = ["module" => "banque", "perms" => "consolidate", "type" => "w"];
+      $params[] = ["module" => "banque", "perms" => "export", "type" => "r"];
+      $params[] = ["module" => "banque", "perms" => "transfer", "type" => "w"];
+      $params[] = ["module" => "banque", "perms" => "cheque", "type" => "w"];
+    } else {
+      $delete = $this->removeRightsOnModule($id, "banque", 'user');
+    }
+    
+    if (count($params) > 0) {
+      $sql = $this->concatSetRequest($id, $params, 'user');
+
+      $result = $this->db->query($sql);
+  
+      if (!$result) {
+        throw new Exception('An error occurs while setting rights');
+      }
+    }
+  }
+
+  /**
    * Suppression des droits d'un utlisateur dans un domaine donné
    * @param string $id ID de l'utilisateur auquel retirer les droits
    * @param string $module Nom du domaine

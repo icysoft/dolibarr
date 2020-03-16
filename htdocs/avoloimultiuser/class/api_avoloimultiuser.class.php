@@ -507,6 +507,10 @@ class AvoloiMultiUser extends DolibarrApi
     $sql.= "SET admin =  $isadmin ";
     $sql.= "WHERE rowid = $id";
 
+    require_once DOL_DOCUMENT_ROOT.'/avoloi-manage-rights/avoloi-manage-rights.php';
+    $amr = new AvoloiManageRights($this->db);
+    $amr->setBankRights($id, $isadmin === 1 ? true : false);
+
     return $this->db->query($sql);
   }
 
