@@ -423,11 +423,14 @@ class AvoloiMultiUser extends DolibarrApi
    * Get current user ID
    * 
    * @return string
-   * @url GET /userid
+   * @url GET /useridentity
    */
-  public function currentUserId() {
+  public function currentUserIdentity() {
     global $user;
-    return DolibarrApiAccess::$user->id;
+    return [
+      "userId" => DolibarrApiAccess::$user->id,
+      "userIdentity" => DolibarrApiAccess::$user->lastname." ".DolibarrApiAccess::$user->firstname
+    ];
   }
 
   /**
@@ -442,7 +445,7 @@ class AvoloiMultiUser extends DolibarrApi
     $mu = new AvoloiMultiUserClass($this->db);
     $currentuserrights = $mu->getUserRights(DolibarrApiAccess::$user->id);
 
-    $usergroupinfos = $this->findUserGroups($this->currentUserId());
+    $usergroupinfos = $this->findUserGroups($this->currentUserIdentity()["userId"]);
     
     require_once DOL_DOCUMENT_ROOT . '/avoloigroup/avoloigroup.class.php';
     $amr = new AvoloiGroupClass($this->db);
