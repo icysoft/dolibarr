@@ -236,8 +236,15 @@ class AvoloiEvent extends DolibarrApi
 
 		$eventcreated = $event->create($user);
 
+		// Update des tiers, contact et affairs pour changer leurs créateurs
+		$didupdate = $this->updateUserCreate($event->userownerid, $socid, $contactId, $affairid);
+		if (!$didupdate || $didupdate <= 0) {
+			throw new RestException(418, 'Problem occurs while setting creator to tiers, contact or affair');
+		}
+
 		// Formatage des date et heurs pour les notifications push
 		$concat = $this->concatDateHour($event->datep);
+
 		// Envoi de la notification push
 		$this->sendNotification($concat['date'], $concat['hour'], $eventcreated);
 
@@ -634,5 +641,12 @@ class AvoloiEvent extends DolibarrApi
 		} else {
 			return $obj_ret;
 		}
+	}
+
+	private function updateUserCreate($userid, $tiersid, $contactid, $affairid) {
+		$sql = "UPDATE ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."socpeople as sp, ".MAIN_DB_PREFIX."projet as p ";
+		$sql.= "SET s.fk_user_creat=$userid, sp.fk_user_creat=$userid, p.fk_user_creat=$userid ";
+		$sql.= "WHERE s.rowid=$tiersid AND sp.rowid=$contactid AND p.rowid=$affairid";
+		return $this->db->query($sql);
 	}
 }
