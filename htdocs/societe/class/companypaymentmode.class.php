@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
@@ -56,6 +56,10 @@ class CompanyPaymentMode extends CommonObject
 	 * @var string String with name of icon for companypaymentmode. Must be the part after the 'object_' into object_companypaymentmode.png
 	 */
 	public $picto = 'generic';
+
+
+	const STATUS_ENABLED = 1;
+	const STATUS_CANCELED = 0;
 
 
 	/**
@@ -169,21 +173,21 @@ class CompanyPaymentMode extends CommonObject
 
 	public $starting_date;
 	public $ending_date;
-	
+
 	/**
      * Date creation record (datec)
      *
      * @var integer
      */
     public $datec;
-	
+
 	/**
      * Date modification record (tms)
      *
      * @var integer
      */
     public $tms;
-    
+
 	public $import_key;
 	// END MODULEBUILDER PROPERTIES
 
@@ -204,9 +208,9 @@ class CompanyPaymentMode extends CommonObject
 	 */
 	//public $class_element_line = 'CompanyPaymentModeline';
 	/**
-	 * @var array  Array of child tables (child tables to delete before deleting a record)
+     * @var array	List of child tables. To test if we can delete object.
 	 */
-	//protected $childtables=array('companypaymentmodedet');
+	//protected $childtables=array();
 	/**
 	 * @var CompanyPaymentModeLine[]     Array of subtable lines
 	 */
@@ -297,20 +301,20 @@ class CompanyPaymentMode extends CommonObject
 	/**
 	 * Load object in memory from the database
 	 *
-	 * @param 	int    	$id   	Id object
-	 * @param 	string 	$ref  	Ref
-	 * @param	int		$socid	Id of company to get first default payment mode
-	 * @param	string	$type	Filter on type ('ban', 'card', ...)
-	 * @return 	int         	<0 if KO, 0 if not found, >0 if OK
+	 * @param 	int    	$id   			Id object
+	 * @param 	string 	$ref  			Ref
+	 * @param	int		$socid			Id of company to get first default payment mode
+	 * @param	string	$type			Filter on type ('ban', 'card', ...)
+	 * @param	string	$morewhere		More SQL filters (' AND ...')
+	 * @return 	int         			<0 if KO, 0 if not found, >0 if OK
 	 */
-	public function fetch($id, $ref = null, $socid = 0, $type = '')
+	public function fetch($id, $ref = null, $socid = 0, $type = '', $morewhere = '')
 	{
-		$morewhere = '';
 		if ($socid) $morewhere.= " AND fk_soc  = ".$this->db->escape($socid)." AND default_rib = 1";
 		if ($type)  $morewhere.= " AND type = '".$this->db->escape($type)."'";
 
 		$result = $this->fetchCommon($id, $ref, $morewhere);
-		if ($result > 0 && ! empty($this->table_element_line)) $this->fetchLines();
+		//if ($result > 0 && ! empty($this->table_element_line)) $this->fetchLines();
 		return $result;
 	}
 
@@ -475,9 +479,9 @@ class CompanyPaymentMode extends CommonObject
 	}
 
 	/**
-	 *  Retourne le libelle du status d'un user (actif, inactif)
+	 *  Return label of the status
 	 *
-	 *  @param	int		$mode          0=libelle long, 1=libelle court, 2=Picto + Libelle court, 3=Picto, 4=Picto + Libelle long, 5=Libelle court + Picto
+	 *  @param  int		$mode          0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto, 6=Long label + Picto
 	 *  @return	string 			       Label of status
 	 */
     public function getLibStatut($mode = 0)
@@ -493,47 +497,29 @@ class CompanyPaymentMode extends CommonObject
 	 *  @param  int		$mode          	0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto, 6=Long label + Picto
 	 *  @return string 			       	Label of status
 	 */
-	public static function LibStatut($status, $mode = 0)
+	public function LibStatut($status, $mode = 0)
 	{
-        // phpcs:enable
-		global $langs;
+		// phpcs:enable
+		if (empty($this->labelStatus) || empty($this->labelStatusShort))
+		{
+			global $langs;
+			//$langs->load("mymodule");
+			$this->labelStatus[self::STATUS_ENABLED] = $langs->trans('Enabled');
+			$this->labelStatus[self::STATUS_CANCELED] = $langs->trans('Disabled');
+			$this->labelStatusShort[self::STATUS_ENABLED] = $langs->trans('Enabled');
+			$this->labelStatusShort[self::STATUS_CANCELED] = $langs->trans('Disabled');
+		}
 
-		if ($mode == 0 || $mode == 1)
-		{
-			if ($status == 1) return $langs->trans('Enabled');
-			elseif ($status == 0) return $langs->trans('Disabled');
-		}
-		elseif ($mode == 2)
-		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'), 'statut4').' '.$langs->trans('Enabled');
-			elseif ($status == 0) return img_picto($langs->trans('Disabled'), 'statut5').' '.$langs->trans('Disabled');
-		}
-		elseif ($mode == 3)
-		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'), 'statut4');
-			elseif ($status == 0) return img_picto($langs->trans('Disabled'), 'statut5');
-		}
-		elseif ($mode == 4)
-		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'), 'statut4').' '.$langs->trans('Enabled');
-			elseif ($status == 0) return img_picto($langs->trans('Disabled'), 'statut5').' '.$langs->trans('Disabled');
-		}
-		elseif ($mode == 5)
-		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'), 'statut4');
-			elseif ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'), 'statut5');
-		}
-		elseif ($mode == 6)
-		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'), 'statut4');
-			elseif ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'), 'statut5');
-		}
+		$statusType = 'status5';
+		if ($status == self::STATUS_ENABLED) $statusType = 'status4';
+
+		return dolGetStatus($this->labelStatus[$status], $this->labelStatusShort[$status], '', $statusType, $mode);
 	}
 
 	/**
-	 *	Charge les informations d'ordre info dans l'objet commande
+	 *	Load the info information in the object
 	 *
-	 *	@param  int		$id       Id of order
+	 *	@param  int		$id       Id of object
 	 *	@return	void
 	 */
     public function info($id)

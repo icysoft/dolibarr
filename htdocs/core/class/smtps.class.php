@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
@@ -496,17 +496,31 @@ class SMTPs
                     return $_retVal;
                 }
             }
+
+			// Default authentication method is LOGIN
+			if (empty($conf->global->MAIL_SMTP_AUTH_TYPE)) $conf->global->MAIL_SMTP_AUTH_TYPE = 'LOGIN';
+
             // Send Authentication to Server
             // Check for errors along the way
-            $this->socket_send_str('AUTH LOGIN', '334');
-
-            // User name will not return any error, server will take anything we give it.
-            $this->socket_send_str(base64_encode($this->_smtpsID), '334');
-
-            // The error here just means the ID/password combo doesn't work.
-            // There is not a method to determine which is the problem, ID or password
-            if ( ! $_retVal = $this->socket_send_str(base64_encode($this->_smtpsPW), '235') )
-            $this->_setErr(130, 'Invalid Authentication Credentials.');
+            switch ($conf->global->MAIL_SMTP_AUTH_TYPE) {
+                case 'PLAIN':
+                    $this->socket_send_str('AUTH PLAIN', '334');
+                    // The error here just means the ID/password combo doesn't work.
+                    $_retVal = $this->socket_send_str(base64_encode("\0" . $this->_smtpsID . "\0" . $this->_smtpsPW), '235');
+                    break;
+                case 'LOGIN':	// most common case
+                default:
+                    $this->socket_send_str('AUTH LOGIN', '334');
+                    // User name will not return any error, server will take anything we give it.
+                    $this->socket_send_str(base64_encode($this->_smtpsID), '334');
+                    // The error here just means the ID/password combo doesn't work.
+                    // There is not a method to determine which is the problem, ID or password
+                    $_retVal = $this->socket_send_str(base64_encode($this->_smtpsPW), '235');
+                    break;
+            }
+            if (! $_retVal) {
+                $this->_setErr(130, 'Invalid Authentication Credentials.');
+			}
         }
         else
         {
@@ -574,7 +588,11 @@ class SMTPs
                 // From this point onward most server response codes should be 250
                 // Specify who the mail is from....
                 // This has to be the raw email address, strip the "name" off
-                $this->socket_send_str('MAIL FROM: ' . $this->getFrom('addr'), '250');
+                $resultmailfrom = $this->socket_send_str('MAIL FROM: ' . $this->getFrom('addr'), '250');
+			    if (! $resultmailfrom) {
+			        fclose($this->socket);
+			        return false;
+			    }
 
                 // 'RCPT TO:' must be given a single address, so this has to loop
                 // through the list of addresses, regardless of TO, CC or BCC
@@ -1290,13 +1308,6 @@ class SMTPs
         $_header .= 'Bcc: ' . $this->getBCC()  . "\r\n";
         */
 
-        $host=$this->getHost();
-        $usetls = preg_match('@tls://@i', $host);
-
-        $host=preg_replace('@tcp://@i', '', $host);	// Remove prefix
-        $host=preg_replace('@ssl://@i', '', $host);	// Remove prefix
-        $host=preg_replace('@tls://@i', '', $host);	// Remove prefix
-
         $host=dol_getprefix('email');
 
         //NOTE: Message-ID should probably contain the username of the user who sent the msg
@@ -1371,7 +1382,7 @@ class SMTPs
             // Similar code to forge a text from html is also in CMailFile.class.php
             $strContentAltText = preg_replace("/<br\s*[^>]*>/", " ", $strContent);
             $strContentAltText = html_entity_decode(strip_tags($strContentAltText));
-            $strContentAltText = rtrim(wordwrap($strContentAltText, 75, "\r\n"));
+            $strContentAltText = trim(wordwrap($strContentAltText, 75, "\r\n"));
         }
 
         // Make RFC2045 Compliant
@@ -1785,6 +1796,7 @@ class SMTPs
                 $_retVal = false;
                 break;
             }
+			$this->log .= $server_response;
             $limit++;
         }
 

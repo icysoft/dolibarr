@@ -1,4 +1,8 @@
 # ESC/POS Print Driver for PHP
+[![Build Status](https://travis-ci.org/mike42/escpos-php.svg?branch=master)](https://travis-ci.org/mike42/escpos-php) [![Latest Stable Version](https://poser.pugx.org/mike42/escpos-php/v/stable)](https://packagist.org/packages/mike42/escpos-php)
+[![Total Downloads](https://poser.pugx.org/mike42/escpos-php/downloads)](https://packagist.org/packages/mike42/escpos-php)
+[![License](https://poser.pugx.org/mike42/escpos-php/license)](https://packagist.org/packages/mike42/escpos-php)
+[![Coverage Status](https://coveralls.io/repos/github/mike42/escpos-php/badge.svg?branch=development)](https://coveralls.io/github/mike42/escpos-php?branch=development)
 
 This project implements a subset of Epson's ESC/POS protocol for thermal receipt printers. It allows you to generate and print receipts with basic formatting, cutting, and barcodes on a compatible printer.
 
@@ -63,29 +67,96 @@ This driver is known to work with the following OS/interface combinations:
 ### Printers
 Many thermal receipt printers support ESC/POS to some degree. This driver has been known to work with:
 
+- 3nStar RPT-008
+- Approx APPPOS80AM
+- AURES ODP-333
+- AURES ODP-500
+- Bematech-4200-TH
+- Bematech LR2000E
+- Birch PRP-085III
 - Bixolon SRP-350III
+- Bixolon SRP-350Plus
+- Black Copper BC-85AC
+- CHD TH-305N
 - Citizen CBM1000-II
+- Citizen CT-S310II
+- Dapper-Geyi Q583P 
+- Daruma DR800
+- DR-MP200 (manufacturer unknown)
 - EPOS TEP 220M
+- Elgin i9
+- Epson EU-T332C
+- Epson FX-890 (requires `feedForm()` to release paper).
+- Epson TM-T20
+- Epson TM-T20II
+- Epson TM-T70
+- Epson TM-T70II
+- Epson TM-T81
+- Epson TM-T82II
+- Epson TM-T88II
 - Epson TM-T88III
 - Epson TM-T88IV
-- Epson TM-T70
-- Epson TM-T82II
-- Epson TM-T20
-- Epson TM-T70II
+- Epson TM-T88V
 - Epson TM-U220
-- Epson FX-890 (requires `feedForm()` to release paper).
-- Excelvan HOP-E58 (connect through powered hub)
-- Okipos 80 Plus III
+- Epson TM-U295 (requires `release()` to release slip).
+- Epson TM-U590 and TM-U590P
+- Equal (EQ-IT-001) POS-58
+- Everycom EC-58
+- Excelvan HOP-E200 
+- Excelvan HOP-E58
+- Excelvan HOP-E801
+- Gainscha GP-2120TF
+- Gainscha GP-5890x (Also marketed as EC Line 5890x)
+- Gainscha GP-U80300I (Also marketed as gprinter GP-U80300I)
+- gprinter GP-U80160I
+- HOIN HOP-H58
+- Ithaca iTherm 28
+- Hasar HTP 250
+- Metapace T-1
+- Metapace T-25
+- Nexa PX700
+- Nyear NP100
+- OKI RT322
+- OKI 80 Plus III
+- Orient BTP-R580
 - P-822D
 - P85A-401 (make unknown)
+- Partner Tech RP320
+- POSLIGNE ODP200H-III-G
+- QPOS Q58M
+- Rongta RP326US
+- Rongta RP58-U
+- Rongta RP80USE
+- SAM4S GIANT-100DB
+- Senor TP-100
+- Sewoo SLK-TS400
+- SEYPOS PRP-96
 - SEYPOS PRP-300 (Also marketed as TYSSO PRP-300)
+- SNBC BTP-R880NPIII
+- Solux SX-TP-88300
+- Sicar POS-80
 - Silicon SP-201 / RP80USE
+- SPRT SP-POS88V
+- Star BSC10
+- Star TSP100 ECO
+- Star TSP100III FuturePRNT
 - Star TSP-650
 - Star TUP-592
+- TVS RP45 Shoppe
+- Venus V248T
+- Xeumior SM-8330
+- Xprinter F-900
+- Xprinter XP-365B
+- Xprinter XP-58 Series
+- Xprinter XP-80C
+- Xprinter XP-90
+- XPrinter XP-Q20011
 - Xprinter XP-Q800
-- Zijang NT-58H
-- Zijang ZJ-5870
-- Zijang ZJ-5890T (Marketed as POS 5890T)
+- Zjiang NT-58H
+- Zjiang ZJ-5870
+- Zjiang ZJ-5890 (Also sold as POS-5890 by many vendors; ZJ-5890K, ZJ-5890T also work).
+- Zjiang ZJ-8220 (Also marketed as Excelvan ZJ-8220)
+- Zjiang ZJ-8250
 
 If you use any other printer with this code, please [let us know](https://github.com/mike42/escpos-php/issues/new) so that it can be added to the list.
 
@@ -116,8 +187,22 @@ git clone https://github.com/mike42/escpos-php vendor/mike42/escpos-php
 
 ```php
 <?php
-require __DIR__ . '/vendor/mike42/escpos-php/autoload.php');
+require __DIR__ . '/vendor/mike42/escpos-php/autoload.php';
 ```
+
+#### Requirements
+
+To maintain compatibility with as many systems as possible, this driver has few
+hard dependencies:
+
+- PHP 5.4 or above.
+- `mbstring` extension, since the driver accepts UTF-8 encoding.
+
+It is also suggested that you install either `imagick` or `gd`, so that you can
+print images.
+
+A number of optional packages can be added to enable more specific features. These
+are described in the "suggest" section of [composer.json](https://github.com/mike42/escpos-php/tree/master/composer.json).
 
 ### The 'Hello World' receipt
 
@@ -200,11 +285,12 @@ For each OS/interface combination that's supported, there are examples in the co
 
 Support for commands and code pages varies between printer vendors and models. By default, the driver will accept UTF-8, and output commands that are suitable for Epson TM-series printers.
 
-When trying out a new brand of printer, it's a good idea to use the `SimpleCapabilityProfile`, which instructs the driver to avoid the use of advanced features (generally simpler image handling, ASCII-only text).
+When trying out a new brand of printer, it's a good idea to use the "simple" `CapabilityProfile`, which instructs the driver to avoid the use of advanced features (generally simpler image handling, ASCII-only text).
 
 ```php
-use Mike42\Escpos\PrintConnectors\FilePrintConnector;
-use Mike42\Escpos\CapabilityProfiles\SimpleCapabilityProfile;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
+use Mike42\Escpos\CapabilityProfile;
+$profile = CapabilityProfile::load("simple");
 $connector = new WindowsPrintConnector("smb://computer/printer");
 $printer = new Printer($connector, $profile);
 ```
@@ -212,13 +298,14 @@ $printer = new Printer($connector, $profile);
 As another example, Star-branded printers use different commands:
 
 ```php
-use Mike42\Escpos\PrintConnectors\FilePrintConnector;
-use Mike42\Escpos\CapabilityProfiles\StarCapabilityProfile;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
+use Mike42\Escpos\CapabilityProfile;
+$profile = CapabilityProfile::load("SP2000")
 $connector = new WindowsPrintConnector("smb://computer/printer");
 $printer = new Printer($connector, $profile);
 ```
 
-Further developing this mechanism is a priority for future releases.
+For a list of available profiles, or to have support for your printer improved, please see the upstream [receipt-print-hq/escpos-printer-db](https://github.com/receipt-print-hq/escpos-printer-db) project.
 
 ### Tips & examples
 On Linux, your printer device file will be somewhere like `/dev/lp0` (parallel), `/dev/usb/lp1` (USB), `/dev/ttyUSB0` (USB-Serial), `/dev/ttyS0` (serial).
@@ -231,12 +318,12 @@ Other examples are located in the [example/](https://github.com/mike42/escpos-ph
 
 ## Available methods
 
-### __construct(PrintConnector $connector, AbstractCapabilityProfile $profile)
+### __construct(PrintConnector $connector, CapabilityProfile $profile)
 Construct new print object.
 
 Parameters:
 - `PrintConnector $connector`: The PrintConnector to send data to.
-- `AbstractCapabilityProfile $profile` Supported features of this printer. If not set, the DefaultCapabilityProfile will be used, which is suitable for Epson printers.
+- `CapabilityProfile $profile` Supported features of this printer. If not set, the "default" CapabilityProfile will be used, which is suitable for Epson printers.
 
 See [example/interface/](https://github.com/mike42/escpos-php/tree/master/example/interface/) for ways to open connections for different platforms and interfaces.
 
@@ -316,6 +403,18 @@ The function [bitImage()](#bitimageescposimage-image-size) takes the same parame
 
 ### initialize()
 Initialize printer. This resets formatting back to the defaults.
+
+### pdf417Code($content, $width, $heightMultiplier, $dataColumnCount, $ec, $options)
+Print a two-dimensional data code using the PDF417 standard.
+
+Parameters:
+
+- `string $content`: Text or numbers to store in the code
+- `number $width`: Width of a module (pixel) in the printed code. Default is 3 dots.
+- `number $heightMultiplier`: Multiplier for height of a module. Default is 3 times the width.
+- `number $dataColumnCount`: Number of data columns to use. 0 (default) is to auto-calculate. Smaller numbers will result in a narrower code, making larger pixel sizes possible. Larger numbers require smaller pixel sizes.
+- `real $ec`: Error correction ratio, from 0.01 to 4.00. Default is 0.10 (10%).
+- `number $options`: Standard code `Printer::PDF417_STANDARD` with start/end bars, or truncated code `Printer::PDF417_TRUNCATED` with start bars only.
 
 ### pulse($pin, $on_ms, $off_ms)
 Generate a pulse, for opening a cash drawer if one is connected. The default settings (0, 120, 240) should open an Epson drawer.
@@ -399,6 +498,32 @@ Parameters:
 
 - `int $justification`: One of `Printer::JUSTIFY_LEFT`, `Printer::JUSTIFY_CENTER`, or `Printer::JUSTIFY_RIGHT`.
 
+### setLineSpacing($height)
+
+Set the height of the line.
+
+Some printers will allow you to overlap lines with a smaller line feed.
+
+Parameters:
+
+- `int	$height`:	The height of each line, in dots. If not set, the printer will reset to its default line spacing.
+
+### setPrintLeftMargin($margin)
+
+Set print area left margin. Reset to default with `Printer::initialize()`.
+
+Parameters:
+
+- `int $margin`: The left margin to set on to the print area, in dots.
+
+### setPrintWidth($width)
+
+Set print area width. This can be used to add a right margin to the print area. Reset to default with `Printer::initialize()`.
+
+Parameters:
+
+- `int $width`: The width of the page print area, in dots.
+
 ### setReverseColors($on)
 Set black/white reverse mode on or off. In this mode, text is printed white on a black background.
 
@@ -431,9 +556,9 @@ Parameters:
 # Further notes
 Posts I've written up for people who are learning how to use receipt printers:
 
-* [What is ESC/POS, and how do I use it?](http://mike.bitrevision.com/blog/what-is-escpos-and-how-do-i-use-it), which documents the output of `example/demo.php`.
-* [Setting up an Epson receipt printer](http://mike.bitrevision.com/blog/2014-20-26-setting-up-an-epson-receipt-printer)
-* [Getting a USB receipt printer working on Linux](http://mike.bitrevision.com/blog/2015-03-getting-a-usb-receipt-printer-working-on-linux)
+* [What is ESC/POS, and how do I use it?](https://mike42.me/blog/what-is-escpos-and-how-do-i-use-it), which documents the output of `example/demo.php`.
+* [Setting up an Epson receipt printer](https://mike42.me/blog/2014-20-26-setting-up-an-epson-receipt-printer)
+* [Getting a USB receipt printer working on Linux](https://mike42.me/blog/2015-03-getting-a-usb-receipt-printer-working-on-linux)
 
 # Development
 
@@ -441,7 +566,7 @@ This code is MIT licensed, and you are encouraged to contribute any modification
 
 For development, it's suggested that you load `imagick`, `gd` and `Xdebug` PHP exensions, and install `composer`.
 
-The tests are executed on [Travis CI](https://travis-ci.org/mike42/escpos-php) over PHP 5.3, 5.4, 5.5, 5.7, 7, and HHVM. Earlier versions of PHP are not supported.
+The tests are executed on [Travis CI](https://travis-ci.org/mike42/escpos-php) over PHP 5.4, 5.5, 5.6, 7.0, 7.1 and 7.2, plus the latest LTS version of HHVM, 3.21. Older versions of PHP are not supported in current releases.
 
 Fetch a copy of this code and load dependencies with composer:
 
@@ -451,7 +576,7 @@ Fetch a copy of this code and load dependencies with composer:
 
 Execute unit tests via `phpunit`:
 
-    php vendor/bin/phpunit --configuration test/phpunit.xml --coverage-text
+    php vendor/bin/phpunit --coverage-text
 
 This project uses the PSR-2 standard, which can be checked via [PHP_CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer):
 
@@ -462,20 +587,3 @@ The developer docs are build with [doxygen](https://github.com/doxygen/doxygen).
     make -C doc clean && make -C doc
 
 Pull requests and bug reports welcome.
-
-<!-- ## Other versions
-TODO: Some notes about related OSS projects will go here.
-Some forks of this project have been developed by others for specific use cases. Improvements from the following projects have been incorporated into escpos-php:
-
-- [wdoyle/EpsonESCPOS-PHP](https://github.com/wdoyle/EpsonESCPOS-PHP)
-- [ronisaha/php-esc-pos](https://github.com/ronisaha/php-esc-pos)-->
-
-<!--
-TODO: A table of printer models vs programming guides available via the web would be good, but should go outside this README
-## Vendor documentation
-Epson notes that not all of its printers support all ESC/POS features, and includes a table in their documentation:
-
-* [FAQ about ESC/POS from Epson](http://content.epson.de/fileadmin/content/files/RSD/downloads/escpos.pdf)
-
-Note that many printers produced by other vendors use the same standard, and are compatible by varying degrees.
--->

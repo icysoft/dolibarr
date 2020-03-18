@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
@@ -97,7 +97,7 @@ class MouvementStock extends CommonObject
 	 *	@param		int		$entrepot_id	Id of warehouse
 	 *	@param		int		$qty			Qty of movement (can be <0 or >0 depending on parameter type)
 	 *	@param		int		$type			Direction of movement:
-	 *										0=input (stock increase by a stock transfer), 1=output (stock decrease after by a stock transfer),
+	 *										0=input (stock increase by a stock transfer), 1=output (stock decrease by a stock transfer),
 	 *										2=output (stock decrease), 3=input (stock increase)
 	 *                                      Note that qty should be > 0 with 0 or 3, < 0 with 1 or 2.
 	 *	@param		int		$price			Unit price HT of product, used to calculate average weighted price (PMP in french). If 0, average weighted price is not changed.
@@ -157,20 +157,22 @@ class MouvementStock extends CommonObject
 		$result=$product->fetch($fk_product);
 		if ($result < 0)
 		{
+			$this->error = $product->error;
+			$this->errors = $product->errors;
 			dol_print_error('', "Failed to fetch product");
 			return -1;
 		}
 
 		$this->db->begin();
 
-		$product->load_stock();
+		$product->load_stock('novirtual');
 
 		// Test if product require batch data. If yes, and there is not, we throw an error.
 		if (! empty($conf->productbatch->enabled) && $product->hasbatch() && ! $skip_batch)
 		{
 			if (empty($batch))
 			{
-				$this->errors[]=$langs->trans("ErrorTryToMakeMoveOnProductRequiringBatchData", $product->ref);
+				$this->errors[]=$langs->transnoentitiesnoconv("ErrorTryToMakeMoveOnProductRequiringBatchData", $product->ref);
 				dol_syslog("Try to make a movement of a product with status_batch on without any batch data");
 
 				$this->db->rollback();
@@ -205,7 +207,8 @@ class MouvementStock extends CommonObject
                         		if ($this->db->jdate($obj->eatby) != $eatby && $this->db->jdate($obj->eatby) != $eatbywithouthour)    // We test date without hours and with hours for backward compatibility
                                 {
                                     // If found and eatby/sellby defined into table and provided and differs, return error
-                                    $this->errors[]=$langs->trans("ThisSerialAlreadyExistWithDifferentDate", $batch, dol_print_date($this->db->jdate($obj->eatby), 'dayhour'), dol_print_date($eatby, 'dayhour'));
+                                	$langs->load("stocks");
+                                	$this->errors[] = $langs->transnoentitiesnoconv("ThisSerialAlreadyExistWithDifferentDate", $batch, dol_print_date($this->db->jdate($obj->eatby), 'dayhour'), dol_print_date($eatbywithouthour, 'dayhour'));
                                     dol_syslog("ThisSerialAlreadyExistWithDifferentDate batch=".$batch.", eatby found into product_lot = ".$obj->eatby." = ".dol_print_date($this->db->jdate($obj->eatby), 'dayhourrfc')." so eatbywithouthour = ".$eatbywithouthour." = ".dol_print_date($eatbywithouthour)." - eatby provided = ".$eatby." = ".dol_print_date($eatby, 'dayhourrfc'), LOG_ERR);
                                     $this->db->rollback();
                                     return -3;
@@ -242,7 +245,7 @@ class MouvementStock extends CommonObject
                                 if ($this->db->jdate($obj->sellby) != $sellby && $this->db->jdate($obj->sellby) != $sellbywithouthour)    // We test date without hours and with hours for backward compatibility
                         		{
                         		    // If found and eatby/sellby defined into table and provided and differs, return error
-            						$this->errors[]=$langs->trans("ThisSerialAlreadyExistWithDifferentDate", $batch, dol_print_date($this->db->jdate($obj->sellby)), dol_print_date($sellby));
+            						$this->errors[]=$langs->transnoentitiesnoconv("ThisSerialAlreadyExistWithDifferentDate", $batch, dol_print_date($this->db->jdate($obj->sellby)), dol_print_date($sellby));
             						dol_syslog($langs->transnoentities("ThisSerialAlreadyExistWithDifferentDate", $batch, dol_print_date($this->db->jdate($obj->sellby)), dol_print_date($sellby)), LOG_ERR);
             						$this->db->rollback();
                         			return -3;
@@ -317,14 +320,18 @@ class MouvementStock extends CommonObject
     		    {
     		        if ($batch != $batchcursor) continue;
     		        $foundforbatch=1;
-    		        if ($prodbatch->qty < abs($qty)) $qtyisnotenough=1;
+    		        if ($prodbatch->qty < abs($qty)) $qtyisnotenough = $prodbatch->qty;
         		    break;
     		    }
     		    if (! $foundforbatch || $qtyisnotenough)
     		    {
     		        $langs->load("stocks");
-    		        $this->error = $langs->trans('qtyToTranferLotIsNotEnough').' : '.$product->ref;
-    		        $this->errors[] = $langs->trans('qtyToTranferLotIsNotEnough').' : '.$product->ref;
+    		        include_once DOL_DOCUMENT_ROOT.'/product/stock/class/entrepot.class.php';
+    		        $tmpwarehouse = new Entrepot($this->db);
+    		        $tmpwarehouse->fetch($entrepot_id);
+
+    		        $this->error = $langs->trans('qtyToTranferLotIsNotEnough', $product->ref, $batch, $qtyisnotenough, $tmpwarehouse->ref);
+    		        $this->errors[] = $langs->trans('qtyToTranferLotIsNotEnough', $product->ref, $batch, $qtyisnotenough, $tmpwarehouse->ref);
         		    $this->db->rollback();
         		    return -8;
     		    }
@@ -344,17 +351,31 @@ class MouvementStock extends CommonObject
 
 		if ($movestock && $entrepot_id > 0)	// Change stock for current product, change for subproduct is done after
 		{
+			$fk_project = 0;
 			if(!empty($this->origin)) {			// This is set by caller for tracking reason
 				$origintype = $this->origin->element;
 				$fk_origin = $this->origin->id;
+				if ($origintype == 'project') $fk_project = $fk_origin;
+				else
+				{
+					$res = $this->origin->fetch($fk_origin);
+					if ($res > 0)
+					{
+						if (!empty($this->origin->fk_project))
+						{
+							$fk_project = $this->origin->fk_project;
+						}
+					}
+				}
 			} else {
 				$origintype = '';
 				$fk_origin = 0;
+				$fk_project = 0;
 			}
 
 			$sql = "INSERT INTO ".MAIN_DB_PREFIX."stock_mouvement(";
 			$sql.= " datem, fk_product, batch, eatby, sellby,";
-			$sql.= " fk_entrepot, value, type_mouvement, fk_user_author, label, inventorycode, price, fk_origin, origintype";
+			$sql.= " fk_entrepot, value, type_mouvement, fk_user_author, label, inventorycode, price, fk_origin, origintype, fk_projet";
 			$sql.= ")";
 			$sql.= " VALUES ('".$this->db->idate($now)."', ".$this->product_id.", ";
 			$sql.= " ".($batch?"'".$batch."'":"null").", ";
@@ -366,7 +387,8 @@ class MouvementStock extends CommonObject
 			$sql.= " ".($inventorycode?"'".$this->db->escape($inventorycode)."'":"null").",";
 			$sql.= " '".price2num($price)."',";
 			$sql.= " '".$fk_origin."',";
-			$sql.= " '".$origintype."'";
+			$sql.= " '".$origintype."',";
+			$sql.= " ". $fk_project;
 			$sql.= ")";
 
 			dol_syslog(get_class($this)."::_create insert record into stock_mouvement", LOG_DEBUG);
@@ -379,7 +401,8 @@ class MouvementStock extends CommonObject
 			}
 			else
 			{
-				$this->errors[]=$this->db->lasterror();
+				$this->error = $this->db->lasterror();
+				$this->errors[] = $this->error;
 				$error = -1;
 			}
 
@@ -569,7 +592,8 @@ class MouvementStock extends CommonObject
 	    $sql .= " t.inventorycode,";
 	    $sql .= " t.batch,";
 	    $sql .= " t.eatby,";
-	    $sql .= " t.sellby";
+	    $sql .= " t.sellby,";
+	    $sql .= " t.fk_projet as fk_project";
 	    $sql .= ' FROM ' . MAIN_DB_PREFIX . $this->table_element . ' as t';
 	    $sql.= ' WHERE 1 = 1';
 	    //if (null !== $ref) {
@@ -602,6 +626,7 @@ class MouvementStock extends CommonObject
 	            $this->batch = $obj->batch;
 	            $this->eatby = $this->db->jdate($obj->eatby);
 	            $this->sellby = $this->db->jdate($obj->sellby);
+	            $this->fk_project = $obj->fk_project;
 	        }
 
 	        // Retreive all extrafield
@@ -924,6 +949,10 @@ class MouvementStock extends CommonObject
 				require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 				$origin = new Project($this->db);
 				break;
+			case 'mo':
+				require_once DOL_DOCUMENT_ROOT.'/mrp/class/mo.class.php';
+				$origin = new Mo($this->db);
+				break;
 
 			default:
 				if ($origintype)
@@ -931,8 +960,8 @@ class MouvementStock extends CommonObject
 					$result=dol_include_once('/'.$origintype.'/class/'.$origintype.'.class.php');
 					if ($result)
 					{
-					   $classname = ucfirst($origintype);
-					   $origin = new $classname($this->db);
+						$classname = ucfirst($origintype);
+						$origin = new $classname($this->db);
 					}
 				}
 				break;
@@ -1092,7 +1121,6 @@ class MouvementStock extends CommonObject
 		$langs->load("stocks");
 
 		if (! dol_strlen($modele)) {
-
 			$modele = 'stdmovement';
 
 			if ($this->modelpdf) {

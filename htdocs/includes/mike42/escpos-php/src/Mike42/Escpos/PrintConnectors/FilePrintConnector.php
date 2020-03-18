@@ -3,7 +3,7 @@
  * This file is part of escpos-php: PHP receipt printer library for use with
  * ESC/POS-compatible thermal and impact printers.
  *
- * Copyright (c) 2014-16 Michael Billington < michael.billington@gmail.com >,
+ * Copyright (c) 2014-18 Michael Billington < michael.billington@gmail.com >,
  * incorporating modifications by others. See CONTRIBUTORS.md for a full list.
  *
  * This software is distributed under the terms of the MIT license. See LICENSE.md
@@ -50,15 +50,20 @@ class FilePrintConnector implements PrintConnector
      */
     public function finalize()
     {
-        fclose($this -> fp);
-        $this -> fp = false;
+        if ($this -> fp !== false) {
+            fclose($this -> fp);
+            $this -> fp = false;
+        }
     }
     
     /* (non-PHPdoc)
-	 * @see PrintConnector::read()
-	 */
+     * @see PrintConnector::read()
+     */
     public function read($len)
     {
+        if ($this -> fp === false) {
+            throw new Exception("PrintConnector has been closed, cannot read input.");
+        }
         return fread($this -> fp, $len);
     }
     
@@ -69,6 +74,9 @@ class FilePrintConnector implements PrintConnector
      */
     public function write($data)
     {
+        if ($this -> fp === false) {
+            throw new Exception("PrintConnector has been closed, cannot send output.");
+        }
         fwrite($this -> fp, $data);
     }
 }
