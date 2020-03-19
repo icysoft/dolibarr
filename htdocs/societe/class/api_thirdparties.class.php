@@ -158,13 +158,7 @@ class Thirdparties extends DolibarrApi
 			$sql .= " AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlfilters).")";
 		}
 
-<<<<<<< HEAD
-
-
-		$sql.= $db->order($sortfield, $sortorder);
-=======
 		$sql .= $db->order($sortfield, $sortorder);
->>>>>>> 11.0.2
 
 		if ($limit) {
 			if ($page < 0)

@@ -544,12 +544,8 @@ class Task extends CommonObject
 			//Delete associated link file
 			if ($conf->projet->dir_output)
 			{
-<<<<<<< HEAD
 				require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 				$projectstatic=new Project($this->db);
-=======
-				$projectstatic = new Project($this->db);
->>>>>>> 11.0.2
 				$projectstatic->fetch($this->fk_project);
 
 				$dir = $conf->projet->dir_output."/".dol_sanitizeFileName($projectstatic->ref).'/'.dol_sanitizeFileName($this->id);
