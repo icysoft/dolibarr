@@ -257,7 +257,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	public function createeventtype($eventType, $color_code = "FFC266") {
 		global $conf, $langs, $user;
 
-		$libelle = $eventType;
+		$libelle = addslashes($eventType);
 
 		// Création du code
 		$code = $this->generateRandomCode();
