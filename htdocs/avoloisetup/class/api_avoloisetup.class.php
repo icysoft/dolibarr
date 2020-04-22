@@ -255,19 +255,19 @@ class AvoloiSetup extends DolibarrApi
         if ($setup_infos->bic) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_BIC', $setup_infos->bic);
 
         // STEP 4
-        if ($setup_infos->id_country_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', $setup_infos->id_country_commerce);
-        if ($setup_infos->vta_number) dolibarr_set_const($this->db, 'MAIN_INFO_TVAINTRA', $setup_infos->vta_number);
-        if ($setup_infos->vta_liable) dolibarr_set_const($this->db, 'FACTURE_TVAOPTION', $setup_infos->vta_liable);
-        if ($setup_infos->code_rcs) dolibarr_set_const($this->db, 'MAIN_INFO_CODE_RCS', $setup_infos->code_rcs);
-        if ($setup_infos->ville_rcs) dolibarr_set_const($this->db, 'MAIN_INFO_VILLE_RCS', $setup_infos->ville_rcs);
-        if ($setup_infos->tva_intracommunautaire) dolibarr_set_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', $setup_infos->tva_intracommunautaire);
+        dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', $setup_infos->id_country_commerce);
+        dolibarr_set_const($this->db, 'MAIN_INFO_TVAINTRA', $setup_infos->vta_number);
+        dolibarr_set_const($this->db, 'FACTURE_TVAOPTION', $setup_infos->vta_liable ? $setup_infos->vta_liable : '0');
+        dolibarr_set_const($this->db, 'MAIN_INFO_CODE_RCS', $setup_infos->code_rcs ? $setup_infos->code_rcs : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_VILLE_RCS', $setup_infos->ville_rcs ? $setup_infos->ville_rcs : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', $setup_infos->tva_intracommunautaire ? $setup_infos->tva_intracommunautaire : null);
         if ($setup_infos->siren) dolibarr_set_const($this->db, 'MAIN_INFO_SIREN', $setup_infos->siren);
         if ($setup_infos->siret) dolibarr_set_const($this->db, 'MAIN_INFO_SIRET', $setup_infos->siret);
         if ($setup_infos->ape) dolibarr_set_const($this->db, 'MAIN_INFO_APE', $setup_infos->ape);
         if ($setup_infos->ident_reg_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_REG_COMMERCE', $setup_infos->ident_reg_commerce);
-        if ($setup_infos->capital) dolibarr_set_const($this->db, 'MAIN_INFO_CAPITAL', $setup_infos->capital);
-        if ($setup_infos->cnbe) dolibarr_set_const($this->db, 'MAIN_INFO_CNBE', $setup_infos->cnbe);
-        if ($setup_infos->carpa) dolibarr_set_const($this->db, 'MAIN_INFO_CARPA', $setup_infos->carpa);
+        dolibarr_set_const($this->db, 'MAIN_INFO_CAPITAL', $setup_infos->capital ? $setup_infos->capital : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_CNBE', $setup_infos->cnbe ? $setup_infos->cnbe : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_CARPA', $setup_infos->carpa ? $setup_infos->carpa : null);
 
         
 
@@ -503,18 +503,18 @@ class AvoloiSetup extends DolibarrApi
         $companyzip = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ZIP', 1);
         $companytown = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TOWN', 1);
         $companycountry_coordonnees = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_COUNTRY_COORDONNEES', 1);
-        $companyid_country_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', 1);
-        $companyvta_liable = dolibarr_get_const($this->db, 'FACTURE_TVAOPTION', 1);
-        $companycode_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_CODE_RCS', 1);
-        $companyville_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_VILLE_RCS', 1);
-        $companytva_intracommunautaire = dolibarr_get_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', 1);
+        // $companyid_country_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', 1);
+        // $companyvta_liable = dolibarr_get_const($this->db, 'FACTURE_TVAOPTION', 1);
+        // $companycode_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_CODE_RCS', 1);
+        // $companyville_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_VILLE_RCS', 1);
+        // $companytva_intracommunautaire = dolibarr_get_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', 1);
         $companysiren = dolibarr_get_const($this->db, 'MAIN_INFO_SIREN', 1);
         $companysiret = dolibarr_get_const($this->db, 'MAIN_INFO_SIRET', 1);
         $companyape = dolibarr_get_const($this->db, 'MAIN_INFO_APE', 1);
         $companyident_reg_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_REG_COMMERCE', 1);
-        $companycapital = dolibarr_get_const($this->db, 'MAIN_INFO_CAPITAL', 1);
-        $companycnbe = dolibarr_get_const($this->db, 'MAIN_INFO_CNBE', 1);
-        $companycarpa = dolibarr_get_const($this->db, 'MAIN_INFO_CARPA', 1);
+        // $companycapital = dolibarr_get_const($this->db, 'MAIN_INFO_CAPITAL', 1);
+        // $companycnbe = dolibarr_get_const($this->db, 'MAIN_INFO_CNBE', 1);
+        // $companycarpa = dolibarr_get_const($this->db, 'MAIN_INFO_CARPA', 1);
 
         // Vérification de l'existence d'un compte bancaire
 		$sql = "SELECT *";
@@ -537,18 +537,19 @@ class AvoloiSetup extends DolibarrApi
             || (!$companyzip || $companyzip === '')
             || (!$companytown || $companytown === '')
             || (!$companycountry_coordonnees || $companycountry_coordonnees === '')
-            || (!$companyid_country_commerce || $companyid_country_commerce === '')
-            || (!$companyvta_liable || $companyvta_liable === '')
-            || (!$companycode_rcs || $companycode_rcs === '')
-            || (!$companyville_rcs || $companyville_rcs === '')
-            || (!$companytva_intracommunautaire || $companytva_intracommunautaire === '')
+            // || (!$companyid_country_commerce || $companyid_country_commerce === '')
+            // || (!$companyvta_liable || $companyvta_liable === '')
+            // || (!$companycode_rcs || $companycode_rcs === '')
+            // || (!$companyville_rcs || $companyville_rcs === '')
+            // || (!$companytva_intracommunautaire || $companytva_intracommunautaire === '')
             || (!$companysiren || $companysiren === '')
             || (!$companysiret || $companysiret === '')
             || (!$companyape || $companyape === '')
             || (!$companyident_reg_commerce || $companyident_reg_commerce === '')
-            || (!$companycapital || $companycapital === '')
-            || (!$companycnbe || $companycnbe === '')
-            || (!$companycarpa || $companycarpa === '')) {
+            // || (!$companycapital || $companycapital === '')
+            // || (!$companycnbe || $companycnbe === '')
+            // || (!$companycarpa || $companycarpa === '')
+            ) {
                 return false;
         } else {
             return true;
