@@ -189,8 +189,6 @@ class AvoloiCustomTypes extends DolibarrApi
 	public function createtierstype($tiersType) {
 		global $conf, $langs, $user;
 
-		$tiersType = $this->db->escape($tiersType);
-
 		$sql = "INSERT INTO `avo_custom_tiers_type` (`datec`, `datem`, `type`, `fk_pays`)";
 		$sql.= " VALUES (";
 		$sql.= "'".date('Y/m/d h:i:s')."'";
@@ -259,8 +257,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	public function createeventtype($eventType, $color_code = "FFC266") {
 		global $conf, $langs, $user;
 
-		$libelle = $this->db->escape($eventType);
-		$color_code = $this->db->escape($color_code);
+		$libelle = $eventType;
 
 		// Création du code
 		$code = $this->generateRandomCode();
@@ -316,8 +313,7 @@ class AvoloiCustomTypes extends DolibarrApi
 	public function updateeventtype($id, $eventType, $color_code = "FFC266") {
 		global $conf, $langs, $user;
 
-		$libelle = $this->db->escape($eventType);
-		$color_code = $this->db->escape($color_code);
+		$libelle = $eventType;
 
 		$sql = "UPDATE `llx_c_actioncomm` SET ";
 		$sql.= "`color`='$color_code', ";
@@ -331,7 +327,7 @@ class AvoloiCustomTypes extends DolibarrApi
 		$resqTmp = $this->db->query($sqlTmp);
 		$objTmp = $this->db->fetch_object($resqTmp);
 
-		if ($this->db->escape($objTmp->libelle) !== $libelle) {
+		if ($objTmp->libelle !== $libelle) {
 			throw new RestException(500, "Problème lors de la modification du type de rendez-vous");
 		}
 
