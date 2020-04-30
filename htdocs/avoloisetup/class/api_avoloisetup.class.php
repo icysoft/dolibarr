@@ -255,21 +255,19 @@ class AvoloiSetup extends DolibarrApi
         if ($setup_infos->bic) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_BIC', $this->db->escape($setup_infos->bic));
 
         // STEP 4
-        if ($setup_infos->id_country_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', $this->db->escape($setup_infos->id_country_commerce));
-        if ($setup_infos->vta_number) dolibarr_set_const($this->db, 'MAIN_INFO_TVAINTRA', $this->db->escape($setup_infos->vta_number));
-        if ($setup_infos->vta_liable) dolibarr_set_const($this->db, 'FACTURE_TVAOPTION', $this->db->escape($setup_infos->vta_liable));
-        if ($setup_infos->code_rcs) dolibarr_set_const($this->db, 'MAIN_INFO_CODE_RCS', $this->db->escape($setup_infos->code_rcs));
-        if ($setup_infos->ville_rcs) dolibarr_set_const($this->db, 'MAIN_INFO_VILLE_RCS', $this->db->escape($setup_infos->ville_rcs));
-        if ($setup_infos->tva_intracommunautaire) dolibarr_set_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', $this->db->escape($setup_infos->tva_intracommunautaire));
+        dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', $this->db->escape($setup_infos->id_country_commerce));
+        dolibarr_set_const($this->db, 'MAIN_INFO_TVAINTRA', $this->db->escape($setup_infos->vta_number));
+        dolibarr_set_const($this->db, 'FACTURE_TVAOPTION', $setup_infos->vta_liable ? '1' : '0');
+        dolibarr_set_const($this->db, 'MAIN_INFO_CODE_RCS', $setup_infos->code_rcs ? $this->db->escape($setup_infos->code_rcs) : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_VILLE_RCS', $setup_infos->ville_rcs ? $this->db->escape($setup_infos->ville_rcs) : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', $setup_infos->tva_intracommunautaire ? $this->db->escape($setup_infos->tva_intracommunautaire) : null);
         if ($setup_infos->siren) dolibarr_set_const($this->db, 'MAIN_INFO_SIREN', $this->db->escape($setup_infos->siren));
         if ($setup_infos->siret) dolibarr_set_const($this->db, 'MAIN_INFO_SIRET', $this->db->escape($setup_infos->siret));
         if ($setup_infos->ape) dolibarr_set_const($this->db, 'MAIN_INFO_APE', $this->db->escape($setup_infos->ape));
         if ($setup_infos->ident_reg_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_REG_COMMERCE', $this->db->escape($setup_infos->ident_reg_commerce));
-        if ($setup_infos->capital) dolibarr_set_const($this->db, 'MAIN_INFO_CAPITAL', $this->db->escape($setup_infos->capital));
-        if ($setup_infos->cnbe) dolibarr_set_const($this->db, 'MAIN_INFO_CNBE', $this->db->escape($setup_infos->cnbe));
-        if ($setup_infos->carpa) dolibarr_set_const($this->db, 'MAIN_INFO_CARPA', $this->db->escape($setup_infos->carpa));
-
-        
+        dolibarr_set_const($this->db, 'MAIN_INFO_CAPITAL', $setup_infos->capital ? $setup_infos->capital : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_CNBE', $setup_infos->cnbe ? $setup_infos->cnbe : null);
+        dolibarr_set_const($this->db, 'MAIN_INFO_CARPA', $setup_infos->carpa ? $setup_infos->carpa : null);
 
         // if ($setup_infos->stateid) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_STATE', $setup_infos->stateid);
         // if ($setup_infos->fax) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_FAX', $setup_infos->fax);
