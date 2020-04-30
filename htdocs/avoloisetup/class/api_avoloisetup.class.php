@@ -72,45 +72,45 @@ class AvoloiSetup extends DolibarrApi
         dol_include_once('/core/lib/admin.lib.php');
 
         // STEP 1
-        $companysociete_type = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE', 1);
-        $companyformejuridique = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_FORME_JURIDIQUE', 1);
-        $companyname = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM', 1);
-        $companyname_lettres = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM_LETTRES', 1);
-        $companyname_actes = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM_ACTES', 1);
-        $companycode_contact = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', 1);
-        $companyprofession = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', 1);
-        $companytype_profil = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', 1);
-        $companytype_barreau = dolibarr_get_const($this->db, 'BARREAU_LABEL', 1);
-        $companylogo_filename = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_LOGO', 1);
+        $companysociete_type = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE', 1));
+        $companyformejuridique = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_FORME_JURIDIQUE', 1));
+        $companyname = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM', 1));
+        $companyname_lettres = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM_LETTRES', 1));
+        $companyname_actes = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_NOM_ACTES', 1));
+        $companycode_contact = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', 1));
+        $companyprofession = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', 1));
+        $companytype_profil = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', 1));
+        $companytype_barreau = stripcslashes(dolibarr_get_const($this->db, 'BARREAU_LABEL', 1));
+        $companylogo_filename = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_LOGO', 1));
 
         // STEP 2
-        $companyemail = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_MAIL', 1);
-        $companyphone_fix = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TEL_FIX', 1);
-        $companyphone_mobile = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TEL_MOBILE', 1);
-        $companyaddress = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ADDRESS', 1);
-        $companyzip = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ZIP', 1);
-        $companytown = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TOWN', 1);
-        $companycountry_coordonnees = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_COUNTRY_COORDONNEES', 1);
+        $companyemail = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_MAIL', 1));
+        $companyphone_fix = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TEL_FIX', 1));
+        $companyphone_mobile = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TEL_MOBILE', 1));
+        $companyaddress = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ADDRESS', 1));
+        $companyzip = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ZIP', 1));
+        $companytown = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_TOWN', 1));
+        $companycountry_coordonnees = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_COUNTRY_COORDONNEES', 1));
 
         // STEP 3
-        $companyid_country_banque = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_BANQUE', 1);
-        $companyiban = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_IBAN', 1);
-        $companybic = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_BIC', 1);
+        $companyid_country_banque = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_BANQUE', 1));
+        $companyiban = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_IBAN', 1));
+        $companybic = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_BIC', 1));
 
         // STEP 4
-        $companyid_country_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', 1);
-        $companyvta_number = dolibarr_get_const($this->db, 'MAIN_INFO_TVAINTRA', 1);
-        $companyvta_liable = dolibarr_get_const($this->db, 'FACTURE_TVAOPTION', 1);
-        $companycode_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_CODE_RCS', 1);
-        $companyville_rcs = dolibarr_get_const($this->db, 'MAIN_INFO_VILLE_RCS', 1);
-        $companytva_intracommunautaire = dolibarr_get_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', 1);
-        $companysiren = dolibarr_get_const($this->db, 'MAIN_INFO_SIREN', 1);
-        $companysiret = dolibarr_get_const($this->db, 'MAIN_INFO_SIRET', 1);
-        $companyape = dolibarr_get_const($this->db, 'MAIN_INFO_APE', 1);
-        $companyident_reg_commerce = dolibarr_get_const($this->db, 'MAIN_INFO_REG_COMMERCE', 1);
-        $companycapital = dolibarr_get_const($this->db, 'MAIN_INFO_CAPITAL', 1);
-        $companycnbe = dolibarr_get_const($this->db, 'MAIN_INFO_CNBE', 1);
-        $companycarpa = dolibarr_get_const($this->db, 'MAIN_INFO_CARPA', 1);
+        $companyid_country_commerce = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', 1));
+        $companyvta_number = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_TVAINTRA', 1));
+        $companyvta_liable = stripcslashes(dolibarr_get_const($this->db, 'FACTURE_TVAOPTION', 1));
+        $companycode_rcs = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_CODE_RCS', 1));
+        $companyville_rcs = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_VILLE_RCS', 1));
+        $companytva_intracommunautaire = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', 1));
+        $companysiren = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SIREN', 1));
+        $companysiret = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_SIRET', 1));
+        $companyape = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_APE', 1));
+        $companyident_reg_commerce = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_REG_COMMERCE', 1));
+        $companycapital = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_CAPITAL', 1));
+        $companycnbe = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_CNBE', 1));
+        $companycarpa = stripcslashes(dolibarr_get_const($this->db, 'MAIN_INFO_CARPA', 1));
 
 
         $list = array();
@@ -229,45 +229,45 @@ class AvoloiSetup extends DolibarrApi
         $setup_infos = (object) $setup_infos;
 
         // STEP 1
-        if ($setup_infos->societe_type) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TYPE', $setup_infos->societe_type);
-        if ($setup_infos->formejuridique) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_FORME_JURIDIQUE', $setup_infos->formejuridique);
-        if ($setup_infos->name) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_NOM', $setup_infos->name);
-        if ($setup_infos->name_lettres) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_NOM_LETTRES', $setup_infos->name_lettres);
-        if ($setup_infos->name_actes) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_NOM_ACTES', $setup_infos->name_actes);
-        if ($setup_infos->code_contact) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', $setup_infos->code_contact);
-        if ($setup_infos->profession) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', $setup_infos->profession);
-        if ($setup_infos->type_profil) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', $setup_infos->type_profil);
-        if ($setup_infos->barreau) dolibarr_set_const($this->db, 'BARREAU_LABEL', $setup_infos->barreau);
-        if ($setup_infos->logo_filename) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_LOGO', $setup_infos->logo_filename);
+        if ($setup_infos->societe_type) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TYPE', $this->db->escape($setup_infos->societe_type));
+        if ($setup_infos->formejuridique) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_FORME_JURIDIQUE', $this->db->escape($setup_infos->formejuridique));
+        if ($setup_infos->name) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_NOM', $this->db->escape($setup_infos->name));
+        if ($setup_infos->name_lettres) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_NOM_LETTRES', $this->db->escape($setup_infos->name_lettres));
+        if ($setup_infos->name_actes) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_NOM_ACTES', $this->db->escape($setup_infos->name_actes));
+        if ($setup_infos->code_contact) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_CODE_CONTACT', $this->db->escape($setup_infos->code_contact));
+        if ($setup_infos->profession) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_PROFESSION', $this->db->escape($setup_infos->profession));
+        if ($setup_infos->type_profil) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TYPE_PROFIL', $this->db->escape($setup_infos->type_profil));
+        if ($setup_infos->barreau) dolibarr_set_const($this->db, 'BARREAU_LABEL', $this->db->escape($setup_infos->barreau));
+        if ($setup_infos->logo_filename) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_LOGO', $this->db->escape($setup_infos->logo_filename));
 
         // STEP 2
-        if ($setup_infos->email) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_MAIL', $setup_infos->email);
-        if ($setup_infos->phone_fix) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TEL_FIX', $setup_infos->phone_fix);
-        if ($setup_infos->phone_mobile) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TEL_MOBILE', $setup_infos->phone_mobile);
-        if ($setup_infos->address) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ADDRESS', $setup_infos->address);
-        if ($setup_infos->zip) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ZIP', $setup_infos->zip);
-        if ($setup_infos->town) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TOWN', $setup_infos->town);
-        if ($setup_infos->country_coordonnees) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_COUNTRY_COORDONNEES', $setup_infos->country_coordonnees);
+        if ($setup_infos->email) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_MAIL', $this->db->escape($setup_infos->email));
+        if ($setup_infos->phone_fix) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TEL_FIX', $this->db->escape($setup_infos->phone_fix));
+        if ($setup_infos->phone_mobile) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TEL_MOBILE', $this->db->escape($setup_infos->phone_mobile));
+        if ($setup_infos->address) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ADDRESS', $this->db->escape($setup_infos->address));
+        if ($setup_infos->zip) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ZIP', $this->db->escape($setup_infos->zip));
+        if ($setup_infos->town) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_TOWN', $this->db->escape($setup_infos->town));
+        if ($setup_infos->country_coordonnees) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_COUNTRY_COORDONNEES', $this->db->escape($setup_infos->country_coordonnees));
 
         // STEP 3
-        if ($setup_infos->id_country_banque) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_BANQUE', $setup_infos->id_country_banque);
-        if ($setup_infos->iban) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_IBAN', $setup_infos->iban);
-        if ($setup_infos->bic) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_BIC', $setup_infos->bic);
+        if ($setup_infos->id_country_banque) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_BANQUE', $this->db->escape($setup_infos->id_country_banque));
+        if ($setup_infos->iban) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_IBAN', $this->db->escape($setup_infos->iban));
+        if ($setup_infos->bic) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_BIC', $this->db->escape($setup_infos->bic));
 
         // STEP 4
-        dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', $setup_infos->id_country_commerce);
-        dolibarr_set_const($this->db, 'MAIN_INFO_TVAINTRA', $setup_infos->vta_number);
-        dolibarr_set_const($this->db, 'FACTURE_TVAOPTION', $setup_infos->vta_liable ? $setup_infos->vta_liable : '0');
-        dolibarr_set_const($this->db, 'MAIN_INFO_CODE_RCS', $setup_infos->code_rcs ? $setup_infos->code_rcs : null);
-        dolibarr_set_const($this->db, 'MAIN_INFO_VILLE_RCS', $setup_infos->ville_rcs ? $setup_infos->ville_rcs : null);
-        dolibarr_set_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', $setup_infos->tva_intracommunautaire ? $setup_infos->tva_intracommunautaire : null);
-        if ($setup_infos->siren) dolibarr_set_const($this->db, 'MAIN_INFO_SIREN', $setup_infos->siren);
-        if ($setup_infos->siret) dolibarr_set_const($this->db, 'MAIN_INFO_SIRET', $setup_infos->siret);
-        if ($setup_infos->ape) dolibarr_set_const($this->db, 'MAIN_INFO_APE', $setup_infos->ape);
-        if ($setup_infos->ident_reg_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_REG_COMMERCE', $setup_infos->ident_reg_commerce);
-        dolibarr_set_const($this->db, 'MAIN_INFO_CAPITAL', $setup_infos->capital ? $setup_infos->capital : null);
-        dolibarr_set_const($this->db, 'MAIN_INFO_CNBE', $setup_infos->cnbe ? $setup_infos->cnbe : null);
-        dolibarr_set_const($this->db, 'MAIN_INFO_CARPA', $setup_infos->carpa ? $setup_infos->carpa : null);
+        if ($setup_infos->id_country_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_SOCIETE_ID_COUNTRY_COMMERCE', $this->db->escape($setup_infos->id_country_commerce));
+        if ($setup_infos->vta_number) dolibarr_set_const($this->db, 'MAIN_INFO_TVAINTRA', $this->db->escape($setup_infos->vta_number));
+        if ($setup_infos->vta_liable) dolibarr_set_const($this->db, 'FACTURE_TVAOPTION', $this->db->escape($setup_infos->vta_liable));
+        if ($setup_infos->code_rcs) dolibarr_set_const($this->db, 'MAIN_INFO_CODE_RCS', $this->db->escape($setup_infos->code_rcs));
+        if ($setup_infos->ville_rcs) dolibarr_set_const($this->db, 'MAIN_INFO_VILLE_RCS', $this->db->escape($setup_infos->ville_rcs));
+        if ($setup_infos->tva_intracommunautaire) dolibarr_set_const($this->db, 'MAIN_INFO_TVA_INTRACOMMUNAUTAIRE', $this->db->escape($setup_infos->tva_intracommunautaire));
+        if ($setup_infos->siren) dolibarr_set_const($this->db, 'MAIN_INFO_SIREN', $this->db->escape($setup_infos->siren));
+        if ($setup_infos->siret) dolibarr_set_const($this->db, 'MAIN_INFO_SIRET', $this->db->escape($setup_infos->siret));
+        if ($setup_infos->ape) dolibarr_set_const($this->db, 'MAIN_INFO_APE', $this->db->escape($setup_infos->ape));
+        if ($setup_infos->ident_reg_commerce) dolibarr_set_const($this->db, 'MAIN_INFO_REG_COMMERCE', $this->db->escape($setup_infos->ident_reg_commerce));
+        if ($setup_infos->capital) dolibarr_set_const($this->db, 'MAIN_INFO_CAPITAL', $this->db->escape($setup_infos->capital));
+        if ($setup_infos->cnbe) dolibarr_set_const($this->db, 'MAIN_INFO_CNBE', $this->db->escape($setup_infos->cnbe));
+        if ($setup_infos->carpa) dolibarr_set_const($this->db, 'MAIN_INFO_CARPA', $this->db->escape($setup_infos->carpa));
 
         
 
@@ -327,12 +327,12 @@ class AvoloiSetup extends DolibarrApi
 
         dolibarr_set_const($this->db, 'FACTURE_ADDON', 'mod_facture_mercure');
 
-        if ($setup_infos->invoice_nomenclature || $setup_infos->invoice_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', $setup_infos->invoice_nomenclature);
-        if ($setup_infos->credit_nomenclature || $setup_infos->credit_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $setup_infos->credit_nomenclature);
-        if ($setup_infos->tiers_nomenclature || $setup_infos->tiers_nomenclature == '') dolibarr_set_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', $setup_infos->tiers_nomenclature);
-        if ($setup_infos->client_time_limit) dolibarr_set_const($this->db, 'CLIENT_TIME_LIMIT', $setup_infos->client_time_limit);
-        if ($setup_infos->provider_time_limit) dolibarr_set_const($this->db, 'PROVIDER_TIME_LIMIT', $setup_infos->provider_time_limit);
-        if ($setup_infos->taux_tva_default || $setup_infos->taux_tva_default == '0') dolibarr_set_const($this->db, 'TAUX_TVA_DEFAULT', $setup_infos->taux_tva_default);
+        if ($setup_infos->invoice_nomenclature || $setup_infos->invoice_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', $this->db->escape($setup_infos->invoice_nomenclature));
+        if ($setup_infos->credit_nomenclature || $setup_infos->credit_nomenclature == '') dolibarr_set_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', $this->db->escape($setup_infos->credit_nomenclature));
+        if ($setup_infos->tiers_nomenclature || $setup_infos->tiers_nomenclature == '') dolibarr_set_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', $this->db->escape($setup_infos->tiers_nomenclature));
+        if ($setup_infos->client_time_limit) dolibarr_set_const($this->db, 'CLIENT_TIME_LIMIT', $this->db->escape($setup_infos->client_time_limit));
+        if ($setup_infos->provider_time_limit) dolibarr_set_const($this->db, 'PROVIDER_TIME_LIMIT', $this->db->escape($setup_infos->provider_time_limit));
+        if ($setup_infos->taux_tva_default || $setup_infos->taux_tva_default == '0') dolibarr_set_const($this->db, 'TAUX_TVA_DEFAULT', $this->db->escape($setup_infos->taux_tva_default));
 
         return $this->getAccountingSetup();
     }
@@ -351,12 +351,12 @@ class AvoloiSetup extends DolibarrApi
     {
         dol_include_once('/core/lib/admin.lib.php');
 
-        $invoice_nomenclature = dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', 1);
-        $credit_nomenclature = dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', 1);
-        $tiers_nomenclature = dolibarr_get_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', 1);
-        $client_time_limit = dolibarr_get_const($this->db, 'CLIENT_TIME_LIMIT', 1);
-        $provider_time_limit = dolibarr_get_const($this->db, 'PROVIDER_TIME_LIMIT', 1);
-        $taux_tva_default = dolibarr_get_const($this->db, 'TAUX_TVA_DEFAULT', 1);
+        $invoice_nomenclature = stripcslashes(dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_INVOICE', 1));
+        $credit_nomenclature = stripcslashes(dolibarr_get_const($this->db, 'FACTURE_MERCURE_MASK_CREDIT', 1));
+        $tiers_nomenclature = stripcslashes(dolibarr_get_const($this->db, 'COMPANY_ELEPHANT_MASK_CUSTOMER', 1));
+        $client_time_limit = stripcslashes(dolibarr_get_const($this->db, 'CLIENT_TIME_LIMIT', 1));
+        $provider_time_limit = stripcslashes(dolibarr_get_const($this->db, 'PROVIDER_TIME_LIMIT', 1));
+        $taux_tva_default = stripcslashes(dolibarr_get_const($this->db, 'TAUX_TVA_DEFAULT', 1));
 
         $list = array();
 
@@ -455,7 +455,10 @@ class AvoloiSetup extends DolibarrApi
 
 		if (!$libelle || $libelle === '') {
 			throw new RestException(400, 'Le libelle est manquant');
-		}
+        }
+        
+        $libelle = $this->db->escape($libelle);
+        $taux = $this->db->escape($taux);
 
 		if ($taux >= 0) {
 			$sql  = "INSERT INTO `" . MAIN_DB_PREFIX . "c_tva` (`fk_pays`, `code`, `taux`, `localtax1`, `localtax1_type`, `localtax2`, `localtax2_type`, `recuperableonly`, `note`, `active`, `accountancy_code_sell`, `accountancy_code_buy`)";
